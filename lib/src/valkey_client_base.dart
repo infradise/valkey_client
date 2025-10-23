@@ -23,6 +23,16 @@ abstract class ValkeyClientBase {
   /// Executes a raw command.
   Future<dynamic> execute(List<String> command);
 
+  // --- COMMANDS ---
+
   /// PINGs the server.
   Future<String> ping([String? message]);
+
+  /// Gets the value of [key].
+  /// Returns `null` if the key does not exist.
+  Future<String?> get(String key);
+
+  /// Sets [key] to [value].
+  /// Returns a simple string reply (usually 'OK').
+  Future<String> set(String key, String value);
 }

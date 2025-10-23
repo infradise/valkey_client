@@ -87,4 +87,26 @@ void main() async {
     print('(Option 2) Closing connection...');
     await flexibleClient.close();
   }
+
+  try {
+    await client.connect();
+    print('✅ Connected successfully!');
+
+    // --- Chapter 3 Test (SET/GET) ---
+    print("Sending: SET greeting 'Hello, Valkey!'");
+    final setResponse = await client.set('greeting', 'Hello, Valkey!');
+    print("Received: $setResponse"); // Should be "OK"
+
+    print("Sending: GET greeting");
+    final getResponse = await client.get('greeting');
+    print("Received: $getResponse"); // Should be "Hello, Valkey!"
+
+    print("Sending: GET non_existent_key");
+    final nullResponse = await client.get('non_existent_key');
+    print("Received: $nullResponse"); // Should be "null"
+  } catch (e) {
+    print('❌ Failed: $e');
+  } finally {
+    await client.close();
+  }
 }

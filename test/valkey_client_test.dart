@@ -121,7 +121,52 @@ Future<void> main() async {
     // We can add that later.
   });
 
-  // We will add more groups here as we add features, e.g.:
-  // group('ValkeyClient Commands - PING', () { ... });
-  // group('ValkeyClient Commands - SET/GET', () { ... });
+  // --- NEW GROUP FOR COMMANDS ---
+  group('ValkeyClient Commands', () {
+    late ValkeyClient client;
+
+    // Connect ONCE before all tests in this group
+    setUpAll(() async {
+      // This assumes the isServerRunning check from the main setUpAll has passed
+      client = ValkeyClient(port: noAuthPort);
+      await client.connect();
+    });
+
+    // Close the connection ONCE after all tests in this group
+    tearDownAll(() async {
+      await client.close();
+    });
+
+    test('PING should return PONG', () async {
+      final response = await client.ping();
+      expect(response, 'PONG');
+    });
+
+    test('PING with message should return the message', () async {
+      final response = await client.ping('Hello Valkey');
+      expect(response, 'Hello Valkey');
+    });
+
+    test('SET should return OK', () async {
+      final response = await client.set('test:key', 'test:value');
+      expect(response, 'OK');
+    });
+
+    test('GET should retrieve the correct value after SET', () async {
+      final key = 'test:key:get';
+      await client.set(key, 'Hello World');
+
+      final response = await client.get(key);
+      expect(response, 'Hello World');
+    });
+
+    test('GET on a non-existent key should return null', () async {
+      final response = await client.get('test:key:non_existent');
+      expect(response, isNull);
+    });
+  },
+      // Skip this entire group if the no-auth server is not running
+      skip: !isServerRunning
+          ? 'Valkey server not running on localhost:$noAuthPort'
+          : false);
 }

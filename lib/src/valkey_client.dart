@@ -127,7 +127,8 @@ class ValkeyClient implements ValkeyClientBase {
 
   /// This is our new "Proto-Parser"
   /// It tries to parse RESP Simple Strings (+OK, +PONG, -ERR) from the buffer.
-  void _processBuffer() {
+  @Deprecated('This will be removed after 0.3.0.')
+  void _processBufferDeprecated() {
     // This is a *very simple* parser. It only looks for \r\n
     // We will make this much smarter in Chapter 2.2
 
@@ -193,6 +194,99 @@ class ValkeyClient implements ValkeyClientBase {
     }
   }
 
+  /// This is our new, smarter parser.
+  /// It processes the buffer and resolves commands, now handling:
+  /// - '+' (Simple Strings)
+  /// - '-' (Errors)
+  /// - '$' (Bulk Strings)
+  void _processBuffer() {
+    // Try to parse as many full messages as we can from the buffer.
+    while (true) {
+      final bytes = _buffer.toBytes();
+      if (bytes.isEmpty) break; // Nothing to process
+
+      // 1. Try to read the first line (prefix + data/length)
+      final crlfIndex = _findCRLF(bytes, 0);
+      if (crlfIndex == -1) {
+        // Not even a single complete line in the buffer. Wait for more data.
+        break;
+      }
+
+      final lineBytes = bytes.sublist(0, crlfIndex);
+      final responseType = lineBytes[0];
+
+      dynamic responsePayload;
+      int totalMessageLength =
+          0; // How many bytes did this *entire* message consume?
+      bool isError = false;
+
+      switch (responseType) {
+        // '+' (Simple String)
+        case 43: // '+'
+          responsePayload = utf8.decode(lineBytes.sublist(1));
+          totalMessageLength = crlfIndex + 2;
+          break;
+
+        // '-' (Error)
+        case 45: // '-'
+          responsePayload = Exception(utf8.decode(lineBytes.sublist(1)));
+          totalMessageLength = crlfIndex + 2;
+          isError = true;
+          break;
+
+        // '$' (Bulk String)
+        case 36: // '$'
+          final lineData = utf8.decode(lineBytes.sublist(1));
+          final dataLength = int.parse(lineData);
+
+          if (dataLength == -1) {
+            // Null response (e.g., GET key_not_found)
+            responsePayload = null;
+            totalMessageLength = crlfIndex + 2;
+          } else {
+            // Data response (e.g., GET my_key)
+            // We need dataLength bytes + 2 bytes for the final \r\n
+            final expectedTotalLength = crlfIndex + 2 + dataLength + 2;
+
+            if (bytes.length < expectedTotalLength) {
+              // Not enough data in the buffer yet. Wait for more.
+              break; // Exit the switch AND the while loop
+            }
+
+            // We have the full message. Extract the data.
+            final dataBytes = bytes.sublist(
+              crlfIndex + 2, // Start after the first \r\n
+              crlfIndex + 2 + dataLength, // End before the final \r\n
+            );
+            responsePayload = utf8.decode(dataBytes);
+            totalMessageLength = expectedTotalLength;
+          }
+          break;
+
+        // '*' (Array) or other types not yet supported
+        default:
+          responsePayload = Exception(
+              'Unsupported RESP type: ${String.fromCharCode(responseType)}');
+          totalMessageLength = crlfIndex + 2;
+          isError = true;
+      }
+
+      if (totalMessageLength == 0) {
+        // This means we're waiting for more data (break from switch '$')
+        break; // Exit the while loop
+      }
+
+      // If we are here, we successfully parsed one full message.
+      // Resolve the corresponding command.
+      _resolveNextCommand(responsePayload, isError: isError);
+
+      // Consume the processed bytes from the buffer
+      final remainingBytes = bytes.sublist(totalMessageLength);
+      _buffer.clear();
+      _buffer.add(remainingBytes);
+    } // end while(true)
+  }
+
   /// Helper to find the first \r\n in a byte list
   int _findCRLF(Uint8List bytes, int start) {
     for (var i = start; i < bytes.length - 1; i++) {
@@ -201,6 +295,32 @@ class ValkeyClient implements ValkeyClientBase {
       }
     }
     return -1;
+  }
+
+  /// Helper to resolve the next command in the queue.
+  void _resolveNextCommand(dynamic response, {bool isError = false}) {
+    if (_isAuthenticating) {
+      // This is the AUTH response
+      _isAuthenticating = false;
+      if (isError) {
+        _connectionCompleter!.completeError(response);
+      } else {
+        _connectionCompleter!.complete();
+      }
+    } else {
+      // This is a response to a command (e.g., PING, GET, SET)
+      if (_responseQueue.isEmpty) {
+        // We got a response we didn't ask for (e.g., Pub/Sub message)
+        // Ignore for now.
+      } else {
+        final completer = _responseQueue.removeFirst();
+        if (isError) {
+          completer.completeError(response);
+        } else {
+          completer.complete(response);
+        }
+      }
+    }
   }
 
   // --- Public Command Methods ---
@@ -241,6 +361,22 @@ class ValkeyClient implements ValkeyClientBase {
     final command = (message == null) ? ['PING'] : ['PING', message];
     final response = await execute(command);
     // Our simple parser will return "PONG" or the message.
+    return response as String;
+  }
+
+  // --- NEW COMMANDS ---
+
+  @override
+  Future<String?> get(String key) async {
+    final response = await execute(['GET', key]);
+    // The parser will return a String or null.
+    return response as String?;
+  }
+
+  @override
+  Future<String> set(String key, String value) async {
+    final response = await execute(['SET', key, value]);
+    // SET returns "+OK"
     return response as String;
   }
 

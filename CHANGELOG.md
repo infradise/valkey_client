@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+- **New Commands:** Added `client.set()` and `client.get()` methods.
+- **Upgraded RESP Parser:** The internal parser now supports **Bulk Strings (`$`)**.
+- This enables handling standard string values (e.g., `GET mykey`) and `null` replies (e.g., `GET non_existent_key`).
+
 ## 0.2.0
 
 ### Added
