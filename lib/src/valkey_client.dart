@@ -16,7 +16,7 @@ class ValkeyClient implements ValkeyClientBase {
   final int _defaultPort;
   final String? _defaultUsername;
   final String? _defaultPassword;
-  
+
   String _lastHost = '127.0.0.1';
   int _lastPort = 6379;
   String? _lastUsername;
@@ -25,6 +25,7 @@ class ValkeyClient implements ValkeyClientBase {
   // --- Command/Response Queue ---
   /// A queue of Completers, each waiting for a response.
   final Queue<Completer<dynamic>> _responseQueue = Queue();
+
   /// A buffer to store incomplete data chunks from the socket.
   final BytesBuilder _buffer = BytesBuilder();
   // ------------------------------
@@ -52,7 +53,8 @@ class ValkeyClient implements ValkeyClientBase {
 
   /// A Future that completes once the connection and authentication are successful.
   @override
-  Future<void> get onConnected => _connectionCompleter?.future ?? Future.error('Client not connected');
+  Future<void> get onConnected =>
+      _connectionCompleter?.future ?? Future.error('Client not connected');
 
   @override
   Future<void> connect({
@@ -86,7 +88,6 @@ class ValkeyClient implements ValkeyClientBase {
 
       // 2. Set up the socket stream listener.
       _subscription = _socket!.listen(
-
         // This is our mini-parser (AUTH only)
         // This is where we will parse the RESP3 data from the server.
 
@@ -106,7 +107,6 @@ class ValkeyClient implements ValkeyClientBase {
         // No password, connection is immediately ready.
         _connectionCompleter!.complete();
       }
-
     } catch (e) {
       print('Failed to connect: $e');
       _cleanup();
@@ -117,7 +117,7 @@ class ValkeyClient implements ValkeyClientBase {
   }
 
   // --- Core Data Handler ---
-  
+
   /// This is now the main entry point for ALL data from the socket.
   void _handleSocketData(Uint8List data) {
     print('Raw data from server: ${String.fromCharCodes(data)}');
@@ -130,23 +130,23 @@ class ValkeyClient implements ValkeyClientBase {
   void _processBuffer() {
     // This is a *very simple* parser. It only looks for \r\n
     // We will make this much smarter in Chapter 2.2
-    
+
     var bytes = _buffer.toBytes();
     var offset = 0;
-    
+
     while (true) {
       // Find the next CRLF (\r\n)
       final crlfIndex = _findCRLF(bytes, offset);
       if (crlfIndex == -1) {
         // No complete message found, stop processing
-        break; 
+        break;
       }
-      
+
       // We found a complete message
       final lineBytes = bytes.sublist(offset, crlfIndex);
       final responseType = lineBytes[0]; // e.g., '+' or '-'
       final responseData = utf8.decode(lineBytes.sublist(1));
-      
+
       // Move offset to the start of the next message
       offset = crlfIndex + 2; // +2 for \r\n
 
@@ -154,12 +154,13 @@ class ValkeyClient implements ValkeyClientBase {
       if (_isAuthenticating) {
         // This is the AUTH response
         _isAuthenticating = false;
-        if (responseType == 43) { // '+' (OK)
+        if (responseType == 43) {
+          // '+' (OK)
           _connectionCompleter!.complete();
-        } else { // '-' (ERR)
+        } else {
+          // '-' (ERR)
           _connectionCompleter!.completeError(
-            Exception('Valkey authentication failed: $responseData')
-          );
+              Exception('Valkey authentication failed: $responseData'));
         }
       } else {
         // This is a response to a command (e.g., PING)
@@ -169,18 +170,21 @@ class ValkeyClient implements ValkeyClientBase {
         } else {
           // Pop the oldest command completer and resolve it.
           final completer = _responseQueue.removeFirst();
-          if (responseType == 43) { // '+' (Simple String)
+          if (responseType == 43) {
+            // '+' (Simple String)
             completer.complete(responseData);
-          } else if (responseType == 45) { // '-' (Error)
+          } else if (responseType == 45) {
+            // '-' (Error)
             completer.completeError(Exception(responseData));
           } else {
             // We don't support Bulk Strings ($) or Arrays (*) yet!
-            completer.completeError(Exception('Unsupported RESP type: ${String.fromCharCode(responseType)}'));
+            completer.completeError(Exception(
+                'Unsupported RESP type: ${String.fromCharCode(responseType)}'));
           }
         }
       }
     }
-    
+
     // Clear the buffer up to the processed offset
     if (offset > 0) {
       final remainingBytes = bytes.sublist(offset);
@@ -192,7 +196,7 @@ class ValkeyClient implements ValkeyClientBase {
   /// Helper to find the first \r\n in a byte list
   int _findCRLF(Uint8List bytes, int start) {
     for (var i = start; i < bytes.length - 1; i++) {
-      if (bytes[i] == 13 /* \r */ && bytes[i+1] == 10 /* \n */) {
+      if (bytes[i] == 13 /* \r */ && bytes[i + 1] == 10 /* \n */) {
         return i;
       }
     }
@@ -200,7 +204,7 @@ class ValkeyClient implements ValkeyClientBase {
   }
 
   // --- Public Command Methods ---
-  
+
   /// Executes a raw command. (This will be our main internal method)
   /// Returns a Future that completes with the server's response.
   @override
@@ -217,7 +221,7 @@ class ValkeyClient implements ValkeyClientBase {
       buffer.write('\$${bytes.length}\r\n');
       buffer.write('$arg\r\n');
     }
-    
+
     // 3. Send to socket
     try {
       _socket?.write(buffer.toString());
@@ -226,11 +230,11 @@ class ValkeyClient implements ValkeyClientBase {
       _responseQueue.remove(completer);
       completer.completeError(e);
     }
-    
+
     // 4. Return the Future
     return completer.future;
   }
-  
+
   /// Our first *real* command: PING
   @override
   Future<String> ping([String? message]) async {
@@ -258,12 +262,13 @@ class ValkeyClient implements ValkeyClientBase {
     final error = Exception('Connection closed unexpectedly.');
     if (_connectionCompleter != null && !_connectionCompleter!.isCompleted) {
       // Connection closed prematurely.
-      _connectionCompleter!.completeError(error); // Connection closed before setup.
+      _connectionCompleter!
+          .completeError(error); // Connection closed before setup.
     }
     // Fail all pending commands
     _failAllPendingCommands(error);
   }
-  
+
   void _failAllPendingCommands(Object error) {
     while (_responseQueue.isNotEmpty) {
       _responseQueue.removeFirst().completeError(error);
@@ -280,7 +285,7 @@ class ValkeyClient implements ValkeyClientBase {
       // RESP Array: *2\r\n$4\r\nAUTH\r\n$<pass_len>\r\n<password>\r\n
       command = ['AUTH', password];
     }
-    
+
     // Build the RESP Array command
     final buffer = StringBuffer();
     buffer.write('*${command.length}\r\n'); // Number of arguments
@@ -289,11 +294,11 @@ class ValkeyClient implements ValkeyClientBase {
       buffer.write('\$${bytes.length}\r\n'); // Argument length
       buffer.write('$arg\r\n'); // Argument value
     }
-    
+
     // Send to socket
     _socket?.write(buffer.toString());
   }
-  
+
   @override
   Future<void> close() async {
     await _subscription?.cancel();

@@ -1,4 +1,4 @@
-/// A modern, production-ready Dart client for Valkey (9.0.0+). 
+/// A modern, production-ready Dart client for Valkey (9.0.0+).
 /// Fully Redis 7.x compatible.
 library;
 

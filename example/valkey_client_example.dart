@@ -10,11 +10,11 @@ void main() async {
   // ---
   // IMPORTANT: Ensure a Valkey server is running on localhost (127.0.0.1:6379).
 
-
   // --- Option 1: Configure in the Constructor (Recommended for 90% of cases) ---
 
   // Set default connection parameters here
-  final client = ValkeyClient( // Create a new client instance.
+  final client = ValkeyClient(
+    // Create a new client instance.
     // --- Connection Parameters ---
     // Change these to match your server configuration
     host: '127.0.0.1',
@@ -43,7 +43,7 @@ void main() async {
     // using the defaults provided in the constructor.
     await client.connect();
     print('✅ (Option 1) Connected successfully using constructor config!');
-  
+
     // Once connected, you will be able to execute commands:
     testPing();
   } catch (e) {
@@ -54,13 +54,12 @@ void main() async {
     print('(Option 1) Closing connection...');
     await client.close();
   }
- 
 
   // --- Option 2: Configure in the connect() method (For advanced cases) ---
-  
+
   // Create a "stateless" client
-  final flexibleClient = ValkeyClient(); 
-  
+  final flexibleClient = ValkeyClient();
+
   try {
     // Pass connection parameters directly to connect()
     // These will override any constructor defaults.

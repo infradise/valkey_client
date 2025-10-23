@@ -8,7 +8,7 @@ bool isServerRunning = false;
 // Standard port for no-auth tests
 const noAuthPort = 6379;
 // Port that is guaranteed to be closed
-const closedPort = 6380; 
+const closedPort = 6380;
 
 Future<void> main() async {
   // ---
@@ -108,15 +108,14 @@ Future<void> main() async {
       // which our client should throw as an Exception.
       await expectLater(
         connectFuture,
-        throwsA(isA<Exception>()
-            .having((e) => e.toString(), 'message',
-                contains('Valkey authentication failed'))),
+        throwsA(isA<Exception>().having((e) => e.toString(), 'message',
+            contains('Valkey authentication failed'))),
       );
     },
         skip: !isServerRunning
             ? 'Valkey server not running on localhost:$noAuthPort'
             : false);
-        
+
     // NOTE: To test *successful* auth, we would need a separate
     // test environment running a password-protected server.
     // We can add that later.
