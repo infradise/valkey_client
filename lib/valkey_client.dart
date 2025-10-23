@@ -1,8 +1,8 @@
-/// Support for doing something awesome.
-///
-/// More dartdocs go here.
+/// A modern, production-ready Dart client for Valkey (9.0.0+). 
+/// Fully Redis 7.x compatible.
 library;
 
-export 'src/valkey_client_base.dart';
+// Export the main client class
+export 'src/valkey_client.dart';
 
-// TODO: Export any libraries intended for clients of this package.
+// We will add more exports here later (e.g., commands, parsers, exceptions)
