@@ -3,22 +3,44 @@ import 'dart:io';
 import 'package:test/test.dart';
 import 'package:valkey_client/valkey_client.dart';
 
-void main() {
-  // ---
-  // IMPORTANT: These tests require a LIVE Valkey server running on localhost:6379.
-  //
-  // Start one easily with Docker:
-  // docker run -d --name valkey-test -p 6379:6379 valkey/valkey:latest
-  //
-  // These tests also assume that localhost:6380 (a different port) is NOT running.
-  // ---
+// This flag will be set by setUpAll
+bool isServerRunning = false;
+// Standard port for no-auth tests
+const noAuthPort = 6379;
+// Port that is guaranteed to be closed
+const closedPort = 6380; 
 
-  group('ValkeyClient Connection', () {
+Future<void> main() async {
+  // ---
+  // This setup runs ONCE before ANY tests.
+  // It checks if the default NO-AUTH server is reachable.
+  // ---
+  setUpAll(() async {
+    final client = ValkeyClient(port: noAuthPort);
+    try {
+      await client.connect();
+      isServerRunning = true;
+      await client.close();
+    } catch (e) {
+      isServerRunning = false;
+    }
+
+    if (!isServerRunning) {
+      print('=' * 70);
+      print('⚠️  WARNING: Valkey server not running on localhost:$noAuthPort.');
+      print('Skipping tests that require a live connection.');
+      print('Please start the NO-AUTH server (e.g., Docker) to run all tests.');
+      print('=' * 70);
+    }
+  });
+
+  group('ValkeyClient Connection (No Auth)', () {
     late ValkeyClient client;
 
     // setUp is called before each test.
     setUp(() {
-      client = ValkeyClient();
+      // Use the default port (6379)
+      client = ValkeyClient(port: noAuthPort);
     });
 
     // tearDown is called after each test.
@@ -28,45 +50,76 @@ void main() {
       await client.close();
     });
 
-    test('should connect and disconnect successfully when server is running',
-        () async {
-      // Act: Connect to the server.
-      // Assert: The connect() Future should complete without throwing any errors.
+    test('should connect successfully using connect() args', () async {
+      final c = ValkeyClient(); // Create with defaults
+      // Connect using method args
+      await expectLater(c.connect(port: noAuthPort), completes);
+    });
+
+    test('should connect successfully using constructor args', () async {
+      // client (from setUp) was created with constructor args
       await expectLater(client.connect(), completes);
     });
 
     test('onConnected Future should complete after successful connection',
         () async {
       // Act: Start the connection but don't await the connect() call itself.
-      client.connect();
-
-      // Assert: The onConnected getter Future should complete.
-      // This proves our Completer logic is working.
+      client.connect(); // Do not await
       await expectLater(client.onConnected, completes);
     });
 
+    test('should allow multiple calls to close() without error', () async {
+      await client.connect();
+      await client.close();
+      await expectLater(client.close(), completes);
+    });
+  },
+      // Skip this entire group if the no-auth server is not running
+      skip: !isServerRunning
+          ? 'Valkey server not running on localhost:$noAuthPort'
+          : false);
+
+  group('ValkeyClient Connection (Failure Scenarios)', () {
     test('should throw a SocketException if connection fails', () async {
       // Act: Attempt to connect to a port where no server is running.
-      final connectFuture = client.connect(port: 6380); // Non-standard port
+      final client = ValkeyClient(port: closedPort); // Non-standard port
 
-      // Assert: The Future should complete with a SocketException.
+      // This test runs regardless of the server status
+      final connectFuture = client.connect();
+
       await expectLater(
         connectFuture,
         throwsA(isA<SocketException>()),
       );
     });
 
-    test('should allow multiple calls to close() without error', () async {
-      // Arrange
-      await client.connect();
+    test(
+        'should throw an Exception when providing auth to a server that does not require it',
+        () async {
+      // This test requires the NO-AUTH server to be running
+      final client = ValkeyClient(
+        port: noAuthPort,
+        password: 'any-password', // Provide a password
+      );
 
-      // Act
-      await client.close();
+      final connectFuture = client.connect();
 
-      // Assert: Calling close() again on an already closed client
-      // should not throw an error.
-      await expectLater(client.close(), completes);
-    });
+      // The server will respond with an error (e.g., -ERR Client sent AUTH...)
+      // which our client should throw as an Exception.
+      await expectLater(
+        connectFuture,
+        throwsA(isA<Exception>()
+            .having((e) => e.toString(), 'message',
+                contains('Valkey authentication failed'))),
+      );
+    },
+        skip: !isServerRunning
+            ? 'Valkey server not running on localhost:$noAuthPort'
+            : false);
+        
+    // NOTE: To test *successful* auth, we would need a separate
+    // test environment running a password-protected server.
+    // We can add that later.
   });
 
   // We will add more groups here as we add features, e.g.:
