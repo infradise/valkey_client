@@ -7,11 +7,9 @@ homepage: https://visualkube.com/opensource/valkey_client
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
-# Created by `dart pub`
-# Add regular dependencies here.
+# We don't have any dependencies... yet.
 # dependencies:
-  # path: ^1.9.0
 
 dev_dependencies:
-  lints: any # ^6.0.0
-  test: any # ^1.25.6
+  lints: ^3.0.0 # ^6.0.0
+  test: ^1.24.0 # ^1.25.6
