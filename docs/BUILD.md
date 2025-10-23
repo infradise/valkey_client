@@ -17,6 +17,12 @@ dart pub get
 dart pub publish --dry-run
 ```
 
+## Commit / Release
+```sh
+git tag v0.3.0
+git push origin v0.3.0
+```
+
 ## Publish
 
 ```sh
