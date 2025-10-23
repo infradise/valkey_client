@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+### Added
+- **Command Execution Pipeline:** Implemented the core `execute` method to send commands and process responses via a queue.
+- **PING Command:** Added the first user-facing command: `client.ping()`.
+- **Basic RESP Parser:** Added an internal parser to handle simple string (`+`) and error (`-`) responses, preparing for full RESP3 support.
+
 ## 0.1.0
 
 This is the first functional release, implementing the core connection logic.

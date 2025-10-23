@@ -23,23 +23,29 @@ void main() async {
     // Provide username (optional if password only)
     username: 'default', // Valkey/Redis 6+ default username
     // Provide password (if any)
-    password: 'my-password',
+    password: 'my-super-secret-password',
     // -----------------------------
   );
+
+  testPing() async {
+    // Execute commands
+    print("Sending: PING");
+    final response = await client.ping();
+    print("Received: $response"); // Should be "PONG"
+
+    print("Sending: PING 'Hello World'");
+    final response2 = await client.ping('Hello World');
+    print("Received: $response2"); // Should be "Hello World"
+  }
 
   try {
     // connect() is called *without* parameters,
     // using the defaults provided in the constructor.
     await client.connect();
     print('✅ (Option 1) Connected successfully using constructor config!');
-
-    // Execute commands
+  
     // Once connected, you will be able to execute commands:
-    //
-    // print('Sending PING...');
-    // final response = await client.ping();
-    // print('Server response: $response'); // Expected output: PONG
-
+    testPing();
   } catch (e) {
     // Handle connection or authentication errors (e.g., server not running)
     print('❌ (Option 1) Failed to connect or authenticate: $e');
@@ -67,18 +73,13 @@ void main() async {
       // Provide username (optional if password only)
       username: 'default', // Valkey/Redis 6+ default username
       // Provide password (if any)
-      password: 'my-password',
+      password: 'my-super-secret-password',
       // -----------------------------
     );
     print('✅ (Option 2) Connected successfully using method config!');
 
-    // Execute commands
     // Once connected, you will be able to execute commands:
-    //
-    // print('Sending PING...');
-    // final response = await client.ping();
-    // print('Server response: $response'); // Expected output: PONG
-
+    testPing();
   } catch (e) {
     // Handle connection or authentication errors (e.g., server not running)
     print('❌ (Option 2) Failed to connect or authenticate: $e');
