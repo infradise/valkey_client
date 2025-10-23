@@ -1,4 +1,4 @@
-# `valkey_client`
+# Valkey client
 
 [](https://pub.dev/packages/valkey_client)
 

@@ -4,10 +4,10 @@ import 'dart:typed_data'; // We will need this soon for parsing
 import 'dart:convert'; // For UTF8 encoding
 import 'dart:collection'; // A Queue to manage pending commands
 
-// import 'package:valkey_client/src/valkey_client_base.dart';
+import 'package:valkey_client/src/valkey_client_base.dart';
 
 /// The main client implementation for communicating with a Valkey server.
-class ValkeyClient /* implements ValkeyClientBase */ {
+class ValkeyClient implements ValkeyClientBase {
   Socket? _socket;
   StreamSubscription<Uint8List>? _subscription;
 
@@ -51,6 +51,7 @@ class ValkeyClient /* implements ValkeyClientBase */ {
   // -----------------------------
 
   /// A Future that completes once the connection and authentication are successful.
+  @override
   Future<void> get onConnected => _connectionCompleter?.future ?? Future.error('Client not connected');
 
   @override
@@ -202,6 +203,7 @@ class ValkeyClient /* implements ValkeyClientBase */ {
   
   /// Executes a raw command. (This will be our main internal method)
   /// Returns a Future that completes with the server's response.
+  @override
   Future<dynamic> execute(List<String> command) async {
     // 1. Create a Completer and add it to the queue.
     final completer = Completer<dynamic>();
@@ -230,6 +232,7 @@ class ValkeyClient /* implements ValkeyClientBase */ {
   }
   
   /// Our first *real* command: PING
+  @override
   Future<String> ping([String? message]) async {
     final command = (message == null) ? ['PING'] : ['PING', message];
     final response = await execute(command);
@@ -290,8 +293,7 @@ class ValkeyClient /* implements ValkeyClientBase */ {
     // Send to socket
     _socket?.write(buffer.toString());
   }
-
-
+  
   @override
   Future<void> close() async {
     await _subscription?.cancel();
