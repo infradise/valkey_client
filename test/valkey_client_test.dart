@@ -186,6 +186,50 @@ Future<void> main() async {
       // The response list should contain the value and null
       expect(response, ['value', null]);
     });
+
+    // --- TESTS FOR v0.5.0 (Hashes) ---
+
+    test('HSET should return 1 for a new field', () async {
+      final response = await client.hset('test:hash', 'field1', 'value1');
+      expect(response, 1);
+    });
+
+    test('HSET should return 0 for an updated field', () async {
+      await client.hset('test:hash', 'field_to_update', 'initial_value');
+      final response = await client.hset('test:hash', 'field_to_update', 'updated_value');
+      expect(response, 0);
+    });
+
+    test('HGET should retrieve the correct value', () async {
+      await client.hset('test:hash:get', 'field', 'hello');
+      final response = await client.hget('test:hash:get', 'field');
+      expect(response, 'hello');
+    });
+
+    test('HGET on a non-existent field should return null', () async {
+      final response = await client.hget('test:hash:get', 'non_existent_field');
+      expect(response, isNull);
+    });
+
+    test('HGETALL should return a Map of all fields and values', () async {
+      final key = 'test:hash:all';
+      await client.hset(key, 'name', 'Valkyrie');
+      await client.hset(key, 'project', 'valkey_client');
+
+      final response = await client.hgetall(key);
+      
+      expect(response, isA<Map<String, String>>());
+      expect(response, {'name': 'Valkyrie', 'project': 'valkey_client'});
+    });
+
+    test('HGETALL on a non-existent key should return an empty Map', () async {
+      final response = await client.hgetall('test:hash:non_existent');
+      expect(response, isA<Map<String, String>>());
+      expect(response, isEmpty);
+    });
+
+
+
   },
       // Skip this entire group if the no-auth server is not running
       skip: !isServerRunning

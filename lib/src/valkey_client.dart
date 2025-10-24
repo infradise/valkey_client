@@ -274,6 +274,12 @@ class ValkeyClient implements ValkeyClientBase {
         }
         return list;
 
+      // ':' (Integer)
+      case 58: // ':'
+        final line = reader.readLine();
+        if (line == null) throw _IncompleteDataException();
+        return int.parse(line);
+
       default:
         throw Exception(
             'Unknown RESP prefix type: ${String.fromCharCode(responseType)}');
@@ -336,6 +342,8 @@ class ValkeyClient implements ValkeyClientBase {
 
   // --- COMMANDS ---
 
+  // --- PING (v0.2.0) ---
+
   @override
   Future<String> ping([String? message]) async {
     final command = (message == null) ? ['PING'] : ['PING', message];
@@ -343,6 +351,8 @@ class ValkeyClient implements ValkeyClientBase {
     // Our simple parser will return "PONG" or the message.
     return response as String;
   }
+
+  // --- SET/GET (v0.3.0) ---
 
   @override
   Future<String?> get(String key) async {
@@ -358,6 +368,8 @@ class ValkeyClient implements ValkeyClientBase {
     return response as String;
   }
 
+  // --- MGET (v0.4.0) ---
+
   @override
   Future<List<String?>> mget(List<String> keys) async {
     final command = ['MGET', ...keys];
@@ -366,6 +378,37 @@ class ValkeyClient implements ValkeyClientBase {
     // Cast to the correct type
     return response.cast<String?>();
   }
+
+  // --- HASH (v0.5.0) ---
+
+  @override
+  Future<String?> hget(String key, String field) async {
+    final response = await execute(['HGET', key, field]);
+    // Returns a Bulk String ($) or Null ($-1)
+    return response as String?;
+  }
+
+  @override
+  Future<int> hset(String key, String field, String value) async {
+    final response = await execute(['HSET', key, field, value]);
+    // Returns an Integer (:)
+    return response as int;
+  }
+
+  @override
+  Future<Map<String, String>> hgetall(String key) async {
+    // HGETALL returns a flat array: ['field1', 'value1', 'field2', 'value2']
+    final response = await execute(['HGETALL', key]) as List<dynamic>;
+
+    // Convert the flat list into a Map
+    final map = <String, String>{};
+    for (var i = 0; i < response.length; i += 2) {
+      // We know the structure is [String, String, String, String, ...]
+      map[response[i] as String] = response[i + 1] as String;
+    }
+    return map;
+  }
+
 
   // --- Socket Lifecycle Handlers ---
 

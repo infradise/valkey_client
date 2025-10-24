@@ -25,8 +25,12 @@ abstract class ValkeyClientBase {
 
   // --- COMMANDS ---
 
+  // --- PING (v0.2.0) ---
+
   /// PINGs the server.
   Future<String> ping([String? message]);
+
+  // --- SET/GET (v0.3.0) ---
 
   /// Gets the value of [key].
   /// Returns `null` if the key does not exist.
@@ -36,7 +40,23 @@ abstract class ValkeyClientBase {
   /// Returns a simple string reply (usually 'OK').
   Future<String> set(String key, String value);
 
+  // --- MGET (v0.4.0) ---
+
   /// Gets the values of all specified [keys].
   /// Returns a list of strings, with `null` for keys that do not exist.
   Future<List<String?>> mget(List<String> keys);
+
+  // --- HASH (v0.5.0) ---
+
+  /// Gets the value of [field] in the hash stored at [key].
+  /// Returns `null` if the field or key does not exist.
+  Future<String?> hget(String key, String field);
+
+  /// Sets [field] in the hash stored at [key] to [value].
+  /// Returns `1` if [field] is a new field, `0` if [field] was updated.
+  Future<int> hset(String key, String field, String value);
+
+  /// Gets all fields and values of the hash stored at [key].
+  /// Returns an empty map if the key does not exist.
+  Future<Map<String, String>> hgetall(String key);
 }

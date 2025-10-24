@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0
+
+### Added
+- **New Commands (Hashes):** Added `client.hset()`, `client.hget()`, and `client.hgetall()`.
+- **Upgraded RESP Parser:** The internal parser now supports **Integers (`:`)**.
+- `hset` returns an `int` (`1` for new field, `0` for update).
+- `hgetall` conveniently returns a `Map<String, String>`.
+
 ## 0.4.0
 
 ### Added

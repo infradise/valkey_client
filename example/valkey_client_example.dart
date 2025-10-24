@@ -33,7 +33,24 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
     print("\n--- MGET (Array Parsing) ---");
     print("Sending: MGET greeting non_existent_key");
     final mgetResponse = await client.mget(['greeting', 'non_existent_key']);
-    print("Received: $mgetResponse");
+    print("Received: $mgetResponse"); // Should be "[Hello, Valkey!, null]"
+
+    // --- HASH (v0.5.0) ---
+    print("\n--- HASH (Map/Object) ---");
+    print("Sending: HSET user:1 name 'Valkyrie'");
+    final hsetResponse = await client.hset('user:1', 'name', 'Valkyrie');
+    print("Received (1=new, 0=update): $hsetResponse");
+
+    print("Sending: HSET user:1 project 'valkey_client'");
+    await client.hset('user:1', 'project', 'valkey_client');
+
+    print("Sending: HGET user:1 name");
+    final hgetResponse = await client.hget('user:1', 'name');
+    print("Received: $hgetResponse"); // Should be "Valkyrie"
+
+    print("Sending: HGETALL user:1");
+    final hgetAllResponse = await client.hgetall('user:1');
+    print("Received Map: $hgetAllResponse"); // Should be {name: Valkyrie, project: valkey_client}
 
   } catch (e) {
     // Handle connection or authentication errors
