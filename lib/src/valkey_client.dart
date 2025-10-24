@@ -140,13 +140,13 @@ class ValkeyClient implements ValkeyClientBase {
     // Reset the completer for this new connection attempt
     _connectionCompleter = Completer();
 
-    print('Connecting to $host:$port...');
+    print('Connecting to $_lastHost:$_lastPort...');
 
     try {
       // 1. Attempt to connect the socket.
       _socket = await Socket.connect(_lastHost, _lastPort);
 
-      print('✅ Successfully connected to $host:$port');
+      print('✅ Successfully connected to $_lastHost:$_lastPort');
 
       // 2. Set up the socket stream listener.
       _subscription = _socket!.listen(
@@ -191,7 +191,11 @@ class ValkeyClient implements ValkeyClientBase {
   /// It loops and tries to parse one full response at a time.
   void _processBuffer() {
     while (true) {
-      if (_responseQueue.isEmpty) break; // No commands waiting for a response
+      if (_responseQueue.isEmpty && !_isAuthenticating) {
+        // If we are not waiting for auth AND not waiting for commands,
+        // then we can stop processing.
+        break;
+      }
 
       final reader = _BufferReader(_buffer.toBytes());
 

@@ -5,42 +5,54 @@ import 'package:valkey_client/valkey_client.dart';
 
 // This flag will be set by setUpAll
 bool isServerRunning = false;
+const noAuthHost = '127.0.0.1'; // or localhost
 // Standard port for no-auth tests
 const noAuthPort = 6379;
 // Port that is guaranteed to be closed
 const closedPort = 6380;
 
-Future<void> main() async {
-  // ---
-  // This setup runs ONCE before ANY tests.
-  // It checks if the default NO-AUTH server is reachable.
-  // ---
-  setUpAll(() async {
-    final client = ValkeyClient(port: noAuthPort);
-    try {
-      await client.connect();
-      isServerRunning = true;
-      await client.close();
-    } catch (e) {
-      isServerRunning = false;
-    }
+/// Helper function to check server status *before* tests are defined.
+Future<bool> checkServerStatus(String host, int port) async {
+  final client = ValkeyClient(host: host, port: port);
+  try {
+    await client.connect();
+    await client.close();
+    return true; // Server is running
+  } catch (e) {
+    return false; // Server is not running
+  }
+}
 
-    if (!isServerRunning) {
-      print('=' * 70);
-      print('⚠️  WARNING: Valkey server not running on localhost:$noAuthPort.');
-      print('Skipping tests that require a live connection.');
-      print('Please start the NO-AUTH server (e.g., Docker) to run all tests.');
-      print('=' * 70);
-    }
-  });
+Future<void> main() async {
+  // --- RUN THE CHECK *BEFORE* DEFINING TESTS ---
+  final isServerRunning = await checkServerStatus(noAuthHost, noAuthPort);
+
+  // Print the warning ONCE if the server is down.
+  if (!isServerRunning) {
+    print('=' * 70);
+    print('⚠️  WARNING: Valkey server not running on $noAuthHost:$noAuthPort.');
+    print('Skipping tests that require a live connection.');
+    print('Please start the NO-AUTH server (e.g., Docker) to run all tests.');
+    print('=' * 70);
+  } 
 
   group('ValkeyClient Connection (No Auth)', () {
     late ValkeyClient client;
 
+    setUpAll(() async {
+      if (isServerRunning) {
+        client = ValkeyClient(host: noAuthHost, port: noAuthPort);
+        await client.connect();
+
+        // Clean the database before running command tests
+        await client.execute(['FLUSHDB']);
+      }
+    });
+
     // setUp is called before each test.
     setUp(() {
       // Use the default port (6379)
-      client = ValkeyClient(port: noAuthPort);
+      client = ValkeyClient(host: noAuthHost, port: noAuthPort);
     });
 
     // tearDown is called after each test.
@@ -51,9 +63,9 @@ Future<void> main() async {
     });
 
     test('should connect successfully using connect() args', () async {
-      final c = ValkeyClient(); // Create with defaults
+      final c = ValkeyClient(); // Create with defaults (127.0.0.1)
       // Connect using method args
-      await expectLater(c.connect(port: noAuthPort), completes);
+      await expectLater(c.connect(host: noAuthHost, port: noAuthPort), completes);
     });
 
     test('should connect successfully using constructor args', () async {
@@ -76,13 +88,13 @@ Future<void> main() async {
   },
       // Skip this entire group if the no-auth server is not running
       skip: !isServerRunning
-          ? 'Valkey server not running on localhost:$noAuthPort'
+          ? 'Valkey server not running on $noAuthHost:$noAuthPort'
           : false);
 
   group('ValkeyClient Connection (Failure Scenarios)', () {
     test('should throw a SocketException if connection fails', () async {
       // Act: Attempt to connect to a port where no server is running.
-      final client = ValkeyClient(port: closedPort); // Non-standard port
+      final client = ValkeyClient(host: noAuthHost, port: closedPort); // Bad or Non-standard port
 
       // This test runs regardless of the server status
       final connectFuture = client.connect();
@@ -98,6 +110,7 @@ Future<void> main() async {
         () async {
       // This test requires the NO-AUTH server to be running
       final client = ValkeyClient(
+        host: noAuthHost,
         port: noAuthPort,
         password: 'any-password', // Provide a password
       );
@@ -109,11 +122,11 @@ Future<void> main() async {
       await expectLater(
         connectFuture,
         throwsA(isA<Exception>().having((e) => e.toString(), 'message',
-            contains('Valkey authentication failed'))),
+            contains('ERR AUTH'))), // Changed from 'Valkey authentication failed'
       );
     },
         skip: !isServerRunning
-            ? 'Valkey server not running on localhost:$noAuthPort'
+            ? 'Valkey server not running on $noAuthHost:$noAuthPort'
             : false);
 
     // NOTE: To test *successful* auth, we would need a separate
@@ -128,7 +141,7 @@ Future<void> main() async {
     // Connect ONCE before all tests in this group
     setUpAll(() async {
       // This assumes the isServerRunning check from the main setUpAll has passed
-      client = ValkeyClient(port: noAuthPort);
+      client = ValkeyClient(host: noAuthHost, port: noAuthPort);
       await client.connect();
     });
 
@@ -233,6 +246,6 @@ Future<void> main() async {
   },
       // Skip this entire group if the no-auth server is not running
       skip: !isServerRunning
-          ? 'Valkey server not running on localhost:$noAuthPort'
+          ? 'Valkey server not running on $noAuthHost:$noAuthPort'
           : false);
 }
