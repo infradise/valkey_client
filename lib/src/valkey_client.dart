@@ -413,7 +413,6 @@ class ValkeyClient implements ValkeyClientBase {
     return map;
   }
 
-
   // --- Socket Lifecycle Handlers ---
 
   void _handleSocketError(Object error) {

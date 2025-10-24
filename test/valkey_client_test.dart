@@ -34,7 +34,7 @@ Future<void> main() async {
     print('Skipping tests that require a live connection.');
     print('Please start the NO-AUTH server (e.g., Docker) to run all tests.');
     print('=' * 70);
-  } 
+  }
 
   group('ValkeyClient Connection (No Auth)', () {
     late ValkeyClient client;
@@ -65,7 +65,8 @@ Future<void> main() async {
     test('should connect successfully using connect() args', () async {
       final c = ValkeyClient(); // Create with defaults (127.0.0.1)
       // Connect using method args
-      await expectLater(c.connect(host: noAuthHost, port: noAuthPort), completes);
+      await expectLater(
+          c.connect(host: noAuthHost, port: noAuthPort), completes);
     });
 
     test('should connect successfully using constructor args', () async {
@@ -94,7 +95,8 @@ Future<void> main() async {
   group('ValkeyClient Connection (Failure Scenarios)', () {
     test('should throw a SocketException if connection fails', () async {
       // Act: Attempt to connect to a port where no server is running.
-      final client = ValkeyClient(host: noAuthHost, port: closedPort); // Bad or Non-standard port
+      final client = ValkeyClient(
+          host: noAuthHost, port: closedPort); // Bad or Non-standard port
 
       // This test runs regardless of the server status
       final connectFuture = client.connect();
@@ -121,8 +123,11 @@ Future<void> main() async {
       // which our client should throw as an Exception.
       await expectLater(
         connectFuture,
-        throwsA(isA<Exception>().having((e) => e.toString(), 'message',
-            contains('ERR AUTH'))), // Changed from 'Valkey authentication failed'
+        throwsA(isA<Exception>().having(
+            (e) => e.toString(),
+            'message',
+            contains(
+                'ERR AUTH'))), // Changed from 'Valkey authentication failed'
       );
     },
         skip: !isServerRunning
@@ -209,7 +214,8 @@ Future<void> main() async {
 
     test('HSET should return 0 for an updated field', () async {
       await client.hset('test:hash', 'field_to_update', 'initial_value');
-      final response = await client.hset('test:hash', 'field_to_update', 'updated_value');
+      final response =
+          await client.hset('test:hash', 'field_to_update', 'updated_value');
       expect(response, 0);
     });
 
@@ -230,7 +236,7 @@ Future<void> main() async {
       await client.hset(key, 'project', 'valkey_client');
 
       final response = await client.hgetall(key);
-      
+
       expect(response, isA<Map<String, String>>());
       expect(response, {'name': 'Valkyrie', 'project': 'valkey_client'});
     });
@@ -240,9 +246,6 @@ Future<void> main() async {
       expect(response, isA<Map<String, String>>());
       expect(response, isEmpty);
     });
-
-
-
   },
       // Skip this entire group if the no-auth server is not running
       skip: !isServerRunning

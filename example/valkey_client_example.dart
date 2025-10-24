@@ -50,8 +50,8 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
 
     print("Sending: HGETALL user:1");
     final hgetAllResponse = await client.hgetall('user:1');
-    print("Received Map: $hgetAllResponse"); // Should be {name: Valkyrie, project: valkey_client}
-
+    print(
+        "Received Map: $hgetAllResponse"); // Should be {name: Valkyrie, project: valkey_client}
   } catch (e) {
     // Handle connection or authentication errors
     print('❌ Failed: $e');
@@ -104,7 +104,6 @@ Future<void> main() async {
   print('=' * 40);
   // Using the 'fixedClient' configured above
   await runCommandExamples(fixedClient);
-
 
   // ====================================================================
   // Advanced: Using the flexibleClient (Method Config)
