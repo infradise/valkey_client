@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+
+### Added
+- **Upgraded RESP Parser:** Implemented a full recursive parser.
+  - The parser now supports **Arrays (`*`)**, completing the core RESP implementation.
+- **New Command:** Added `client.mget()` (Multiple GET) which relies on the new array parser.
+- **Internal:** Refactored the parser logic into a `_BufferReader` for cleaner, more robust parsing.
+
 ## 0.3.0
 
 ### Added

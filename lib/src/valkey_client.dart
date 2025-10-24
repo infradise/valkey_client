@@ -6,6 +6,68 @@ import 'dart:collection'; // A Queue to manage pending commands
 
 import 'package:valkey_client/src/valkey_client_base.dart';
 
+/// Internal helper class to read bytes from the buffer.
+/// This makes parsing much cleaner.
+class _BufferReader {
+  final Uint8List _bytes;
+  int _offset = 0;
+
+  _BufferReader(this._bytes);
+
+  int get remainingLength => _bytes.length - _offset;
+  bool get isDone => _offset >= _bytes.length;
+
+  /// Consumes bytes from the buffer up to the current offset.
+  Uint8List consume() => _bytes.sublist(_offset);
+
+  /// Reads a single byte (prefix)
+  int readByte() => _bytes[_offset++];
+
+  /// Reads a line (until \r\n) and returns it as a string.
+  /// Returns null if no \r\n is found.
+  String? readLine() {
+    final crlfIndex = _findCRLF(_bytes, _offset);
+    if (crlfIndex == -1) return null;
+
+    final lineBytes = _bytes.sublist(_offset, crlfIndex);
+    _offset = crlfIndex + 2; // Consume \r\n
+    return utf8.decode(lineBytes);
+  }
+
+  /// Reads a specific number of bytes.
+  /// Returns null if not enough bytes are available.
+  Uint8List? readBytes(int length) {
+    if (remainingLength < length) return null;
+
+    final data = _bytes.sublist(_offset, _offset + length);
+    _offset += length;
+    return data;
+  }
+
+  /// Reads 2 bytes for the final \r\n
+  /// Returns false if not enough bytes or not \r\n
+  bool readFinalCRLF() {
+    if (remainingLength < 2) return false;
+    if (_bytes[_offset] == 13 && _bytes[_offset + 1] == 10) {
+      _offset += 2;
+      return true;
+    }
+    return false; // Should throw an error here ideally
+  }
+
+  int _findCRLF(Uint8List bytes, int start) {
+    for (var i = start; i < bytes.length - 1; i++) {
+      if (bytes[i] == 13 /* \r */ && bytes[i + 1] == 10 /* \n */) {
+        return i;
+      }
+    }
+    return -1;
+  }
+}
+
+/// Helper exception for when the buffer doesn't have enough data.
+class _IncompleteDataException implements Exception {}
+
 /// The main client implementation for communicating with a Valkey server.
 class ValkeyClient implements ValkeyClientBase {
   Socket? _socket;
@@ -125,107 +187,97 @@ class ValkeyClient implements ValkeyClientBase {
     _processBuffer(); // Try to process the buffered data
   }
 
-  /// This is our new, smarter parser.
-  /// It processes the buffer and resolves commands, now handling:
-  /// - '+' (Simple Strings)
-  /// - '-' (Errors)
-  /// - '$' (Bulk Strings)
+  /// This is the new parser entry point.
+  /// It loops and tries to parse one full response at a time.
   void _processBuffer() {
-    // Try to parse as many full messages as we can from the buffer.
     while (true) {
-      final bytes = _buffer.toBytes();
-      if (bytes.isEmpty) break; // Nothing to process
+      if (_responseQueue.isEmpty) break; // No commands waiting for a response
 
-      // 1. Try to read the first line (prefix + data/length)
-      final crlfIndex = _findCRLF(bytes, 0);
-      if (crlfIndex == -1) {
-        // Not even a single complete line in the buffer. Wait for more data.
+      final reader = _BufferReader(_buffer.toBytes());
+
+      try {
+        // --- THIS IS THE NEW RECURSIVE PARSER ---
+        final response = _parseResponse(reader);
+        // ----------------------------------------
+
+        // If we got here, we successfully parsed one full message.
+        _resolveNextCommand(response);
+
+        // Consume the processed bytes from the buffer
+        _buffer.clear();
+        _buffer.add(reader.consume());
+      } on _IncompleteDataException {
+        // Not enough data in the buffer to parse a full response.
+        // Stop looping and wait for more socket data.
         break;
-      }
-
-      final lineBytes = bytes.sublist(0, crlfIndex);
-      final responseType = lineBytes[0];
-
-      dynamic responsePayload;
-      int totalMessageLength =
-          0; // How many bytes did this *entire* message consume?
-      bool isError = false;
-
-      switch (responseType) {
-        // '+' (Simple String)
-        case 43: // '+'
-          responsePayload = utf8.decode(lineBytes.sublist(1));
-          totalMessageLength = crlfIndex + 2;
-          break;
-
-        // '-' (Error)
-        case 45: // '-'
-          responsePayload = Exception(utf8.decode(lineBytes.sublist(1)));
-          totalMessageLength = crlfIndex + 2;
-          isError = true;
-          break;
-
-        // '$' (Bulk String)
-        case 36: // '$'
-          final lineData = utf8.decode(lineBytes.sublist(1));
-          final dataLength = int.parse(lineData);
-
-          if (dataLength == -1) {
-            // Null response (e.g., GET key_not_found)
-            responsePayload = null;
-            totalMessageLength = crlfIndex + 2;
-          } else {
-            // Data response (e.g., GET my_key)
-            // We need dataLength bytes + 2 bytes for the final \r\n
-            final expectedTotalLength = crlfIndex + 2 + dataLength + 2;
-
-            if (bytes.length < expectedTotalLength) {
-              // Not enough data in the buffer yet. Wait for more.
-              break; // Exit the switch AND the while loop
-            }
-
-            // We have the full message. Extract the data.
-            final dataBytes = bytes.sublist(
-              crlfIndex + 2, // Start after the first \r\n
-              crlfIndex + 2 + dataLength, // End before the final \r\n
-            );
-            responsePayload = utf8.decode(dataBytes);
-            totalMessageLength = expectedTotalLength;
-          }
-          break;
-
-        // '*' (Array) or other types not yet supported
-        default:
-          responsePayload = Exception(
-              'Unsupported RESP type: ${String.fromCharCode(responseType)}');
-          totalMessageLength = crlfIndex + 2;
-          isError = true;
-      }
-
-      if (totalMessageLength == 0) {
-        // This means we're waiting for more data (break from switch '$')
-        break; // Exit the while loop
-      }
-
-      // If we are here, we successfully parsed one full message.
-      // Resolve the corresponding command.
-      _resolveNextCommand(responsePayload, isError: isError);
-
-      // Consume the processed bytes from the buffer
-      final remainingBytes = bytes.sublist(totalMessageLength);
-      _buffer.clear();
-      _buffer.add(remainingBytes);
-    } // end while(true)
-  }
-
-  /// Helper to find the first \r\n in a byte list
-  int _findCRLF(Uint8List bytes, int start) {
-    for (var i = start; i < bytes.length - 1; i++) {
-      if (bytes[i] == 13 /* \r */ && bytes[i + 1] == 10 /* \n */) {
-        return i;
+      } catch (e) {
+        // A real parsing error (e.g., unknown prefix)
+        _resolveNextCommand(e, isError: true);
+        // Clear buffer to avoid infinite error loop
+        _buffer.clear();
       }
     }
-    return -1;
+  }
+
+  /// The core recursive RESP parser.
+  dynamic _parseResponse(_BufferReader reader) {
+    if (reader.isDone) throw _IncompleteDataException();
+
+    final responseType = reader.readByte();
+
+    switch (responseType) {
+      // '+' (Simple String)
+      case 43: // '+'
+        final line = reader.readLine();
+        if (line == null) throw _IncompleteDataException();
+        return line;
+
+      // '-' (Error)
+      case 45: // '-'
+        final line = reader.readLine();
+        if (line == null) throw _IncompleteDataException();
+        throw Exception(line); // Throw errors as exceptions
+
+      // '$' (Bulk String)
+      case 36: // '$'
+        final line = reader.readLine();
+        if (line == null) throw _IncompleteDataException();
+
+        final dataLength = int.parse(line);
+        if (dataLength == -1) {
+          return null; // Null response
+        }
+
+        final data = reader.readBytes(dataLength);
+        if (data == null) throw _IncompleteDataException();
+
+        if (!reader.readFinalCRLF()) throw _IncompleteDataException();
+
+        return utf8.decode(data);
+
+      // '*' (Array)
+      case 42: // '*'
+        final line = reader.readLine();
+        if (line == null) throw _IncompleteDataException();
+
+        final arrayLength = int.parse(line);
+        if (arrayLength == -1) {
+          return null; // Null array
+        }
+
+        final list = <dynamic>[];
+        for (var i = 0; i < arrayLength; i++) {
+          // --- RECURSION ---
+          // Parse each item in the array
+          final item = _parseResponse(reader);
+          list.add(item);
+        }
+        return list;
+
+      default:
+        throw Exception(
+            'Unknown RESP prefix type: ${String.fromCharCode(responseType)}');
+    }
   }
 
   /// Helper to resolve the next command in the queue.
@@ -239,17 +291,13 @@ class ValkeyClient implements ValkeyClientBase {
         _connectionCompleter!.complete();
       }
     } else {
-      // This is a response to a command (e.g., PING, GET, SET)
-      if (_responseQueue.isEmpty) {
-        // We got a response we didn't ask for (e.g., Pub/Sub message)
-        // Ignore for now.
+      if (_responseQueue.isEmpty) return; // Should not happen, but safe guard
+
+      final completer = _responseQueue.removeFirst();
+      if (isError) {
+        completer.completeError(response);
       } else {
-        final completer = _responseQueue.removeFirst();
-        if (isError) {
-          completer.completeError(response);
-        } else {
-          completer.complete(response);
-        }
+        completer.complete(response);
       }
     }
   }
@@ -286,7 +334,8 @@ class ValkeyClient implements ValkeyClientBase {
     return completer.future;
   }
 
-  /// Our first *real* command: PING
+  // --- COMMANDS ---
+
   @override
   Future<String> ping([String? message]) async {
     final command = (message == null) ? ['PING'] : ['PING', message];
@@ -294,8 +343,6 @@ class ValkeyClient implements ValkeyClientBase {
     // Our simple parser will return "PONG" or the message.
     return response as String;
   }
-
-  // --- NEW COMMANDS ---
 
   @override
   Future<String?> get(String key) async {
@@ -309,6 +356,15 @@ class ValkeyClient implements ValkeyClientBase {
     final response = await execute(['SET', key, value]);
     // SET returns "+OK"
     return response as String;
+  }
+
+  @override
+  Future<List<String?>> mget(List<String> keys) async {
+    final command = ['MGET', ...keys];
+    // The parser will return List<dynamic> containing String?
+    final response = await execute(command) as List<dynamic>;
+    // Cast to the correct type
+    return response.cast<String?>();
   }
 
   // --- Socket Lifecycle Handlers ---

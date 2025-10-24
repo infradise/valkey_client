@@ -35,4 +35,8 @@ abstract class ValkeyClientBase {
   /// Sets [key] to [value].
   /// Returns a simple string reply (usually 'OK').
   Future<String> set(String key, String value);
+
+  /// Gets the values of all specified [keys].
+  /// Returns a list of strings, with `null` for keys that do not exist.
+  Future<List<String?>> mget(List<String> keys);
 }

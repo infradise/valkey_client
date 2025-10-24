@@ -164,6 +164,28 @@ Future<void> main() async {
       final response = await client.get('test:key:non_existent');
       expect(response, isNull);
     });
+
+    test('MSET/MGET should set and get multiple values', () async {
+      // Note: We don't have MSET yet, so we use multiple SETs
+      await client.set('test:mget:1', 'hello');
+      await client.set('test:mget:2', 'world');
+
+      final response = await client.mget(['test:mget:1', 'test:mget:2']);
+
+      // The response should be a List<String>
+      expect(response, isA<List<String?>>());
+      expect(response, ['hello', 'world']);
+    });
+
+    test('MGET should return null for non-existent keys', () async {
+      await client.set('test:mget:exists', 'value');
+
+      final response =
+          await client.mget(['test:mget:exists', 'test:mget:does_not_exist']);
+
+      // The response list should contain the value and null
+      expect(response, ['value', null]);
+    });
   },
       // Skip this entire group if the no-auth server is not running
       skip: !isServerRunning
