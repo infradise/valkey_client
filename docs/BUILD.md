@@ -1,29 +1,67 @@
 # Build instructions
 
 ## Test
+
+Run the unit tests. Make sure a local Valkey server (without authentication) is running on the default port (6379).
+
 ```sh
 dart test
 ```
 
-## Check Dart formatting
+## Check Dart Formatting
+
+Ensure the code adheres to Dart formatting guidelines.
 
 ```sh
 dart format .
 ```
 
-## Check Preflight for Publish
+## Pre-Publish Check
+
+Verify that the package is ready for publishing without actually uploading it.
+
 ```sh
 dart pub get
 dart pub publish --dry-run
 ```
 
-## Commit / Release
-```sh
-git tag v0.3.0
-git push origin v0.3.0
+## Bump to New Version
+
+### Edit pubspec.yaml
+
+Update the `version` field in `pubspec.yaml` to the new version number.
+
+```yaml
+# version: 0.6.0  # Previous version
+version: 0.7.0   # New version
 ```
 
-## Publish
+### Commit the Version Bump
+
+Commit the version change with a conventional commit message.
+
+```
+build: bump version to 0.7.0
+```
+
+## Tag the Release Locally
+
+Create a Git tag corresponding to the new version and push it to the remote repository.
+
+```sh
+git tag v0.7.0
+git push origin v0.7.0
+```
+
+## Create GitHub Release
+
+Create a new release on GitHub. Use the tag you just created (e.g., `v0.7.0`). Copy the relevant section from `CHANGELOG.md` into the release notes.
+
+## Publish to pub.dev
+
+**Final Check:** Before publishing, double-check everything (version number in `pubspec.yaml`, `CHANGELOG.md` entry, successful tests, correct formatting). Ensure no sensitive information is included.
+
+**Publish:** Once you are confident, publish the package to `pub.dev`.
 
 ```sh
 dart pub publish
