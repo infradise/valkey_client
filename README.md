@@ -65,3 +65,9 @@ It is designed primarily for server-side Dart applications (`server.dart`) requi
 ## Contributing
 
 This project is just getting started. If you are interested in contributing to the development of the standard Valkey client for Dart, please check the **[GitHub repository](https://github.com/infradise/valkey_client)** or file an issue to discuss ideas.
+
+---
+
+## Maintained By
+
+Maintained by the developers of [Visualkube](https://visualkube.com) at [Infradise Inc](https://visualkube.com/about-us). We believe in giving back to the Dart & Flutter community.
