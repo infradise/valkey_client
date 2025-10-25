@@ -342,7 +342,7 @@ Future<void> main() async {
       expect(response, isA<List<String?>>());
       // Sets are unordered, so check with containsAll
       expect(response, containsAll(['apple', 'banana']));
-      expect(response?.length, 2);
+      expect(response.length, 2);
     });
 
     // --- TESTS FOR v0.7.0 (Sorted Sets) ---
