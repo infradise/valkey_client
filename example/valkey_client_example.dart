@@ -52,6 +52,24 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
     final hgetAllResponse = await client.hgetall('user:1');
     print(
         "Received Map: $hgetAllResponse"); // Should be {name: Valkyrie, project: valkey_client}
+
+    // --- LIST (v0.6.0) ---
+    print("\n--- LIST (Queue/Stack) ---");
+    print("Sending: LPUSH mylist 'item1'");
+    await client.lpush('mylist', 'item1');
+    print("Sending: LPUSH mylist 'item2'");
+    final length = await client.lpush('mylist', 'item2');
+    print("Received list length: $length"); // Should be 2
+
+    print("Sending: LRANGE mylist 0 -1");
+    final listResponse = await client.lrange('mylist', 0, -1);
+    print(
+        "Received list: $listResponse"); // Should be [item2, item1] (LPUSH prepends)
+
+    print("Sending: RPOP mylist");
+    final poppedItem = await client.rpop('mylist');
+    print(
+        "Received popped item: $poppedItem"); // Should be "item1" (RPOP removes from the end)
   } catch (e) {
     // Handle connection or authentication errors
     print('❌ Failed: $e');

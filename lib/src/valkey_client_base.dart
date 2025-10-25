@@ -59,4 +59,26 @@ abstract class ValkeyClientBase {
   /// Gets all fields and values of the hash stored at [key].
   /// Returns an empty map if the key does not exist.
   Future<Map<String, String>> hgetall(String key);
+
+  // --- LIST (v0.6.0) ---
+
+  /// Prepends [value] to the list stored at [key].
+  /// Returns the length of the list after the push.
+  Future<int> lpush(String key, String value);
+
+  /// Appends [value] to the list stored at [key].
+  /// Returns the length of the list after the push.
+  Future<int> rpush(String key, String value);
+
+  /// Removes and returns the first element of the list stored at [key].
+  /// Returns `null` if the key does not exist or the list is empty.
+  Future<String?> lpop(String key);
+
+  /// Removes and returns the last element of the list stored at [key].
+  /// Returns `null` if the key does not exist or the list is empty.
+  Future<String?> rpop(String key);
+
+  /// Returns the specified elements of the list stored at [key].
+  /// [start] and [stop] are zero-based indexes. (e.g., 0, -1 for all)
+  Future<List<String?>> lrange(String key, int start, int stop);
 }

@@ -246,6 +246,68 @@ Future<void> main() async {
       expect(response, isA<Map<String, String>>());
       expect(response, isEmpty);
     });
+
+    // --- TESTS FOR v0.6.0 (Lists) ---
+
+    test('LPUSH should return the new length of the list', () async {
+      // Key is cleaned by FLUSHDB
+      final response1 = await client.lpush('test:list', 'item1');
+      expect(response1, 1);
+      final response2 = await client.lpush('test:list', 'item2');
+      expect(response2, 2);
+    });
+
+    test('RPUSH should return the new length of the list', () async {
+      // Key is cleaned by FLUSHDB
+      final response1 = await client.rpush('test:list:r', 'item1');
+      expect(response1, 1);
+      final response2 = await client.rpush('test:list:r', 'item2');
+      expect(response2, 2);
+    });
+
+    test('LPOP should remove and return the first item', () async {
+      final key = 'test:list:pop';
+      await client.rpush(key, 'itemA'); // List: [itemA]
+      await client.rpush(key, 'itemB'); // List: [itemA, itemB]
+
+      final response = await client.lpop(key); // Pops itemA
+      expect(response, 'itemA');
+
+      final remaining = await client.lrange(key, 0, -1);
+      expect(remaining, ['itemB']);
+    });
+
+    test('RPOP should remove and return the last item', () async {
+      final key = 'test:list:rpop';
+      await client.rpush(key, 'itemA'); // List: [itemA]
+      await client.rpush(key, 'itemB'); // List: [itemA, itemB]
+
+      final response = await client.rpop(key); // Pops itemB
+      expect(response, 'itemB');
+
+      final remaining = await client.lrange(key, 0, -1);
+      expect(remaining, ['itemA']);
+    });
+
+    test('LPOP/RPOP on an empty key should return null', () async {
+      final response = await client.lpop('test:list:empty');
+      expect(response, isNull);
+    });
+
+    test('LRANGE should return the correct range', () async {
+      final key = 'test:list:range';
+      await client.rpush(key, 'one');
+      await client.rpush(key, 'two');
+      await client.rpush(key, 'three');
+
+      // Get all items (0 to -1)
+      final response = await client.lrange(key, 0, -1);
+      expect(response, ['one', 'two', 'three']);
+
+      // Get first two items
+      final response2 = await client.lrange(key, 0, 1);
+      expect(response2, ['one', 'two']);
+    });
   },
       // Skip this entire group if the no-auth server is not running
       skip: !isServerRunning

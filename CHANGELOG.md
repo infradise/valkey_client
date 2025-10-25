@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0
+
+### Added
+- **New Commands (Lists):** Added commands for working with Lists.
+  - `client.lpush()` / `client.rpush()`
+  - `client.lpop()` / `client.rpop()`
+  - `client.lrange()`
+- These commands utilize the existing `Integer`, `Bulk String`, and `Array` parsers.
+
+
 ## 0.5.0
 
 ### Added

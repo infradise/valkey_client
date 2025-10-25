@@ -413,6 +413,44 @@ class ValkeyClient implements ValkeyClientBase {
     return map;
   }
 
+  // --- LIST (v0.6.0) ---
+
+  @override
+  Future<int> lpush(String key, String value) async {
+    // LPUSH returns an Integer (:)
+    final response = await execute(['LPUSH', key, value]);
+    return response as int;
+  }
+
+  @override
+  Future<int> rpush(String key, String value) async {
+    // RPUSH returns an Integer (:)
+    final response = await execute(['RPUSH', key, value]);
+    return response as int;
+  }
+
+  @override
+  Future<String?> lpop(String key) async {
+    // LPOP returns a Bulk String ($) or Null ($-1)
+    final response = await execute(['LPOP', key]);
+    return response as String?;
+  }
+
+  @override
+  Future<String?> rpop(String key) async {
+    // RPOP returns a Bulk String ($) or Null ($-1)
+    final response = await execute(['RPOP', key]);
+    return response as String?;
+  }
+
+  @override
+  Future<List<String?>> lrange(String key, int start, int stop) async {
+    // LRANGE returns an Array (*)
+    final response =
+        await execute(['LRANGE', key, start.toString(), stop.toString()]);
+    return (response as List<dynamic>).cast<String?>();
+  }
+
   // --- Socket Lifecycle Handlers ---
 
   void _handleSocketError(Object error) {
