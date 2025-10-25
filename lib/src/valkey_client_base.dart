@@ -81,4 +81,31 @@ abstract class ValkeyClientBase {
   /// Returns the specified elements of the list stored at [key].
   /// [start] and [stop] are zero-based indexes. (e.g., 0, -1 for all)
   Future<List<String?>> lrange(String key, int start, int stop);
+
+  // --- SET (v0.7.0) ---
+
+  /// Adds [member] to the set stored at [key].
+  /// Returns `1` if the member was added, `0` if it already existed.
+  Future<int> sadd(String key, String member);
+
+  /// Removes [member] from the set stored at [key].
+  /// Returns `1` if the member was removed, `0` if it did not exist.
+  Future<int> srem(String key, String member);
+
+  /// Returns all members of the set stored at [key].
+  Future<List<String?>> smembers(String key);
+
+  // --- NEW SORTED SET COMMANDS (v0.7.0) ---
+
+  /// Adds [member] with the specified [score] to the sorted set stored at [key].
+  /// Returns `1` if the member was added, `0` if it was updated.
+  Future<int> zadd(String key, double score, String member);
+
+  /// Removes [member] from the sorted set stored at [key].
+  /// Returns `1` if the member was removed, `0` if it did not exist.
+  Future<int> zrem(String key, String member);
+
+  /// Returns the specified range of members in the sorted set stored at [key],
+  /// ordered from lowest to highest score.
+  Future<List<String?>> zrange(String key, int start, int stop);
 }

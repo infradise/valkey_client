@@ -70,6 +70,27 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
     final poppedItem = await client.rpop('mylist');
     print(
         "Received popped item: $poppedItem"); // Should be "item1" (RPOP removes from the end)
+
+    // --- SET / SORTED SET (v0.7.0) ---
+    print("\n--- SET (Unique Tags) / SORTED SET (Leaderboard) ---");
+    print("Sending: SADD users:1:tags 'dart'");
+    await client.sadd('users:1:tags', 'dart');
+    print("Sending: SADD users:1:tags 'valkey'");
+    await client.sadd('users:1:tags', 'valkey');
+
+    print("Sending: SMEMBERS users:1:tags");
+    final tags = await client.smembers('users:1:tags');
+    print("Received tags (unordered): $tags"); // Should contain [dart, valkey]
+
+    print("Sending: ZADD leaderboard 100 'PlayerOne'");
+    await client.zadd('leaderboard', 100, 'PlayerOne');
+    print("Sending: ZADD leaderboard 150 'PlayerTwo'");
+    await client.zadd('leaderboard', 150, 'PlayerTwo');
+
+    print("Sending: ZRANGE leaderboard 0 -1"); // Get all players by score
+    final leaderboard = await client.zrange('leaderboard', 0, -1);
+    print(
+        "Received leaderboard (score low to high): $leaderboard"); // Should be [PlayerOne, PlayerTwo]
   } catch (e) {
     // Handle connection or authentication errors
     print('❌ Failed: $e');

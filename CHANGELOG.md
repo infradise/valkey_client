@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.0
+
+### Added
+- **New Commands (Sets):** Added commands for working with Sets.
+  - `client.sadd()` / `client.srem()`
+  - `client.smembers()`
+- **New Commands (Sorted Sets):** Added commands for working with Sorted Sets (leaderboards).
+  - `client.zadd()` / `client.zrem()`
+  - `client.zrange()` (by index)
+- These commands utilize the existing `Integer`, `Array`, and `Bulk String` parsers.
+
+
 ## 0.6.0
 
 ### Added

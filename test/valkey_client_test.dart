@@ -308,6 +308,73 @@ Future<void> main() async {
       final response2 = await client.lrange(key, 0, 1);
       expect(response2, ['one', 'two']);
     });
+
+    // --- TESTS FOR v0.7.0 (Sets) ---
+
+    test('SADD should return 1 for a new member', () async {
+      final response = await client.sadd('test:set', 'member1');
+      expect(response, 1);
+    });
+
+    test('SADD should return 0 for an existing member', () async {
+      await client.sadd('test:set:exists', 'member1');
+      final response = await client.sadd('test:set:exists', 'member1');
+      expect(response, 0);
+    });
+
+    test('SREM should return 1 for a removed member', () async {
+      await client.sadd('test:set:rem', 'member_to_remove');
+      final response = await client.srem('test:set:rem', 'member_to_remove');
+      expect(response, 1);
+    });
+
+    test('SREM should return 0 for a non-existent member', () async {
+      final response = await client.srem('test:set:rem', 'non_existent');
+      expect(response, 0);
+    });
+
+    test('SMEMBERS should return all members of the set', () async {
+      final key = 'test:set:members';
+      await client.sadd(key, 'apple');
+      await client.sadd(key, 'banana');
+
+      final response = await client.smembers(key);
+      expect(response, isA<List<String?>>());
+      // Sets are unordered, so check with containsAll
+      expect(response, containsAll(['apple', 'banana']));
+      expect(response?.length, 2);
+    });
+
+    // --- TESTS FOR v0.7.0 (Sorted Sets) ---
+
+    test('ZADD should return 1 for a new member', () async {
+      final response = await client.zadd('test:zset', 10, 'player1');
+      expect(response, 1);
+    });
+
+    test('ZADD should return 0 for an updated member', () async {
+      await client.zadd('test:zset:update', 10, 'player1');
+      final response =
+          await client.zadd('test:zset:update', 20, 'player1'); // Update score
+      expect(response, 0);
+    });
+
+    test('ZREM should return 1 for a removed member', () async {
+      await client.zadd('test:zset:rem', 10, 'player_to_remove');
+      final response = await client.zrem('test:zset:rem', 'player_to_remove');
+      expect(response, 1);
+    });
+
+    test('ZRANGE should return members in score order', () async {
+      final key = 'test:zset:range';
+      await client.zadd(key, 100, 'player_c');
+      await client.zadd(key, 50, 'player_a');
+      await client.zadd(key, 75, 'player_b');
+
+      // Get all members, lowest score first
+      final response = await client.zrange(key, 0, -1);
+      expect(response, ['player_a', 'player_b', 'player_c']);
+    });
   },
       // Skip this entire group if the no-auth server is not running
       skip: !isServerRunning

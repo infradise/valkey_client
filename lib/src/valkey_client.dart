@@ -451,6 +451,53 @@ class ValkeyClient implements ValkeyClientBase {
     return (response as List<dynamic>).cast<String?>();
   }
 
+  // --- SET (v0.7.0) ---
+
+  @override
+  Future<int> sadd(String key, String member) async {
+    // SADD returns an Integer (:)
+    final response = await execute(['SADD', key, member]);
+    return response as int;
+  }
+
+  @override
+  Future<int> srem(String key, String member) async {
+    // SREM returns an Integer (:)
+    final response = await execute(['SREM', key, member]);
+    return response as int;
+  }
+
+  @override
+  Future<List<String?>> smembers(String key) async {
+    // SMEMBERS returns an Array (*) of Bulk Strings ($)
+    final response = await execute(['SMEMBERS', key]);
+    return (response as List<dynamic>).cast<String?>();
+  }
+
+  // --- SORTED SET (v0.7.0) ---
+
+  @override
+  Future<int> zadd(String key, double score, String member) async {
+    // ZADD returns an Integer (:)
+    final response = await execute(['ZADD', key, score.toString(), member]);
+    return response as int;
+  }
+
+  @override
+  Future<int> zrem(String key, String member) async {
+    // ZREM returns an Integer (:)
+    final response = await execute(['ZREM', key, member]);
+    return response as int;
+  }
+
+  @override
+  Future<List<String?>> zrange(String key, int start, int stop) async {
+    // ZRANGE returns an Array (*) of Bulk Strings ($)
+    final response =
+        await execute(['ZRANGE', key, start.toString(), stop.toString()]);
+    return (response as List<dynamic>).cast<String?>();
+  }
+
   // --- Socket Lifecycle Handlers ---
 
   void _handleSocketError(Object error) {
