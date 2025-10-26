@@ -1,6 +1,6 @@
 name: valkey_client
 description: A modern, production-ready Dart client for Valkey (9.0.0+). Fully Redis 7.x compatible.
-version: 0.7.0
+version: 0.8.0
 repository: https://github.com/infradise/valkey_client
 homepage: https://visualkube.com/opensource/valkey_client
 
@@ -11,5 +11,5 @@ environment:
 # dependencies:
 
 dev_dependencies:
-  lints: ^3.0.0 # ^6.0.0
-  test: ^1.24.0 # ^1.25.6
+  lints: ^3.0.0
+  test: ^1.24.0
