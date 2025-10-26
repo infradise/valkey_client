@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.0
+
+### Added
+- **New Commands (Key Management):** Added commands for managing keys.
+  - `client.del()`
+  - `client.exists()`
+  - `client.expire()` (set timeout in seconds)
+  - `client.ttl()` (get remaining time to live)
+- These commands primarily return `Integer` responses.
+
+
 ## 0.7.0
 
 ### Added

@@ -91,6 +91,25 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
     final leaderboard = await client.zrange('leaderboard', 0, -1);
     print(
         "Received leaderboard (score low to high): $leaderboard"); // Should be [PlayerOne, PlayerTwo]
+
+    // --- KEY MANAGEMENT (v0.8.0) ---
+    print("\n--- KEY MANAGEMENT (Expiration & Deletion) ---");
+    print("Sending: EXPIRE greeting 10"); // Expire the 'greeting' key in 10s
+    final expireResponse = await client.expire('greeting', 10);
+    print("Received (1=set, 0=not set): $expireResponse");
+
+    print("Sending: TTL greeting");
+    final ttlResponse = await client.ttl('greeting');
+    print(
+        "Received TTL (seconds, -1=no expire, -2=not exist): $ttlResponse"); // Should be <= 10
+
+    print("Sending: DEL mylist"); // Delete the list key
+    final delResponse = await client.del('mylist');
+    print("Received (number of keys deleted): $delResponse"); // Should be 1
+
+    print("Sending: EXISTS mylist");
+    final existsResponse = await client.exists('mylist');
+    print("Received (1=exists, 0=not exist): $existsResponse"); // Should be 0
   } catch (e) {
     // Handle connection or authentication errors
     print('❌ Failed: $e');

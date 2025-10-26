@@ -95,7 +95,7 @@ abstract class ValkeyClientBase {
   /// Returns all members of the set stored at [key].
   Future<List<String?>> smembers(String key);
 
-  // --- NEW SORTED SET COMMANDS (v0.7.0) ---
+  // --- SORTED SET (v0.7.0) ---
 
   /// Adds [member] with the specified [score] to the sorted set stored at [key].
   /// Returns `1` if the member was added, `0` if it was updated.
@@ -108,4 +108,23 @@ abstract class ValkeyClientBase {
   /// Returns the specified range of members in the sorted set stored at [key],
   /// ordered from lowest to highest score.
   Future<List<String?>> zrange(String key, int start, int stop);
+
+  // --- KEY MANAGEMENT (v0.8.0) ---
+
+  /// Deletes the specified [key].
+  /// Returns the number of keys that were removed (0 or 1).
+  Future<int> del(String key);
+
+  /// Checks if [key] exists.
+  /// Returns `1` if the key exists, `0` otherwise.
+  Future<int> exists(String key);
+
+  /// Sets a timeout on [key] in seconds.
+  /// Returns `1` if the timeout was set, `0` if the key doesn't exist.
+  Future<int> expire(String key, int seconds);
+
+  /// Gets the remaining time to live of a [key] in seconds.
+  /// Returns `-1` if the key exists but has no associated expire.
+  /// Returns `-2` if the key does not exist.
+  Future<int> ttl(String key);
 }

@@ -375,6 +375,57 @@ Future<void> main() async {
       final response = await client.zrange(key, 0, -1);
       expect(response, ['player_a', 'player_b', 'player_c']);
     });
+
+    // --- TESTS FOR v0.8.0 (Key Management) ---
+
+    test('EXISTS should return 1 for an existing key', () async {
+      await client.set('test:exists:key', 'value');
+      final response = await client.exists('test:exists:key');
+      expect(response, 1);
+    });
+
+    test('EXISTS should return 0 for a non-existent key', () async {
+      final response = await client.exists('test:exists:non_existent');
+      expect(response, 0);
+    });
+
+    test('DEL should return 1 for a deleted key', () async {
+      await client.set('test:del:key', 'value');
+      final response = await client.del('test:del:key');
+      expect(response, 1);
+      // Verify deletion
+      final exists = await client.exists('test:del:key');
+      expect(exists, 0);
+    });
+
+    test('DEL should return 0 for a non-existent key', () async {
+      final response = await client.del('test:del:non_existent');
+      expect(response, 0);
+    });
+
+    test('EXPIRE should set a timeout and return 1', () async {
+      await client.set('test:expire:key', 'value');
+      final response = await client.expire('test:expire:key', 10); // 10 seconds
+      expect(response, 1);
+    });
+
+    test('TTL should return remaining time or specific values', () async {
+      final key = 'test:ttl:key';
+      // Test 1: Key exists, no expire
+      await client.set(key, 'value');
+      final ttl1 = await client.ttl(key);
+      expect(ttl1, -1);
+
+      // Test 2: Set expire
+      await client.expire(key, 5); // 5 seconds
+      final ttl2 = await client.ttl(key);
+      expect(ttl2, greaterThan(0)); // Should be around 5
+      expect(ttl2, lessThanOrEqualTo(5));
+
+      // Test 3: Key does not exist
+      final ttl3 = await client.ttl('test:ttl:non_existent');
+      expect(ttl3, -2);
+    });
   },
       // Skip this entire group if the no-auth server is not running
       skip: !isServerRunning

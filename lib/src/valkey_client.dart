@@ -498,6 +498,36 @@ class ValkeyClient implements ValkeyClientBase {
     return (response as List<dynamic>).cast<String?>();
   }
 
+  // --- KEY MANAGEMENT (v0.8.0) ---
+
+  @override
+  Future<int> del(String key) async {
+    // DEL returns an Integer (:)
+    final response = await execute(['DEL', key]);
+    return response as int;
+  }
+
+  @override
+  Future<int> exists(String key) async {
+    // EXISTS returns an Integer (:)
+    final response = await execute(['EXISTS', key]);
+    return response as int;
+  }
+
+  @override
+  Future<int> expire(String key, int seconds) async {
+    // EXPIRE returns an Integer (:)
+    final response = await execute(['EXPIRE', key, seconds.toString()]);
+    return response as int;
+  }
+
+  @override
+  Future<int> ttl(String key) async {
+    // TTL returns an Integer (:)
+    final response = await execute(['TTL', key]);
+    return response as int;
+  }
+
   // --- Socket Lifecycle Handlers ---
 
   void _handleSocketError(Object error) {
