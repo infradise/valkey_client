@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'dart:async';
-import 'dart:typed_data'; // We will need this soon for parsing
+import 'dart:typed_data';
 import 'dart:convert'; // For UTF8 encoding
 import 'dart:collection'; // A Queue to manage pending commands
 
 import 'package:valkey_client/src/valkey_client_base.dart';
+export 'package:valkey_client/src/valkey_client_base.dart' show ValkeyMessage; // Re-export ValkeyMessage
 
 /// Internal helper class to read bytes from the buffer.
 /// This makes parsing much cleaner.
@@ -98,6 +99,15 @@ class ValkeyClient implements ValkeyClientBase {
   // Internal state to manage the auth handshake
   bool _isAuthenticating = false;
 
+  // --- Fields for Pub/Sub ---
+  /// Controller to broadcast incoming pub/sub messages.
+  StreamController<ValkeyMessage>? _pubSubController;
+  /// Flag to indicate if the client is currently in subscribed mode.
+  bool _isSubscribed = false;
+  /// Set of channels currently subscribed to.
+  final Set<String> _subscribedChannels = {};
+  // ------------------------------
+
   /// Creates a new Valkey client instance.
   ///
   /// [host], [port], [username], and [password] are the default
@@ -178,7 +188,7 @@ class ValkeyClient implements ValkeyClientBase {
     return onConnected;
   }
 
-  // --- Core Data Handler ---
+  // --- Core Data Handler & Parser ---
 
   /// This is now the main entry point for ALL data from the socket.
   void _handleSocketData(Uint8List data) {
@@ -191,120 +201,182 @@ class ValkeyClient implements ValkeyClientBase {
   /// It loops and tries to parse one full response at a time.
   void _processBuffer() {
     while (true) {
-      if (_responseQueue.isEmpty && !_isAuthenticating) {
-        // If we are not waiting for auth AND not waiting for commands,
-        // then we can stop processing.
-        break;
+
+      // If subscribed, we don't expect command responses unless it's a
+      // special response like the initial subscribe confirmation.
+      // If the queue IS empty and we are NOT authenticating, it *might* be a pub/sub message.
+      final bool mightBePushMessage = _responseQueue.isEmpty && !_isAuthenticating;
+      if (!mightBePushMessage && _responseQueue.isEmpty && !_isAuthenticating) {
+          // If we are not waiting for auth AND not waiting for commands,
+          // then we can stop processing.
+          break; // Nothing expected, stop processing
       }
 
       final reader = _BufferReader(_buffer.toBytes());
+      int initialOffset = reader._offset; // Track if we consumed anything
 
       try {
-        // --- THIS IS THE NEW RECURSIVE PARSER ---
+        // --- RECURSIVE PARSER ---
         final response = _parseResponse(reader);
-        // ----------------------------------------
 
-        // If we got here, we successfully parsed one full message.
-        _resolveNextCommand(response);
+        // --- Handle Push Messages (Pub/Sub) ---
+        if (_isPubSubPushMessage(response)) {
+          _handlePubSubMessage(response as List<dynamic>);
+        }
+        // --- Handle Regular Command Responses ---
+        else {
+          // If we got here, we successfully parsed one full message.
+          _resolveNextCommand(response);
+        }
+        // ---------------------------------------
 
         // Consume the processed bytes from the buffer
         _buffer.clear();
         _buffer.add(reader.consume());
+
+        // If we didn't consume any bytes (e.g., incomplete data), stop looping
+        if (reader._offset == initialOffset) break;
+
       } on _IncompleteDataException {
         // Not enough data in the buffer to parse a full response.
         // Stop looping and wait for more socket data.
-        break;
+        break; // Wait for more data
       } catch (e) {
         // A real parsing error (e.g., unknown prefix)
         _resolveNextCommand(e, isError: true);
         // Clear buffer to avoid infinite error loop
         _buffer.clear();
+        // If subscribed mode error, maybe close stream?
+        if (_isSubscribed) {
+          _pubSubController?.addError(e);
+          _resetPubSubState(); // Exit subscribed mode on error
+        }
       }
     }
+  }
+
+  /// Checks if a parsed RESP Array is a Pub/Sub push message.
+  /// e.g., ['message', 'channel_name', 'payload']
+  /// e.g., ['subscribe', 'channel_name', 1] (confirmation)
+  bool _isPubSubPushMessage(dynamic response) {
+    if (!_isSubscribed && response is! List) return false;
+    if (response is List && response.isNotEmpty && response[0] is String) {
+        final type = response[0] as String;
+        // Check for known push types
+        return type == 'message' || type == 'subscribe' || type == 'unsubscribe';
+        // TODO: Add pmessage, psubscribe, punsubscribe later
+    }
+    return false;
+  }
+
+  /// Handles incoming Pub/Sub push messages.
+  void _handlePubSubMessage(List<dynamic> messageArray) {
+    final type = messageArray[0] as String;
+    // We only care about actual messages for now, not confirmations
+    if (type == 'message' && messageArray.length == 3) {
+      final channel = messageArray[1] as String;
+      final message = messageArray[2] as String;
+      _pubSubController?.add(ValkeyMessage(channel, message));
+    } else if (type == 'subscribe' && messageArray.length == 3) {
+      // Handle the initial subscription confirmation
+      final channel = messageArray[1] as String;
+      final count = messageArray[2] as int; // Number of channels currently subscribed to
+      _subscribedChannels.add(channel);
+      // We still need to pop the original 'subscribe' command's completer
+      if (!_responseQueue.isEmpty) {
+        final completer = _responseQueue.removeFirst();
+        // Complete with the subscription details or just success?
+        // Let's complete with success for now, the stream handles messages.
+        completer.complete(null); // Or maybe return the count? TBD.
+      }
+    }
+    // TODO: Handle unsubscribe confirmation
   }
 
   /// The core recursive RESP parser.
   dynamic _parseResponse(_BufferReader reader) {
     if (reader.isDone) throw _IncompleteDataException();
-
     final responseType = reader.readByte();
 
-    switch (responseType) {
-      // '+' (Simple String)
-      case 43: // '+'
-        final line = reader.readLine();
-        if (line == null) throw _IncompleteDataException();
-        return line;
+    try {
+      switch (responseType) {        
+        case 43: // '+' (Simple String)
+          final line = reader.readLine();
+          if (line == null) throw _IncompleteDataException();
+          return line;
+        case 45: // '-' (Error)
+          final line = reader.readLine();
+          if (line == null) throw _IncompleteDataException();
+          // RETURN the error string instead of throwing immediately
+          // The caller (_processBuffer) will decide how to handle it
+          return Exception(line);        
+        case 36: // '$' (Bulk String)
+          final line = reader.readLine();
+          if (line == null) throw _IncompleteDataException();
 
-      // '-' (Error)
-      case 45: // '-'
-        final line = reader.readLine();
-        if (line == null) throw _IncompleteDataException();
-        throw Exception(line); // Throw errors as exceptions
+          final dataLength = int.parse(line);
+          if (dataLength == -1) {
+            return null; // Null response
+          }
 
-      // '$' (Bulk String)
-      case 36: // '$'
-        final line = reader.readLine();
-        if (line == null) throw _IncompleteDataException();
+          final data = reader.readBytes(dataLength);
+          if (data == null) throw _IncompleteDataException();
 
-        final dataLength = int.parse(line);
-        if (dataLength == -1) {
-          return null; // Null response
-        }
+          if (!reader.readFinalCRLF()) throw _IncompleteDataException();
 
-        final data = reader.readBytes(dataLength);
-        if (data == null) throw _IncompleteDataException();
+          return utf8.decode(data);
+        case 42: // '*' (Array)
+          final line = reader.readLine();
+          if (line == null) throw _IncompleteDataException();
 
-        if (!reader.readFinalCRLF()) throw _IncompleteDataException();
+          final arrayLength = int.parse(line);
+          if (arrayLength == -1) {
+            return null; // Null array
+          }
 
-        return utf8.decode(data);
+          final list = <dynamic>[];
+          for (var i = 0; i < arrayLength; i++) {
+            // --- RECURSION ---
+            // Parse each item in the array
+            final item = _parseResponse(reader);
+            list.add(item);
+          }
+          return list;       
+        case 58: // ':' (Integer)
+          final line = reader.readLine();
+          if (line == null) throw _IncompleteDataException();
+          return int.parse(line);
 
-      // '*' (Array)
-      case 42: // '*'
-        final line = reader.readLine();
-        if (line == null) throw _IncompleteDataException();
-
-        final arrayLength = int.parse(line);
-        if (arrayLength == -1) {
-          return null; // Null array
-        }
-
-        final list = <dynamic>[];
-        for (var i = 0; i < arrayLength; i++) {
-          // --- RECURSION ---
-          // Parse each item in the array
-          final item = _parseResponse(reader);
-          list.add(item);
-        }
-        return list;
-
-      // ':' (Integer)
-      case 58: // ':'
-        final line = reader.readLine();
-        if (line == null) throw _IncompleteDataException();
-        return int.parse(line);
-
-      default:
-        throw Exception(
-            'Unknown RESP prefix type: ${String.fromCharCode(responseType)}');
+        default:
+          // Instead of throwing, return an exception object
+          throw Exception(
+              'Unknown RESP prefix type: ${String.fromCharCode(responseType)}');
+      }
+    } catch (e) {
+      // If parsing itself fails (e.g., bad integer format), return exception
+      return e;
     }
   }
 
   /// Helper to resolve the next command in the queue.
-  void _resolveNextCommand(dynamic response, {bool isError = false}) {
+  /// Resolves the next command, now checks if response is an Exception.
+  void _resolveNextCommand(dynamic response, {bool isError = false /* deprecated */}) {
+    // Determine if the response itself is an error
+    final bool responseIsError = response is Exception;
+
     if (_isAuthenticating) {
       // This is the AUTH response
       _isAuthenticating = false;
-      if (isError) {
+      if (responseIsError) {
         _connectionCompleter!.completeError(response);
       } else {
         _connectionCompleter!.complete();
       }
     } else {
-      if (_responseQueue.isEmpty) return; // Should not happen, but safe guard
+      if (_responseQueue.isEmpty) return; // Should not happen, (but safe guard)
 
       final completer = _responseQueue.removeFirst();
-      if (isError) {
+      if (responseIsError) {
         completer.completeError(response);
       } else {
         completer.complete(response);
@@ -318,6 +390,17 @@ class ValkeyClient implements ValkeyClientBase {
   /// Returns a Future that completes with the server's response.
   @override
   Future<dynamic> execute(List<String> command) async {
+    // --- Check if in subscribed mode ---
+    if (_isSubscribed) {
+      final cmd = command[0].toUpperCase();
+      // Allow only specific commands in subscribed mode
+      if (cmd != 'UNSUBSCRIBE' && cmd != 'PUNSUBSCRIBE' &&
+          cmd != 'PING' && cmd != 'QUIT') { // Removed PSUBSCRIBE/SUBSCRIBE for now
+        return Future.error(Exception('Cannot execute command $cmd while subscribed.'));
+      }
+    }
+    // ---------------------------------
+
     // 1. Create a Completer and add it to the queue.
     final completer = Completer<dynamic>();
     _responseQueue.add(completer);
@@ -528,6 +611,49 @@ class ValkeyClient implements ValkeyClientBase {
     return response as int;
   }
 
+  // --- PUB/SUB COMMANDS (v0.9.0) ---
+
+  @override
+  Future<int> publish(String channel, String message) async {
+    // PUBLISH returns an Integer (:) - number of clients received
+    final response = await execute(['PUBLISH', channel, message]);
+    return response as int;
+  }
+
+  @override
+  Stream<ValkeyMessage> subscribe(List<String> channels) {
+    if (_isSubscribed) {
+      // Cannot call subscribe again while already subscribed (use PSUBSCRIBE?)
+      // For now, just return the existing stream or throw an error.
+      throw Exception('Client is already in subscribed mode.');
+    }
+    if (_pubSubController == null || _pubSubController!.isClosed) {
+      _pubSubController = StreamController<ValkeyMessage>.broadcast();
+    }
+
+    _isSubscribed = true;
+    _subscribedChannels.clear(); // Reset channel list for this subscription
+
+    // Send the SUBSCRIBE command. The response(s) will be handled by _handlePubSubMessage
+    // We expect multiple confirmation messages (one per channel), plus the final count.
+    // The Future completes after the *first* confirmation? Or all? Let's try first.
+    execute(['SUBSCRIBE', ...channels]).catchError((e) {
+        // If the initial SUBSCRIBE command fails, report error and reset state
+        _pubSubController?.addError(e);
+        _resetPubSubState();
+    });
+    // Return the stream immediately. Users listen to this.
+    return _pubSubController!.stream;
+  }
+
+  /// Resets the Pub/Sub state (e.g., after unsubscribe or error).
+  void _resetPubSubState() {
+      _isSubscribed = false;
+      _subscribedChannels.clear();
+      _pubSubController?.close();
+      _pubSubController = null;
+  }
+
   // --- Socket Lifecycle Handlers ---
 
   void _handleSocketError(Object error) {
@@ -538,6 +664,10 @@ class ValkeyClient implements ValkeyClientBase {
     }
     // Fail all pending commands
     _failAllPendingCommands(error);
+    // --- Close PubSub stream on error ---
+    _pubSubController?.addError(error);
+    _resetPubSubState();
+    // ----------------------------------
   }
 
   void _handleSocketDone() {
@@ -551,6 +681,10 @@ class ValkeyClient implements ValkeyClientBase {
     }
     // Fail all pending commands
     _failAllPendingCommands(error);
+    // --- Close PubSub stream on disconnect ---
+     _pubSubController?.addError(error);
+    _resetPubSubState();
+    // ---------------------------------------
   }
 
   void _failAllPendingCommands(Object error) {

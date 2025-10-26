@@ -202,4 +202,57 @@ Future<void> main() async {
   } finally {
     await flexibleClient.close(); // Close this specific client
   }
-}
+
+  // ====================================================================
+  // Pub/Sub Example (v0.9.0)
+  // ====================================================================
+  print('\n' * 2);
+  print('=' * 40);
+  print('Running Pub/Sub Example');
+  print('=' * 40);
+
+  // Use two clients: one to subscribe, one to publish
+  final subscriber = ValkeyClient(host: '127.0.0.1', port: 6379);
+  final publisher = ValkeyClient(host: '127.0.0.1', port: 6379);
+
+  try {
+    await Future.wait([subscriber.connect(), publisher.connect()]);
+    print('✅ Subscriber and Publisher connected!');
+
+    final channel = 'news:updates';
+    print('\nSubscribing to channel: $channel');
+
+    // 1. Subscribe and listen to the stream
+    final messageStream = subscriber.subscribe([channel]);
+    final subscription = messageStream.listen(
+      (message) {
+        print('📬 Received: ${message.message} (from channel: ${message.channel})');
+      },
+      onError: (e) => print('❌ Stream Error: $e'),
+      onDone: () => print('ℹ️ Subscription stream closed.'),
+    );
+
+    // Give the subscription a moment to activate
+    await Future.delayed(Duration(milliseconds: 200));
+
+    // 2. Publish messages from the other client
+    print("\nSending: PUBLISH $channel 'First update!'");
+    await publisher.publish(channel, 'First update!');
+
+    print("Sending: PUBLISH $channel 'Second update!'");
+    await publisher.publish(channel, 'Second update!');
+
+    // Wait a bit to receive messages
+    await Future.delayed(Duration(seconds: 1));
+
+    // 3. Clean up (Need UNSUBSCRIBE command in the future)
+    print('\nClosing connections (will stop subscription)...');
+    await subscription.cancel(); // Cancel the stream listener
+
+  } catch (e) {
+    print('❌ Pub/Sub Example Failed: $e');
+  } finally {
+    await Future.wait([subscriber.close(), publisher.close()]);
+    print('Pub/Sub clients closed.');
+  }
+} // End of main

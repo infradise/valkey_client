@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 import 'package:valkey_client/valkey_client.dart';
+import 'package:stream_channel/stream_channel.dart'; // for StreamMatcher
+import 'package:async/async.dart' show StreamQueue;
 
 // This flag will be set by setUpAll
 bool isServerRunning = false;
@@ -139,7 +141,7 @@ Future<void> main() async {
     // We can add that later.
   });
 
-  // --- NEW GROUP FOR COMMANDS ---
+  // --- GROUP FOR COMMANDS ---
   group('ValkeyClient Commands', () {
     late ValkeyClient client;
 
@@ -427,8 +429,97 @@ Future<void> main() async {
       expect(ttl3, -2);
     });
   },
+ 
       // Skip this entire group if the no-auth server is not running
       skip: !isServerRunning
           ? 'Valkey server not running on $noAuthHost:$noAuthPort'
           : false);
+
+
+  // --- NEW GROUP FOR PUB/SUB ---
+  group('ValkeyClient Pub/Sub', () {
+    late ValkeyClient subscriberClient;
+    late ValkeyClient publisherClient;
+
+    // Connect both clients ONCE before tests
+    setUpAll(() async {
+      if (isServerRunning) {
+        subscriberClient = ValkeyClient(host: noAuthHost, port: noAuthPort);
+        publisherClient = ValkeyClient(host: noAuthHost, port: noAuthPort);
+        await Future.wait([
+          subscriberClient.connect(),
+          publisherClient.connect(),
+        ]);
+        // Clean DB
+        await publisherClient.execute(['FLUSHDB']);
+      }
+    });
+
+    // Close connections ONCE after tests
+    tearDownAll(() async {
+      if (isServerRunning) {
+        await Future.wait([
+          subscriberClient.close(),
+          publisherClient.close(),
+        ]);
+      }
+    });
+
+    test('should receive messages on subscribed channel', () async {
+      final channel = 'test:pubsub:channel1';
+      final message1 = 'Hello from test 1';
+      final message2 = 'Hello from test 2';
+
+      // 1. Subscribe and get the stream
+      final messageStream = subscriberClient.subscribe([channel]);
+
+      // 2. Use StreamMatcher to expect messages
+      // Use StreamQueue to consume events in order
+      final queue = StreamQueue(messageStream);
+
+      // Check the first message
+      var receivedMessage = await queue.next;
+      expect(receivedMessage, isA<ValkeyMessage>());
+      expect(receivedMessage.channel, channel);
+      expect(receivedMessage.message, message1);
+
+      // Check the second message
+      receivedMessage = await queue.next;
+      expect(receivedMessage, isA<ValkeyMessage>());
+      expect(receivedMessage.channel, channel);
+      expect(receivedMessage.message, message2);
+
+      // 3. Publish messages AFTER setting up the listener
+      // Allow a brief moment for the subscription to activate on the server
+      await Future.delayed(Duration(milliseconds: 100));
+      final count1 = await publisherClient.publish(channel, message1);
+      final count2 = await publisherClient.publish(channel, message2);
+
+      // Expect at least one subscriber (our subscriberClient)
+      expect(count1, greaterThanOrEqualTo(1));
+      expect(count2, greaterThanOrEqualTo(1));
+
+      // Clean up the stream queue
+      await queue.cancel();
+
+      // Note: We need to implement UNSUBSCRIBE to properly exit
+      // the subscribed state for the client. For now, rely on tearDownAll.
+    },
+      // Give this test a bit more time due to async nature
+      timeout: Timeout(Duration(seconds: 5))
+    );
+
+    test('publish should return number of receivers', () async {
+      // No active subscribers on this channel yet
+      final count = await publisherClient.publish('test:pubsub:no_subs', 'message');
+      expect(count, 0); // Expect 0 subscribers
+    });
+
+  },
+
+      // Skip the entire group if the server is down
+      skip: !isServerRunning
+          ? 'Valkey server not running on $noAuthHost:$noAuthPort'
+          : false);
+
 }

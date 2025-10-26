@@ -127,4 +127,30 @@ abstract class ValkeyClientBase {
   /// Returns `-1` if the key exists but has no associated expire.
   /// Returns `-2` if the key does not exist.
   Future<int> ttl(String key);
+
+  // --- PUB/SUB (v0.9.0) ---
+
+  /// Posts a [message] to the given [channel].
+  /// Returns the number of clients that received the message.
+  Future<int> publish(String channel, String message);
+
+  /// Subscribes the client to the specified [channels].
+  /// Returns a Stream that emits messages received on the subscribed channels.
+  ///
+  /// IMPORTANT: Once subscribed, the client can only execute UNSUBSCRIBE,
+  /// PSUBSCRIBE, PUNSUBSCRIBE, PING, and QUIT commands.
+  Stream<ValkeyMessage> subscribe(List<String> channels);
+
+  // TODO: Add unsubscribe, psubscribe, punsubscribe later
+}
+
+/// Represents a message received from a subscribed channel.
+class ValkeyMessage {
+  final String channel;
+  final String message;
+
+  ValkeyMessage(this.channel, this.message);
+
+  @override
+  String toString() => 'Message{channel: $channel, message: $message}';
 }
