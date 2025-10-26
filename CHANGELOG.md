@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.9.0
+
+**Note:** This version was not published to `pub.dev` due to unresolved issues in the Pub/Sub implementation found during testing.
+
+### Added
+- **New Commands (Pub/Sub):** Added basic Publish/Subscribe functionality.
+  - `client.publish()`: Posts a message to a channel.
+  - `client.subscribe()`: Subscribes to channels and returns a `Stream<ValkeyMessage>` for receiving messages.
+- **Push Message Handling:** The internal parser and client logic were updated to handle asynchronous push messages (like pub/sub messages) separate from command responses.
+- **`ValkeyMessage` Class:** Introduced a class to represent incoming pub/sub messages.
+
+### Known Limitations
+- Once subscribed, only `UNSUBSCRIBE`, `PUNSUBSCRIBE`, `PING`, and `QUIT` commands are allowed by Redis/Valkey. The client currently enforces this restriction partially. Full `unsubscribe` logic is not yet implemented.
+- Pattern subscription (`PSUBSCRIBE`, `PUNSUBSCRIBE`) is not yet supported.
+
+
 ## 0.8.0
 
 ### Added
