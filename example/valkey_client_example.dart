@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:valkey_client/valkey_client.dart';
 
 // Here is a basic example of how to connect and close the client.
@@ -204,7 +206,7 @@ Future<void> main() async {
   }
 
   // ====================================================================
-  // Pub/Sub Example (v0.9.0)
+  // Pub/Sub Example (v0.9.0 / v0.9.1)
   // ====================================================================
   print('\n' * 2);
   print('=' * 40);
@@ -214,6 +216,7 @@ Future<void> main() async {
   // Use two clients: one to subscribe, one to publish
   final subscriber = ValkeyClient(host: '127.0.0.1', port: 6379);
   final publisher = ValkeyClient(host: '127.0.0.1', port: 6379);
+  StreamSubscription<ValkeyMessage>? listener; // Keep track of the listener
 
   try {
     await Future.wait([subscriber.connect(), publisher.connect()]);
@@ -222,20 +225,28 @@ Future<void> main() async {
     final channel = 'news:updates';
     print('\nSubscribing to channel: $channel');
 
-    // 1. Subscribe and listen to the stream
-    final messageStream = subscriber.subscribe([channel]);
-    final subscription = messageStream.listen(
+    // 1. Subscribe and get the Subscription object
+    final sub = subscriber
+        .subscribe([channel]); // Returns Subscription{messages, ready}
+
+    // --- NEW: Wait for subscription ready ---
+    print('Waiting for subscription confirmation...');
+    await sub.ready.timeout(Duration(seconds: 2));
+    print('Subscription confirmed!');
+    // ------------------------------------
+
+    // 2. Listen to the message stream AFTER subscription is ready
+    listener = sub.messages.listen(
+      // Listen to sub.messages
       (message) {
-        print('📬 Received: ${message.message} (from channel: ${message.channel})');
+        print(
+            '📬 Received: ${message.message} (from channel: ${message.channel})');
       },
       onError: (e) => print('❌ Stream Error: $e'),
       onDone: () => print('ℹ️ Subscription stream closed.'),
     );
 
-    // Give the subscription a moment to activate
-    await Future.delayed(Duration(milliseconds: 200));
-
-    // 2. Publish messages from the other client
+    // 3. Publish messages AFTER awaiting sub.ready
     print("\nSending: PUBLISH $channel 'First update!'");
     await publisher.publish(channel, 'First update!');
 
@@ -245,13 +256,14 @@ Future<void> main() async {
     // Wait a bit to receive messages
     await Future.delayed(Duration(seconds: 1));
 
-    // 3. Clean up (Need UNSUBSCRIBE command in the future)
+    // 4. Clean up (Need UNSUBSCRIBE command in the future)
     print('\nClosing connections (will stop subscription)...');
-    await subscription.cancel(); // Cancel the stream listener
-
+    await listener.cancel(); // Cancel the stream listener
   } catch (e) {
     print('❌ Pub/Sub Example Failed: $e');
   } finally {
+    // Ensure listener is cancelled even on error
+    await listener?.cancel();
     await Future.wait([subscriber.close(), publisher.close()]);
     print('Pub/Sub clients closed.');
   }

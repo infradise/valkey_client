@@ -134,12 +134,13 @@ abstract class ValkeyClientBase {
   /// Returns the number of clients that received the message.
   Future<int> publish(String channel, String message);
 
-  /// Subscribes the client to the specified [channels].
-  /// Returns a Stream that emits messages received on the subscribed channels.
-  ///
   /// IMPORTANT: Once subscribed, the client can only execute UNSUBSCRIBE,
   /// PSUBSCRIBE, PUNSUBSCRIBE, PING, and QUIT commands.
-  Stream<ValkeyMessage> subscribe(List<String> channels);
+
+  /// Subscribes the client to the specified [channels].
+  /// Returns a [Subscription] object containing the message stream
+  /// and a future indicating when the subscription is ready.
+  Subscription subscribe(List<String> channels);
 
   // TODO: Add unsubscribe, psubscribe, punsubscribe later
 }
@@ -153,4 +154,17 @@ class ValkeyMessage {
 
   @override
   String toString() => 'Message{channel: $channel, message: $message}';
+}
+
+/// Represents an active subscription to channels.
+class Subscription {
+  /// A stream that emits messages received on the subscribed channels.
+  final Stream<ValkeyMessage> messages;
+
+  /// A future that completes when the initial subscription to all requested
+  /// channels is confirmed by the server.
+  final Future<void> ready;
+  // TODO: Add an unsubscribe() method here later.
+
+  Subscription(this.messages, this.ready);
 }

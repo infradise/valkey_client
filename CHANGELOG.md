@@ -1,5 +1,20 @@
 # Changelog
 
+
+## 0.9.1
+
+**Note:** This is the first version published to `pub.dev` with basic Pub/Sub support. Version 0.9.0 was unpublished due to bugs.
+
+### Fixed
+
+* **Critical Pub/Sub Bug:** Fixed the issue where the client would stop receiving Pub/Sub messages after the initial subscription confirmation, causing tests to time out. The root cause involved the handling of the `SUBSCRIBE` command's `Completer` interfering with the `StreamSubscription`.
+* **Parser Logic:** Improved the internal parser logic (`_processBuffer`) to more reliably distinguish between Pub/Sub push messages and regular command responses, especially while in the subscribed state.
+* **Test Logic:** Corrected the authentication failure test (`should throw an Exception when providing auth...`) to expect the actual error message returned by the server (`ERR AUTH...`) instead of a custom one.
+
+### Changed
+* **Pub/Sub Example:** Updated the Pub/Sub example (`example/valkey_client_example.dart`) to reflect the correct usage with the new `Subscription` object (including `await sub.ready`).
+
+
 ## 0.9.0
 
 **Note:** This version was not published to `pub.dev` due to unresolved issues in the Pub/Sub implementation found during testing.

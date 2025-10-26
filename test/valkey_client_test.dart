@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:test/test.dart';
 import 'package:valkey_client/valkey_client.dart';
-import 'package:stream_channel/stream_channel.dart'; // for StreamMatcher
-import 'package:async/async.dart' show StreamQueue;
+// import 'package:stream_channel/stream_channel.dart'; // for StreamMatcher
+// import 'package:async/async.dart' show StreamQueue;
 
 // This flag will be set by setUpAll
 bool isServerRunning = false;
@@ -429,12 +430,11 @@ Future<void> main() async {
       expect(ttl3, -2);
     });
   },
- 
+
       // Skip this entire group if the no-auth server is not running
       skip: !isServerRunning
           ? 'Valkey server not running on $noAuthHost:$noAuthPort'
           : false);
-
 
   // --- NEW GROUP FOR PUB/SUB ---
   group('ValkeyClient Pub/Sub', () {
@@ -470,56 +470,96 @@ Future<void> main() async {
       final message1 = 'Hello from test 1';
       final message2 = 'Hello from test 2';
 
-      // 1. Subscribe and get the stream
-      final messageStream = subscriberClient.subscribe([channel]);
+      // 1. Subscribe and get the Subscription object
+      final sub = subscriberClient
+          .subscribe([channel]); // Returns Subscription{messages, ready}
 
-      // 2. Use StreamMatcher to expect messages
-      // Use StreamQueue to consume events in order
-      final queue = StreamQueue(messageStream);
+      // --- NEW: Wait for the subscription to be ready ---
+      print('TEST: Waiting for subscription ready...');
+      await sub.ready.timeout(Duration(seconds: 2), onTimeout: () {
+        throw TimeoutException(
+            'Timed out waiting for subscription confirmation');
+      });
+      print('TEST: Subscription ready!');
+      // ---------------------------------------------------
 
-      // Check the first message
-      var receivedMessage = await queue.next;
-      expect(receivedMessage, isA<ValkeyMessage>());
-      expect(receivedMessage.channel, channel);
-      expect(receivedMessage.message, message1);
+      // 2. Use Completers to wait for messages AFTER subscription is ready
+      final completer1 = Completer<ValkeyMessage>();
+      final completer2 = Completer<ValkeyMessage>();
+      int messageCount = 0;
 
-      // Check the second message
-      receivedMessage = await queue.next;
-      expect(receivedMessage, isA<ValkeyMessage>());
-      expect(receivedMessage.channel, channel);
-      expect(receivedMessage.message, message2);
+      final subscriptionListener = sub.messages.listen(// Listen to sub.messages
+          (message) {
+        print('TEST received: ${message.message}');
+        messageCount++;
+        if (messageCount == 1 && !completer1.isCompleted) {
+          completer1.complete(message);
+        } else if (messageCount == 2 && !completer2.isCompleted) {
+          completer2.complete(message);
+        }
+      }, onError: (e, s) {
+        print('TEST stream error: $e');
+        if (!completer1.isCompleted) completer1.completeError(e, s);
+        if (!completer2.isCompleted) completer2.completeError(e, s);
+      }, onDone: () {
+        print('TEST stream done.');
+        if (!completer1.isCompleted) {
+          completer1.completeError('Stream closed prematurely');
+        }
+        if (!completer2.isCompleted) {
+          completer2.completeError('Stream closed prematurely');
+        }
+      });
 
-      // 3. Publish messages AFTER setting up the listener
-      // Allow a brief moment for the subscription to activate on the server
-      await Future.delayed(Duration(milliseconds: 100));
+      // 3. Publish messages AFTER awaiting sub.ready
+      print('TEST Publishing message 1...');
       final count1 = await publisherClient.publish(channel, message1);
+      print('TEST Publishing message 2...');
       final count2 = await publisherClient.publish(channel, message2);
 
-      // Expect at least one subscriber (our subscriberClient)
+      // Expect at least one subscriber
       expect(count1, greaterThanOrEqualTo(1));
       expect(count2, greaterThanOrEqualTo(1));
 
-      // Clean up the stream queue
-      await queue.cancel();
+      // 4. Wait for messages using Completers
+      print('TEST Waiting for message 1...');
+      final receivedMessage1 =
+          await completer1.future.timeout(Duration(seconds: 2), onTimeout: () {
+        print('TEST Timeout waiting for message 1');
+        throw TimeoutException('Timeout waiting for message 1');
+      });
+      expect(receivedMessage1, isA<ValkeyMessage>());
+      expect(receivedMessage1.channel, channel);
+      expect(receivedMessage1.message, message1);
+      print('TEST Received message 1 OK');
 
-      // Note: We need to implement UNSUBSCRIBE to properly exit
-      // the subscribed state for the client. For now, rely on tearDownAll.
+      print('TEST Waiting for message 2...');
+      final receivedMessage2 =
+          await completer2.future.timeout(Duration(seconds: 2), onTimeout: () {
+        print('TEST Timeout waiting for message 2');
+        throw TimeoutException('Timeout waiting for message 2');
+      });
+      expect(receivedMessage2, isA<ValkeyMessage>());
+      expect(receivedMessage2.channel, channel);
+      expect(receivedMessage2.message, message2);
+      print('TEST Received message 2 OK');
+
+      // Clean up the stream listener
+      await subscriptionListener.cancel();
     },
-      // Give this test a bit more time due to async nature
-      timeout: Timeout(Duration(seconds: 5))
-    );
+        // Give this test a bit more time due to async nature
+        timeout: Timeout(Duration(seconds: 10)));
 
     test('publish should return number of receivers', () async {
       // No active subscribers on this channel yet
-      final count = await publisherClient.publish('test:pubsub:no_subs', 'message');
+      final count =
+          await publisherClient.publish('test:pubsub:no_subs', 'message');
       expect(count, 0); // Expect 0 subscribers
     });
-
   },
 
       // Skip the entire group if the server is down
       skip: !isServerRunning
           ? 'Valkey server not running on $noAuthHost:$noAuthPort'
           : false);
-
 }
