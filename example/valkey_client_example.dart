@@ -304,7 +304,8 @@ Future<void> runPatternSubscriptionExample() async {
     listener = sub.messages.listen(
       (message) {
         // Now message includes the pattern
-        print('📬 Received: ${message.message} (Pattern: ${message.pattern}, Channel: ${message.channel})');
+        print(
+            '📬 Received: ${message.message} (Pattern: ${message.pattern}, Channel: ${message.channel})');
       },
       onError: (e) => print('❌ Stream Error: $e'),
       onDone: () => print('ℹ️ Subscription stream closed.'),
@@ -328,12 +329,11 @@ Future<void> runPatternSubscriptionExample() async {
     await subscriber.punsubscribe([pattern]);
     await Future.delayed(Duration(milliseconds: 200)); // Allow processing
 
-     // 5. Publish again (should not be received)
-    print("Sending: PUBLISH $channelInfo 'This message should NOT be received'");
+    // 5. Publish again (should not be received)
+    print(
+        "Sending: PUBLISH $channelInfo 'This message should NOT be received'");
     await publisher.publish(channelInfo, 'This message should NOT be received');
     await Future.delayed(Duration(seconds: 1));
-
-
   } catch (e) {
     print('❌ Advanced Pub/Sub Example Failed: $e');
   } finally {

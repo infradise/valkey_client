@@ -160,8 +160,10 @@ abstract class ValkeyClientBase {
 class ValkeyMessage {
   /// The channel the message was sent to. Null for pattern messages.
   final String? channel;
+
   /// The message payload.
   final String message;
+
   /// The pattern that matched the channel (only for pmessage). Null otherwise.
   final String? pattern;
 

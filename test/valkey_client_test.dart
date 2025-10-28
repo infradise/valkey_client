@@ -579,7 +579,8 @@ Future<void> main() async {
       // 2. Publish message 1 (should be received)
       await Future.delayed(Duration(milliseconds: 100)); // Allow listener setup
       await publisherClient.publish(channel, message1);
-      final receivedMsg1 = await msgCompleter.future.timeout(Duration(seconds: 2));
+      final receivedMsg1 =
+          await msgCompleter.future.timeout(Duration(seconds: 2));
       expect(receivedMsg1.message, message1);
 
       // 3. Unsubscribe
@@ -630,12 +631,14 @@ Future<void> main() async {
       await publisherClient.publish(channel2, message2);
 
       // 3. Wait and verify messages
-      final receivedMsg1 = await msg1Completer.future.timeout(Duration(seconds: 2));
+      final receivedMsg1 =
+          await msg1Completer.future.timeout(Duration(seconds: 2));
       expect(receivedMsg1.pattern, pattern);
       expect(receivedMsg1.channel, channel1);
       expect(receivedMsg1.message, message1);
 
-      final receivedMsg2 = await msg2Completer.future.timeout(Duration(seconds: 2));
+      final receivedMsg2 =
+          await msg2Completer.future.timeout(Duration(seconds: 2));
       expect(receivedMsg2.pattern, pattern);
       expect(receivedMsg2.channel, channel2);
       expect(receivedMsg2.message, message2);
@@ -645,7 +648,8 @@ Future<void> main() async {
       await listener.cancel();
       // Need punsubscribe to clean up properly
       await subscriberClient.punsubscribe([pattern]);
-       await Future.delayed(Duration(milliseconds: 100)); // Allow punsubscribe processing
+      await Future.delayed(
+          Duration(milliseconds: 100)); // Allow punsubscribe processing
     });
 
     test('punsubscribe should stop receiving pattern messages', () async {
@@ -661,18 +665,20 @@ Future<void> main() async {
 
       // Listen
       final listener = sub.messages.listen((msg) {
-         if (!msgCompleter.isCompleted) msgCompleter.complete(msg);
+        if (!msgCompleter.isCompleted) msgCompleter.complete(msg);
       });
       await Future.delayed(Duration(milliseconds: 100));
 
       // 2. Publish message 1 (should be received)
       await publisherClient.publish(channel, message1);
-      final receivedMsg1 = await msgCompleter.future.timeout(Duration(seconds: 2));
+      final receivedMsg1 =
+          await msgCompleter.future.timeout(Duration(seconds: 2));
       expect(receivedMsg1.message, message1);
 
       // 3. PUnsubscribe
       await subscriberClient.punsubscribe([pattern]);
-      await Future.delayed(Duration(milliseconds: 200)); // Allow server processing
+      await Future.delayed(
+          Duration(milliseconds: 200)); // Allow server processing
 
       // 4. Publish message 2 (should NOT be received)
       msgCompleter = Completer();
@@ -684,7 +690,6 @@ Future<void> main() async {
 
       await listener.cancel();
     });
-    
   },
 
       // Skip the entire group if the server is down
