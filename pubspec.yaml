@@ -7,6 +7,8 @@ homepage: https://visualkube.com/opensource/valkey_client
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
+license: Apache-2.0
+
 # We don't have any dependencies... yet.
 # dependencies:
 

@@ -71,3 +71,23 @@ This project is just getting started. If you are interested in contributing to t
 ## Maintained By
 
 Maintained by the developers of [Visualkube](https://visualkube.com) at [Infradise Inc](https://visualkube.com/about-us). We believe in giving back to the Dart & Flutter community.
+
+---
+
+## License
+
+This project is licensed under the **Apache License 2.0**.
+
+⚠️ **License Change Notification (2025-10-29)**
+
+This project was initially licensed under the MIT License. As of October 29, 2025 (v0.11.0 and later), the project has been re-licensed to the **Apache License 2.0**.
+
+We chose Apache 2.0 for its robust, clear, and balanced terms, which benefit both users and contributors:
+
+* **Contributor Protection (Patent Defense):** Includes a defensive patent termination clause. This strongly deters users from filing patent infringement lawsuits against contributors (us).
+* **User Protection (Patent Grant):** Explicitly grants users a patent license for any contributor patents embodied in the code, similar to MIT.
+* **Trademark Protection (Non-Endorsement):** Includes a clause (Section 6) that restricts the use of our trademarks (like `Infradise Inc.` or `Visualkube`), providing an effect similar to the "non-endorsement" clause in the BSD-3 license.
+
+**License Compatibility:** Please note that the Apache 2.0 license is **compatible with GPLv3**, but it is **not compatible with GPLv2**.
+
+All versions published prior to this change remain available under the MIT License. All future contributions and versions will be licensed under Apache License 2.0.
