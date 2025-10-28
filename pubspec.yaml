@@ -4,6 +4,13 @@ version: 0.10.0
 repository: https://github.com/infradise/valkey_client
 homepage: https://visualkube.com/opensource/valkey_client
 
+topics:
+  - valkey
+  - client
+  - redis
+  - sentinel
+  - cluster
+
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
