@@ -16,6 +16,14 @@ Ensure the code adheres to Dart formatting guidelines.
 dart format .
 ```
 
+## Analyze Code
+
+Check for static errors, warnings, and lints to ensure code quality and adherence to Dart best practices.
+
+```sh
+dart analyze
+```
+
 ## Pre-Publish Check
 
 Verify that the package is ready for publishing without actually uploading it.
