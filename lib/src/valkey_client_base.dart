@@ -145,12 +145,14 @@ abstract class ValkeyClientBase {
   // --- ADVANCED PUB/SUB COMMANDS (v0.10.0) ---
 
   /// Unsubscribes the client from the given [channels], or all channels if none are given.
+  /// The Future completes when the server confirms *all* relevant subscriptions are cancelled.
   Future<void> unsubscribe([List<String> channels = const []]);
 
   /// Subscribes the client to the given [patterns].
   Subscription psubscribe(List<String> patterns);
 
   /// Unsubscribes the client from the given [patterns], or all patterns if none are given.
+  /// The Future completes when the server confirms *all* relevant subscriptions are cancelled.
   Future<void> punsubscribe([List<String> patterns = const []]);
 }
 
