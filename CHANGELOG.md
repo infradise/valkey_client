@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.10.0
+
+### Added
+- **Advanced Pub/Sub:** Completed the core Pub/Sub feature set.
+  - `client.unsubscribe()`: Unsubscribes from specific channels or all channels.
+  - `client.psubscribe()`: Subscribes to patterns, returning a `Subscription` object.
+  - `client.punsubscribe()`: Unsubscribes from specific patterns or all patterns.
+- **`pmessage` Handling:** The client now correctly parses and emits `pmessage` (pattern message) events via the `ValkeyMessage` stream (with `pattern` field populated).
+- **State Management:** Improved internal state management (`_isInPubSubMode`, `_resetPubSubState`) for handling mixed and multiple subscription/unsubscription scenarios.
+
+### Fixed
+- **Critical Pub/Sub Hang:** Fixed a complex bug where `await unsubscribe()` or `await punsubscribe()` would hang (timeout).
+  - **Root Cause:** `SUBSCRIBE` and `PSUBSCRIBE` commands were incorrectly leaving their command `Completer`s in the `_responseQueue`.
+  - **Symptom:** This caused the queue to become desynchronized, and subsequent `unsubscribe`/`punsubscribe` calls would process the stale `Completer` instead of their own, leading to an infinite wait.
+- **Logic Refactor:** The `execute` method is now corrected to **not** add `Completer`s to the `_responseQueue` for any Pub/Sub management commands (`SUBSCRIBE`, `PSUBSCRIBE`, `UNSUBSCRIBE`, `PUNSUBSCRIBE`), as their futures are managed separately (e.g., `Subscription.ready` or the `Future<void>` returned by `unsubscribe`).
+
 
 ## 0.9.1
 
