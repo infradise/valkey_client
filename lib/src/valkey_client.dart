@@ -1105,8 +1105,9 @@ class ValkeyClient implements ValkeyClientBase {
 
   @override
   Future<void> unsubscribe([List<String> channels = const []]) async {
-    if (!_isInPubSubMode || (_subscribedChannels.isEmpty && channels.isEmpty))
+    if (!_isInPubSubMode || (_subscribedChannels.isEmpty && channels.isEmpty)) {
       return;
+    }
     // Send the command and return immediately once sent.
     // The Future completes when the command is sent, not confirmed.
     // Confirmation push messages will update internal state via _handlePubSubMessage.
@@ -1179,8 +1180,9 @@ class ValkeyClient implements ValkeyClientBase {
 
   @override
   Future<void> punsubscribe([List<String> patterns = const []]) async {
-    if (!_isInPubSubMode || (_subscribedPatterns.isEmpty && patterns.isEmpty))
+    if (!_isInPubSubMode || (_subscribedPatterns.isEmpty && patterns.isEmpty)) {
       return;
+    }
 
     // Initialize completer before executing
     if (_punsubscribeCompleter != null &&
