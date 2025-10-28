@@ -436,7 +436,7 @@ Future<void> main() async {
           ? 'Valkey server not running on $noAuthHost:$noAuthPort'
           : false);
 
-  // --- NEW GROUP FOR PUB/SUB ---
+  // --- GROUP FOR PUB/SUB ---
   group('ValkeyClient Pub/Sub', () {
     late ValkeyClient subscriberClient;
     late ValkeyClient publisherClient;
@@ -556,6 +556,135 @@ Future<void> main() async {
           await publisherClient.publish('test:pubsub:no_subs', 'message');
       expect(count, 0); // Expect 0 subscribers
     });
+
+    // --- TESTS FOR v0.10.0 (Advanced Pub/Sub) ---
+
+    test('unsubscribe should stop receiving messages', () async {
+      final channel = 'test:pubsub:unsub';
+      final message1 = 'message before unsub';
+      final message2 = 'message after unsub';
+      Completer<ValkeyMessage> msgCompleter = Completer();
+
+      // 1. Subscribe
+      final sub = subscriberClient.subscribe([channel]);
+      await sub.ready; // Wait for confirmation
+
+      // Listen
+      final listener = sub.messages.listen((msg) {
+        if (!msgCompleter.isCompleted) {
+          msgCompleter.complete(msg);
+        }
+      });
+
+      // 2. Publish message 1 (should be received)
+      await Future.delayed(Duration(milliseconds: 100)); // Allow listener setup
+      await publisherClient.publish(channel, message1);
+      final receivedMsg1 = await msgCompleter.future.timeout(Duration(seconds: 2));
+      expect(receivedMsg1.message, message1);
+
+      // 3. Unsubscribe
+      await subscriberClient.unsubscribe([channel]);
+      // Need a small delay for server to process unsubscribe
+      await Future.delayed(Duration(milliseconds: 200));
+
+      // 4. Publish message 2 (should NOT be received)
+      msgCompleter = Completer(); // Reset completer
+      await publisherClient.publish(channel, message2);
+
+      // Verify message 2 is NOT received by checking for timeout
+      await expectLater(
+        msgCompleter.future.timeout(Duration(seconds: 1)), // Shorter timeout
+        throwsA(isA<TimeoutException>()),
+      );
+
+      await listener.cancel();
+    });
+
+    test('psubscribe should receive messages matching pattern', () async {
+      final pattern = 'test:psub:*';
+      final channel1 = 'test:psub:channelA';
+      final channel2 = 'test:psub:channelB';
+      final message1 = 'Msg A';
+      final message2 = 'Msg B';
+      Completer<ValkeyMessage> msg1Completer = Completer();
+      Completer<ValkeyMessage> msg2Completer = Completer();
+      int receivedCount = 0;
+
+      // 1. PSubscribe
+      final sub = subscriberClient.psubscribe([pattern]);
+      await sub.ready; // Wait for confirmation
+
+      // Listen
+      final listener = sub.messages.listen((msg) {
+        receivedCount++;
+        if (msg.channel == channel1 && !msg1Completer.isCompleted) {
+          msg1Completer.complete(msg);
+        } else if (msg.channel == channel2 && !msg2Completer.isCompleted) {
+          msg2Completer.complete(msg);
+        }
+      });
+
+      // 2. Publish to matching channels AFTER ready
+      await Future.delayed(Duration(milliseconds: 100));
+      await publisherClient.publish(channel1, message1);
+      await publisherClient.publish(channel2, message2);
+
+      // 3. Wait and verify messages
+      final receivedMsg1 = await msg1Completer.future.timeout(Duration(seconds: 2));
+      expect(receivedMsg1.pattern, pattern);
+      expect(receivedMsg1.channel, channel1);
+      expect(receivedMsg1.message, message1);
+
+      final receivedMsg2 = await msg2Completer.future.timeout(Duration(seconds: 2));
+      expect(receivedMsg2.pattern, pattern);
+      expect(receivedMsg2.channel, channel2);
+      expect(receivedMsg2.message, message2);
+
+      expect(receivedCount, 2); // Ensure only 2 messages received
+
+      await listener.cancel();
+      // Need punsubscribe to clean up properly
+      await subscriberClient.punsubscribe([pattern]);
+       await Future.delayed(Duration(milliseconds: 100)); // Allow punsubscribe processing
+    });
+
+    test('punsubscribe should stop receiving pattern messages', () async {
+      final pattern = 'test:punsub:*';
+      final channel = 'test:punsub:channel';
+      final message1 = 'Msg before punsub';
+      final message2 = 'Msg after punsub';
+      Completer<ValkeyMessage> msgCompleter = Completer();
+
+      // 1. PSubscribe
+      final sub = subscriberClient.psubscribe([pattern]);
+      await sub.ready;
+
+      // Listen
+      final listener = sub.messages.listen((msg) {
+         if (!msgCompleter.isCompleted) msgCompleter.complete(msg);
+      });
+      await Future.delayed(Duration(milliseconds: 100));
+
+      // 2. Publish message 1 (should be received)
+      await publisherClient.publish(channel, message1);
+      final receivedMsg1 = await msgCompleter.future.timeout(Duration(seconds: 2));
+      expect(receivedMsg1.message, message1);
+
+      // 3. PUnsubscribe
+      await subscriberClient.punsubscribe([pattern]);
+      await Future.delayed(Duration(milliseconds: 200)); // Allow server processing
+
+      // 4. Publish message 2 (should NOT be received)
+      msgCompleter = Completer();
+      await publisherClient.publish(channel, message2);
+      await expectLater(
+        msgCompleter.future.timeout(Duration(seconds: 1)),
+        throwsA(isA<TimeoutException>()),
+      );
+
+      await listener.cancel();
+    });
+    
   },
 
       // Skip the entire group if the server is down

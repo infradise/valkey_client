@@ -267,4 +267,79 @@ Future<void> main() async {
     await Future.wait([subscriber.close(), publisher.close()]);
     print('Pub/Sub clients closed.');
   }
+
+  await runPatternSubscriptionExample();
 } // End of main
+
+// ====================================================================
+// Advanced Pub/Sub Example (v0.10.0) - Pattern Subscription
+// ====================================================================
+Future<void> runPatternSubscriptionExample() async {
+  print('\n' * 2);
+  print('=' * 40);
+  print('Running Advanced Pub/Sub Example (Pattern Subscription)');
+  print('=' * 40);
+
+  final subscriber = ValkeyClient(host: '127.0.0.1', port: 6379);
+  final publisher = ValkeyClient(host: '127.0.0.1', port: 6379);
+  StreamSubscription<ValkeyMessage>? listener;
+
+  try {
+    await Future.wait([subscriber.connect(), publisher.connect()]);
+    print('✅ Subscriber and Publisher connected!');
+
+    final pattern = 'log:*'; // Subscribe to all channels starting with 'log:'
+    final channelInfo = 'log:info';
+    final channelError = 'log:error';
+
+    print('\nPSubscribing to pattern: $pattern');
+
+    // 1. PSubscribe and wait for ready
+    final sub = subscriber.psubscribe([pattern]);
+    print('Waiting for psubscribe confirmation...');
+    await sub.ready.timeout(Duration(seconds: 2));
+    print('PSubscription confirmed!');
+
+    // 2. Listen to messages
+    listener = sub.messages.listen(
+      (message) {
+        // Now message includes the pattern
+        print('📬 Received: ${message.message} (Pattern: ${message.pattern}, Channel: ${message.channel})');
+      },
+      onError: (e) => print('❌ Stream Error: $e'),
+      onDone: () => print('ℹ️ Subscription stream closed.'),
+    );
+
+    // Give the subscription a moment
+    await Future.delayed(Duration(milliseconds: 200));
+
+    // 3. Publish to channels matching the pattern
+    print("\nSending: PUBLISH $channelInfo 'Application started'");
+    await publisher.publish(channelInfo, 'Application started');
+
+    print("Sending: PUBLISH $channelError 'Critical error occurred!'");
+    await publisher.publish(channelError, 'Critical error occurred!');
+
+    // Wait a bit to receive messages
+    await Future.delayed(Duration(seconds: 1));
+
+    // 4. Unsubscribe from the pattern
+    print('\nPUnsubscribing from pattern: $pattern');
+    await subscriber.punsubscribe([pattern]);
+    await Future.delayed(Duration(milliseconds: 200)); // Allow processing
+
+     // 5. Publish again (should not be received)
+    print("Sending: PUBLISH $channelInfo 'This message should NOT be received'");
+    await publisher.publish(channelInfo, 'This message should NOT be received');
+    await Future.delayed(Duration(seconds: 1));
+
+
+  } catch (e) {
+    print('❌ Advanced Pub/Sub Example Failed: $e');
+  } finally {
+    // Ensure listener is cancelled even on error
+    await listener?.cancel();
+    await Future.wait([subscriber.close(), publisher.close()]);
+    print('Advanced Pub/Sub clients closed.');
+  }
+}

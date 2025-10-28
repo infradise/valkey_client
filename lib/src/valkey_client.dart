@@ -7,10 +7,9 @@ import 'dart:collection'; // A Queue to manage pending commands
 // Import the base class AND the new ValkeyMessage
 import 'package:valkey_client/src/valkey_client_base.dart';
 // Re-export ValkeyMessage from the main library file
-export 'package:valkey_client/src/valkey_client_base.dart' show ValkeyMessage;
+export 'package:valkey_client/src/valkey_client_base.dart' show ValkeyMessage, Subscription;
 
-/// Internal helper class to read bytes from the buffer.
-/// This makes parsing much cleaner.
+// Internal helper class to read bytes from the buffer.
 class _BufferReader {
   final Uint8List _bytes;
   int _offset = 0;
@@ -24,7 +23,10 @@ class _BufferReader {
   Uint8List consume() => _bytes.sublist(_offset);
 
   /// Reads a single byte (prefix)
-  int readByte() => _bytes[_offset++];
+  int readByte() {
+    if (isDone) throw _IncompleteDataException('Cannot read byte, buffer empty');
+    return _bytes[_offset++];
+  }
 
   /// Reads a line (until \r\n) and returns it as a string.
   /// Returns null if no \r\n is found.
@@ -41,7 +43,7 @@ class _BufferReader {
   /// Returns null if not enough bytes are available.
   Uint8List? readBytes(int length) {
     if (length < 0) {
-      throw Exception('Invalid RESP length: $length'); // Added check
+      throw Exception('Invalid RESP length: $length');
     }
     if (remainingLength < length) return null; // Not enough bytes
 
@@ -81,6 +83,7 @@ class _IncompleteDataException implements Exception {
   String toString() => message;
 }
 
+
 /// The main client implementation for communicating with a Valkey server.
 class ValkeyClient implements ValkeyClientBase {
   Socket? _socket;
@@ -97,36 +100,34 @@ class ValkeyClient implements ValkeyClientBase {
   String? _lastUsername;
   String? _lastPassword;
 
-  // --- Command/Response Queue ---
+  // Command/Response Queue
   /// A queue of Completers, each waiting for a response.
   final Queue<Completer<dynamic>> _responseQueue = Queue();
-
   /// A buffer to store incomplete data chunks from the socket.
   final BytesBuilder _buffer = BytesBuilder();
-  // ------------------------------
 
+  // Connection/Auth State
   /// A Completer for the initial connection/auth handshake.
   Completer<void>? _connectionCompleter;
-
-  // Internal state to manage the auth handshake
+  /// Internal state to manage the auth handshake
   bool _isAuthenticating = false;
 
   // Pub/Sub State
-  // --- Fields for Pub/Sub ---
   /// Controller to broadcast incoming pub/sub messages.
   StreamController<ValkeyMessage>? _pubSubController;
-
-  /// Flag to indicate if the client is currently in subscribed mode.
-  bool _isSubscribed = false;
-
-  /// Set of channels currently subscribed to.
+  /// Flag indicating if the client is in *any* Pub/Sub mode (channel or pattern).
+  bool _isInPubSubMode = false;
+  /// Channels currently subscribed to via SUBSCRIBE.
   final Set<String> _subscribedChannels = {};
-  // ------------------------------
-  /// Completer for the 'ready' future of the current subscription.
+  /// Patterns currently subscribed to via PSUBSCRIBE.
+  final Set<String> _subscribedPatterns = {};
+  /// Completer for the 'ready' future of the current SUBSCRIBE command.
   Completer<void>? _subscribeReadyCompleter;
-
   /// Number of channels we expect confirmation for.
   int _expectedSubscribeConfirmations = 0;
+  /// Completer for the 'ready' future of the current PSUBSCRIBE command.
+  Completer<void>? _psubscribeReadyCompleter;
+  int _expectedPSubscribeConfirmations = 0;
 
   /// Creates a new Valkey client instance.
   ///
@@ -141,7 +142,6 @@ class ValkeyClient implements ValkeyClientBase {
         _defaultPort = port,
         _defaultUsername = username,
         _defaultPassword = password;
-  // -----------------------------
 
   /// A Future that completes once the connection and authentication are successful.
   @override
@@ -160,7 +160,6 @@ class ValkeyClient implements ValkeyClientBase {
     if (_connectionCompleter != null && !_connectionCompleter!.isCompleted) {
       return onConnected;
     }
-    // If already connecting or connected, return the existing future.
     // If already connected successfully, return immediately
     if (_socket != null &&
         _connectionCompleter != null &&
@@ -170,46 +169,46 @@ class ValkeyClient implements ValkeyClientBase {
           await onConnected.then((_) => true, onError: (_) => false);
       if (wasSuccessful) return onConnected;
       // If the future completed with an error, allow reconnect attempt
-      await close(); // Ensure cleanup before reconnect
+      await close(); // Ensure cleanup before reconnect if previous connection failed
     }
 
-    // --- Use method args if provided, otherwise fallback to defaults ---
+    // Use method args if provided, otherwise fallback to defaults
     _lastHost = host ?? _defaultHost;
     _lastPort = port ?? _defaultPort;
     _lastUsername = username ?? _defaultUsername;
     _lastPassword = password ?? _defaultPassword;
-    // -----------------------------------------------------------------
 
     // Reset the completer for this new connection attempt
     _connectionCompleter = Completer();
     // Reset states for a fresh connection
     _isAuthenticating = false;
-    _isSubscribed = false;
+
+    _isInPubSubMode = false; // Reset pubsub state on new connection
     _subscribedChannels.clear();
+    _subscribedPatterns.clear(); // Clear patterns too
     _buffer.clear();
     _responseQueue.clear();
-    // Close existing pub/sub controller if any
-    _resetPubSubState();
+    _resetPubSubState(); // Close existing controller and reset completers
 
-    print('Connecting to $_lastHost:$_lastPort...');
+    // print('Connecting to $_lastHost:$_lastPort...');
 
     try {
       // 1. Attempt to connect the socket.
       _socket = await Socket.connect(_lastHost, _lastPort);
 
-      print('✅ Successfully connected to $_lastHost:$_lastPort');
+      // print('✅ Successfully connected to $_lastHost:$_lastPort');
 
       // 2. Set up the socket stream listener.
       _subscription = _socket!.listen(
-        // This is our mini-parser (AUTH only)
         // This is where we will parse the RESP3 data from the server.
-
-        _handleSocketData, // Renamed to a generic handler
+        _handleSocketData,
         onError: _handleSocketError,
         onDone: _handleSocketDone,
-        cancelOnError: true, // Automatically cancel the subscription on error.
+        // false: The subscription will NOT be automatically cancelled if an error occurs. Error handling (including potential cancellation) is managed by the onError callback (_handleSocketError).
+        // true: Automatically cancel the subscription on error.
+        cancelOnError: false, 
       );
-      print('[STREAM LOG] Subscription CREATED/LISTENED.');
+      // print('[STREAM LOG] Subscription CREATED/LISTENED.');
 
       // --- AUTHENTICATION LOGIC ---
       if (_lastPassword != null) {
@@ -224,7 +223,7 @@ class ValkeyClient implements ValkeyClientBase {
         }
       }
     } catch (e, s) {
-      print('Failed to connect: $e');
+      // print('Failed to connect: $e');
       _cleanup(); // Clean up socket if connection fails
       if (_connectionCompleter != null && !_connectionCompleter!.isCompleted) {
         _connectionCompleter!.completeError(e, s); // Rethrow connection error
@@ -238,7 +237,7 @@ class ValkeyClient implements ValkeyClientBase {
 
   /// This is now the main entry point for ALL data from the socket.
   void _handleSocketData(Uint8List data) {
-    print('Raw data from server: ${String.fromCharCodes(data)}');
+    // print('Raw data from server: ${String.fromCharCodes(data)}');
     // print('[DEBUG 1] _handleSocketData received: ${data.length} bytes');
     // try { print('[DEBUG 1.1] Data as string:\n${utf8.decode(data).replaceAll('\r', '\\r').replaceAll('\n', '\\n\n')}'); } catch (_) {}
     _buffer.add(data);
@@ -250,8 +249,8 @@ class ValkeyClient implements ValkeyClientBase {
   ///
   /// Processes the buffer, parsing messages and routing them.
   void _processBuffer() {
-    // print('[DEBUG 2] _processBuffer entered. Buffer size: ${_buffer.length}, Queue size: ${_responseQueue.length}, Subscribed: $_isSubscribed, Authenticating: $_isAuthenticating');
-    while (_buffer.isNotEmpty) {
+    // print('[DEBUG 2] _processBuffer entered. Buffer size: ${_buffer.length}, Queue size: ${_responseQueue.length}, Subscribed: $_isInPubSubMode, Authenticating: $_isAuthenticating');
+    while (_buffer.isNotEmpty) { // Process as long as there's data
       final reader = _BufferReader(_buffer.toBytes());
       final initialOffset = reader._offset; // Track if we consumed anything
 
@@ -266,6 +265,7 @@ class ValkeyClient implements ValkeyClientBase {
 
         // --- Handle Push Messages (Pub/Sub) ---
         // 1. Is it a Pub/Sub push message?
+        // Check if it's a PUSH message FIRST
         if (_isPubSubPushMessage(response)) {
           // print('[DEBUG 5.1] Handling as PubSub Push Message...');
           _handlePubSubMessage(response as List<dynamic>);
@@ -273,11 +273,13 @@ class ValkeyClient implements ValkeyClientBase {
 
         // --- Handle Regular Command Responses ---
         // 2. Is it the response to the initial AUTH command?
+        // If NOT a push message, check if we are AUTHENTICATING
         else if (_isAuthenticating) {
           // print('[DEBUG 5.2] Handling as AUTH Response...');
           _resolveNextCommand(response); // Completes _connectionCompleter
         }
         // 3. Is it a response to a command we sent via execute()?
+        // If NOT push and NOT auth, check if it's a COMMAND response
         else if (_responseQueue.isNotEmpty) {
           // print('[DEBUG 5.3] Handling as Command Response (Queue has ${_responseQueue.length})...');
           _resolveNextCommand(response); // Completes command completer
@@ -317,7 +319,7 @@ class ValkeyClient implements ValkeyClientBase {
 
         // If subscribed mode error, maybe close stream?
         // Try to report error to the correct place
-        if (_isSubscribed &&
+        if (_isInPubSubMode &&
             _pubSubController != null &&
             !_pubSubController!.isClosed) {
           _pubSubController!.addError(e, s);
@@ -342,12 +344,8 @@ class ValkeyClient implements ValkeyClientBase {
   bool _isPubSubPushMessage(dynamic response) {
     if (response is List && response.isNotEmpty && response[0] is String) {
       final type = response[0] as String;
-      // Check for known push types (adjust as needed)
-      return type == 'message' ||
-          type == 'subscribe' ||
-          type == 'unsubscribe'; // Add pmessage later
-
-      // TODO: Add pmessage, psubscribe, punsubscribe later
+      return type == 'message' || type == 'subscribe' || type == 'unsubscribe' ||
+             type == 'pmessage' || type == 'psubscribe' || type == 'punsubscribe';
     }
     return false;
   }
@@ -359,32 +357,43 @@ class ValkeyClient implements ValkeyClientBase {
 
     if (type == 'message' && messageArray.length == 3) {
       final channel = messageArray[1] as String;
-      final message = messageArray[2]
-          as String?; // Allow null message? Redis usually sends empty string
+      final message = messageArray[2] as String?; // Allow null message? Redis usually sends empty string
       // print('[DEBUG 10] Adding message to StreamController for channel $channel...');
       if (_pubSubController != null && !_pubSubController!.isClosed) {
-        _pubSubController!.add(
-            ValkeyMessage(channel, message ?? '')); // Handle potential null
+           _pubSubController!.add(
+               ValkeyMessage(channel: channel, message: message ?? '')); // Handle potential null
       } else {
         // print('[DEBUG 10.1] StreamController is null or closed, cannot add message.');
       }
-    } else if (type == 'subscribe' && messageArray.length == 3) {
+    }
+    
+    else if (type == 'pmessage' && messageArray.length == 4) {
+        final pattern = messageArray[1] as String;
+        final channel = messageArray[2] as String;
+        final message = messageArray[3] as String?;
+        if (_pubSubController != null && !_pubSubController!.isClosed) {
+             _pubSubController!.add(ValkeyMessage(pattern: pattern, channel: channel, message: message ?? ''));
+        }
+    }
+
+    else if (type == 'subscribe' && messageArray.length == 3) {
       // Handle the initial subscription confirmation
       final channel = messageArray[1]
           as String?; // Can be null on multi-subscribe? Check RESP spec
-      final count = messageArray[2]; // Should be int
+      final count = messageArray[2]; // Current total *combined* count
 
       // print('[DEBUG 11] Handling subscribe confirmation for ${channel ?? 'unknown channel'}. Count: $count');
       if (channel != null && count is int) {
-        if (!_isSubscribed && count > 0) {
-          // print('[DEBUG 11.1] Setting _isSubscribed = true');
-          _isSubscribed = true; // Set state upon first confirmation
+        if (!_isInPubSubMode && count > 0) {
+          // print('[DEBUG 11.1] Setting _isInPubSubMode = true');
+          _isInPubSubMode = true; // Set state upon first confirmation
         }
         _subscribedChannels.add(channel);
         // Completer is handled in _resolveNextCommand
 
         // --- FIX: Check if all expected channels are confirmed ---
         // Decrement expected count (or check if _subscribedChannels.length reaches expected)
+        // Complete the 'ready' future for SUBSCRIBE
         _expectedSubscribeConfirmations--;
         // print('[DEBUG 11.3] Subscription confirmed for $channel. Remaining confirmations needed: $_expectedSubscribeConfirmations');
 
@@ -392,19 +401,71 @@ class ValkeyClient implements ValkeyClientBase {
         if (_expectedSubscribeConfirmations <=
                 0 && // Should be exactly 0 ideally
             _subscribeReadyCompleter != null &&
-            !_subscribeReadyCompleter!.isCompleted) {
-          print(
-              '[DEBUG 11.4] All subscribe confirmations received. Completing ready future.');
-          _subscribeReadyCompleter!.complete();
+            !_subscribeReadyCompleter!.isCompleted)
+        {
+            // print('[DEBUG 11.4] All subscribe confirmations received. Completing ready future.');
+            _subscribeReadyCompleter!.complete();
         }
         // --- DO NOT complete the command completer here ---
         // --- DO NOT add this confirmation to _pubSubController ---
       } else {
         // print('[DEBUG 11.2] Invalid subscribe confirmation format: $messageArray');
       }
-    } else if (type == 'unsubscribe' /* ...or other types... */) {
-      // Handle unsubscribe confirmations etc. later
-      // print('[DEBUG 9.1] Unhandled push message type: $type');
+    } 
+    
+    else if (type == 'psubscribe' && messageArray.length == 3) {
+        final pattern = messageArray[1] as String?;
+        final count = messageArray[2]; // Current total *combined* count
+
+        if (pattern != null && count is int) {
+             if (!_isInPubSubMode && count > 0) {
+                 _isInPubSubMode = true;
+             }
+            _subscribedPatterns.add(pattern);
+
+            // Complete the 'ready' future for PSUBSCRIBE
+            _expectedPSubscribeConfirmations--;
+             if (_expectedPSubscribeConfirmations <= 0 &&
+                _psubscribeReadyCompleter != null &&
+                !_psubscribeReadyCompleter!.isCompleted)
+            {
+               _psubscribeReadyCompleter!.complete();
+            }
+        }
+    }
+    
+    else if (type == 'unsubscribe' && messageArray.length == 3) {
+        final channel = messageArray[1] as String?; // Can be null if unsubscribing from all
+        final count = messageArray[2]; // Remaining total *combined* count
+
+        if (channel != null && count is int) {
+            _subscribedChannels.remove(channel);
+        } else if (channel == null && count is int) { // count might not be 0 if patterns remain
+           _subscribedChannels.clear();
+        }
+        // Check if fully unsubscribed
+        if (count is int && count == 0 && _subscribedPatterns.isEmpty) {
+             _resetPubSubState(); // Reset if truly no subscriptions left
+        }
+    }
+
+    else if (type == 'punsubscribe' && messageArray.length == 3) {
+        final pattern = messageArray[1] as String?; // Can be null
+        final count = messageArray[2]; // Remaining total *combined* count
+
+        if (pattern != null && count is int) {
+            _subscribedPatterns.remove(pattern);
+        } else if (pattern == null && count is int) { // count might not be 0 if channels remain
+           _subscribedPatterns.clear();
+        }
+        // Check if fully unsubscribed
+        if (count is int && count == 0 && _subscribedChannels.isEmpty) {
+             _resetPubSubState(); // Reset if truly no subscriptions left
+        }
+    }
+    else {
+       // Unhandled push type
+       print('Warning: Unhandled Pub/Sub push message type: $type');
     }
   }
 
@@ -515,26 +576,27 @@ class ValkeyClient implements ValkeyClientBase {
       // print('[DEBUG R.2] Resolving AUTH completer.');
       // This is the AUTH response
       _isAuthenticating = false;
-      if (responseIsError) {
-        _connectionCompleter!.completeError(result, stackTrace);
-      } else {
-        _connectionCompleter!.complete();
+
+      if (!_connectionCompleter!.isCompleted) {
+        if (responseIsError) {
+          _connectionCompleter!.completeError(result, stackTrace);
+        } else {
+          _connectionCompleter!.complete();
+        }
       }
     } else {
       if (_responseQueue.isEmpty) {
-        // Safety check
         // print('[DEBUG R.3] Warning: _resolveNextCommand called but queue is empty.');
-        return; // Should not happen, (but safe guard)
+        return; // Safety check
       }
 
       final completer = _responseQueue.removeFirst();
-      // print('[DEBUG R.4] Resolving command completer. Queue left: ${_responseQueue.length}');
-
       if (completer.isCompleted) return; // Already completed
 
       // print('[DEBUG R.4] Resolving command completer. Queue left: ${_responseQueue.length}');
 
       // Normal command completion/error
+      // SUBSCRIBE/PSUBSCRIBE confirmations are PUSH messages and handled elsewhere
       if (responseIsError) {
         completer.completeError(result, stackTrace);
       } else {
@@ -549,21 +611,20 @@ class ValkeyClient implements ValkeyClientBase {
   /// Returns a Future that completes with the server's response.
   @override
   Future<dynamic> execute(List<String> command) async {
-    // --- Check if in subscribed mode ---
-    // Prevent most commands in subscribed mode
-    if (_isSubscribed) {
+    // Prevent most commands in Pub/Sub mode
+    if (_isInPubSubMode) {
       final cmd = command.isNotEmpty ? command[0].toUpperCase() : '';
-      // Allow only specific commands in subscribed mode
+      // Allow specific commands needed for Pub/Sub management
       const allowedCommands = {
+        'SUBSCRIBE', 
         'UNSUBSCRIBE',
+        'PSUBSCRIBE', 
         'PUNSUBSCRIBE',
-        'PING',
-        'QUIT'
-      }; // Allowed when subscribed
-      // Removed PSUBSCRIBE/SUBSCRIBE for now
+        'PING', 
+        'QUIT' // QUIT should probably disconnect
+      };
       if (!allowedCommands.contains(cmd)) {
-        return Future.error(Exception(
-            'Cannot execute command $cmd while subscribed. Only UNSUBSCRIBE, PUNSUBSCRIBE, PING, QUIT are allowed.'));
+        return Future.error(Exception('Cannot execute command $cmd while in Pub/Sub mode...'));
       }
     }
     // ---------------------------------
@@ -586,25 +647,30 @@ class ValkeyClient implements ValkeyClientBase {
       if (_socket == null) {
         throw Exception('Client not connected.');
       }
-      // Ensure connection/auth is complete before sending commands (unless it's AUTH itself)
-      if (command.isNotEmpty && command[0].toUpperCase() != 'AUTH') {
-        await onConnected; // Wait if connection/auth is still in progress
+      // Ensure connection/auth is complete before sending most commands
+      final cmdUpper = command.isNotEmpty ? command[0].toUpperCase() : '';
+      const skipWaitCommands = {'AUTH', 'SUBSCRIBE', 'PSUBSCRIBE'}; // Don't wait for onConnected for these
+      if (!skipWaitCommands.contains(cmdUpper)) {
+           await onConnected; // Wait if connection/auth is still in progress
       }
       _socket!.write(buffer.toString());
     } catch (e, s) {
-      // If write fails, remove the completer and throw
       // If write fails or onConnected fails, remove completer and complete with error
+      // Ensure completer is removed and completed with error
       if (_responseQueue.contains(completer)) {
-        _responseQueue.remove(completer);
+         _responseQueue.remove(completer);
       }
-      // Avoid completing if already completed
+      // Complete with error ONLY if it hasn't been completed already
       if (!completer.isCompleted) {
-        completer.completeError(e, s);
+         completer.completeError(e, s);
+      } else {
+         // If already completed, at least log the error that occurred here
+         print('Warning: Error occurred during execute() for an already completed command: $e');
       }
+      // Optional: rethrow e; // Rethrow if needed for higher-level handlers
     }
 
     // 4. Return the Future
-
     return completer.future;
   }
 
@@ -812,11 +878,10 @@ class ValkeyClient implements ValkeyClientBase {
 
   @override
   Subscription subscribe(List<String> channels) {
-    if (_isSubscribed) {
-      // Cannot call subscribe again while already subscribed (use PSUBSCRIBE?)
-      // For now, just return the existing stream or throw an error.
+    if (_isInPubSubMode && _subscribedPatterns.isNotEmpty) {
       throw Exception(
-          'Client is already in subscribed mode. Create a new client instance.');
+        'Client is already in subscribed mode. Mixing channel and pattern subscriptions on the same client instance is discouraged due to complexity. Please use separate client instances for channel (subscribe) and pattern (psubscribe) subscriptions.'
+      );
     }
     // Ensure channels list is not empty
     if (channels.isEmpty) {
@@ -828,10 +893,11 @@ class ValkeyClient implements ValkeyClientBase {
     }
 
     _subscribedChannels.clear(); // Reset channel list for this subscription
-    // --- NEW: Initialize ready completer ---
-    _subscribeReadyCompleter = Completer<void>();
+    // Initialize or reset ready completer
+    if (_subscribeReadyCompleter == null || _subscribeReadyCompleter!.isCompleted) {
+       _subscribeReadyCompleter = Completer<void>();
+    }
     _expectedSubscribeConfirmations = channels.length;
-    // ------------------------------------
 
     // Send the command, handle errors, but don't await the Future from execute() here.
     execute(['SUBSCRIBE', ...channels]).catchError((e, s) {
@@ -843,6 +909,8 @@ class ValkeyClient implements ValkeyClientBase {
       if (_pubSubController != null && !_pubSubController!.isClosed) {
         _pubSubController!.addError(e, s);
       }
+      // Reset state needed if the initial command send fails,
+      // ensuring the client returns to a normal operational state.
       _resetPubSubState();
     });
 
@@ -854,53 +922,143 @@ class ValkeyClient implements ValkeyClientBase {
   /// Resets the Pub/Sub state (e.g., after unsubscribe or error).
   void _resetPubSubState() {
     // print('[DEBUG X.1] Resetting PubSub state.');
-    _isSubscribed = false;
+    if (_isInPubSubMode) {
+          _isInPubSubMode = false;
+    }
     _subscribedChannels.clear();
+    _subscribedPatterns.clear(); // Clear patterns too
+
+    // Close ready completers if they exist and aren't done
+    // Complete completers with error if they are still pending
+    if (_subscribeReadyCompleter != null && !_subscribeReadyCompleter!.isCompleted) {
+        // Subscription cancelled or failed.
+        _subscribeReadyCompleter!.completeError(Exception("Subscription cancelled or failed before ready."));
+    }
+    if (_psubscribeReadyCompleter != null && !_psubscribeReadyCompleter!.isCompleted) {
+        // Subscription cancelled or failed.
+        _psubscribeReadyCompleter!.completeError(Exception("Subscription cancelled or failed before ready."));
+    }
+    _subscribeReadyCompleter = null;
+    _psubscribeReadyCompleter = null;
+    _expectedSubscribeConfirmations = 0;
+    _expectedPSubscribeConfirmations = 0;
+
     if (_pubSubController != null && !_pubSubController!.isClosed) {
       _pubSubController!.close();
     }
     _pubSubController = null;
   }
 
+  // --- Pub/Sub Commands (v0.10.0) ---
+
+  @override
+  Future<void> unsubscribe([List<String> channels = const []]) async {
+    if (!_isInPubSubMode || _subscribedChannels.isEmpty) return; // Nothing to unsubscribe from
+    // Server replies with confirmation pushes handled by _handlePubSubMessage
+    // This Future completes when the command is sent.
+    // Confirmations are handled by _handlePubSubMessage which updates state.
+    await execute(['UNSUBSCRIBE', ...channels]);
+    // State (_isInPubSubMode, _subscribedChannels) updated in _handlePubSubMessage
+  }
+
+  @override
+  Subscription psubscribe(List<String> patterns) {
+    if (_isInPubSubMode && _subscribedChannels.isNotEmpty) {
+      // Mixing SUBSCRIBE and PSUBSCRIBE on the same connection can be complex.
+      // For simplicity, let's restrict to one mode or the other for now,
+      // or require PSUBSCRIBE only when not channel-subscribed.
+      // Let's allow it but state management gets tricky.
+
+      // print('Warning: Mixing channel and pattern subscriptions might lead to unexpected behavior.');
+      // throw Exception('Cannot mix PSUBSCRIBE with active channel subscriptions on the same client.');
+    }
+     if (patterns.isEmpty) {
+       throw ArgumentError('Pattern list cannot be empty for PSUBSCRIBE.');
+    }
+    if (_pubSubController == null || _pubSubController!.isClosed) {
+      _pubSubController = StreamController<ValkeyMessage>.broadcast();
+    }
+
+    // Initialize or reset ready completer for this command
+    if (_psubscribeReadyCompleter == null || _psubscribeReadyCompleter!.isCompleted) {
+        _psubscribeReadyCompleter = Completer<void>();
+    }
+    _expectedPSubscribeConfirmations = patterns.length;
+
+    // Send the command
+    execute(['PSUBSCRIBE', ...patterns]).catchError((e, s) {
+        if (_psubscribeReadyCompleter != null && !_psubscribeReadyCompleter!.isCompleted) {
+            _psubscribeReadyCompleter!.completeError(e, s);
+        }
+        if (_pubSubController != null && !_pubSubController!.isClosed) {
+           _pubSubController!.addError(e, s);
+        }
+        // Reset state needed if the initial command send fails,
+        // ensuring the client returns to a normal operational state.
+        _resetPubSubState();
+    });
+
+    // Return the Subscription object immediately
+    return Subscription(_pubSubController!.stream, _psubscribeReadyCompleter!.future);
+  }
+
+   @override
+  Future<void> punsubscribe([List<String> patterns = const []]) async {
+    if (!_isInPubSubMode || _subscribedPatterns.isEmpty) return; // Not subscribed
+    // Server replies with confirmation pushes
+    await execute(['PUNSUBSCRIBE', ...patterns]);
+    // State updated in _handlePubSubMessage
+  }
+
   // --- Socket Lifecycle Handlers ---
 
   void _handleSocketError(Object error, StackTrace stackTrace) {
-    print('[STREAM LOG] onError CALLED. Error: $error');
-    // print('Socket error: $error');
+    // print('[STREAM LOG] onError CALLED. Error: $error');
     // print('[DEBUG E.1] Socket Error: $error');
-    _cleanup(); // Close socket etc.
+    // Call cleanup FIRST to release resources immediately
+    _cleanup(); // Close socket etc. FIRST
+
+    // Complete connection completer if it's still pending
     if (_connectionCompleter != null && !_connectionCompleter!.isCompleted) {
       _connectionCompleter!.completeError(error, stackTrace);
-    }
-    // Fail all pending commands
+    }    
+
+    // Fail any pending commands in the queue
     _failAllPendingCommands(error, stackTrace);
+
+    // Add error to Pub/Sub stream AFTER failing commands
     if (_pubSubController != null && !_pubSubController!.isClosed) {
       // --- Close PubSub stream on error ---
       _pubSubController!.addError(error, stackTrace);
-    }
-    _resetPubSubState();
-    // ----------------------------------
-  }
+    }    
+    
+    _resetPubSubState(); // Reset Pub/Sub state AFTER handling errors
+  } 
 
   void _handleSocketDone() {
-    print('[STREAM LOG] onDone CALLED.');
+    // print('[STREAM LOG] onDone CALLED.');
     // print('Socket closed by server.');
     // print('[DEBUG D.1] Socket Done.');
-    _cleanup();
+    _cleanup(); // Close socket etc. FIRST
+
     final error = Exception('Connection closed unexpectedly by the server.');
-    final stackTrace = StackTrace.current;
+    final stackTrace = StackTrace.current; // Get current stack for context
+
+    // Complete connection completer if it's still pending
     if (_connectionCompleter != null && !_connectionCompleter!.isCompleted) {
-      // Connection closed prematurely.
-      _connectionCompleter!
-          .completeError(error, stackTrace); // Connection closed before setup.
+        _connectionCompleter!
+          .completeError(error, stackTrace); // Connection closed prematurely before setup.
     }
-    // Fail all pending commands
+
+    // Fail any pending commands
     _failAllPendingCommands(error, stackTrace);
+
+    // Add error to Pub/Sub stream AFTER failing commands
     if (_pubSubController != null && !_pubSubController!.isClosed) {
-      // --- Close PubSub stream on disconnect ---
-      _pubSubController!.addError(error, stackTrace);
+        // Close PubSub stream on disconnect
+        _pubSubController!.addError(error, stackTrace);
     }
-    _resetPubSubState();
+    _resetPubSubState(); // Reset Pub/Sub state AFTER handling errors
   }
 
   void _failAllPendingCommands(Object error, [StackTrace? stackTrace]) {
@@ -914,8 +1072,7 @@ class ValkeyClient implements ValkeyClientBase {
     }
   }
 
-  /// Sends the AUTH command in RESP Array format.
-  /// Sends the AUTH command. Internal use only.
+  /// Sends the AUTH command in RESP Array format. Internal use only.
   void _sendAuthCommand(String password, {String? username}) {
     List<String> command;
     if (username != null) {
@@ -936,13 +1093,16 @@ class ValkeyClient implements ValkeyClientBase {
     }
     // Auth command is sent immediately after connect, socket should exist
     try {
+      if (_socket == null && _connectionCompleter != null && !_connectionCompleter!.isCompleted) {
+           throw Exception('Socket closed before AUTH could be sent.');
+       }
       // Send to socket
       _socket?.write(buffer.toString());
-    } catch (e) {
+    } catch (e, s) {
       // If sending AUTH fails, connection setup fails
       if (_connectionCompleter != null && !_connectionCompleter!.isCompleted) {
         _connectionCompleter!
-            .completeError(Exception('Failed to send AUTH command: $e'));
+            .completeError(Exception('Failed to send AUTH command: $e'), s);
       }
       _cleanup();
     }
@@ -950,34 +1110,38 @@ class ValkeyClient implements ValkeyClientBase {
 
   @override
   Future<void> close() async {
-    print('[DEBUG C.1] Close called by user.');
-    print('[STREAM LOG] close(): Attempting to CANCEL subscription...');
-    await _subscription?.cancel();
-    await _socket?.close(); // Graceful close if possible
-    _cleanup(); // Ensure resources are released
+    // print('[DEBUG C.1] Close called by user.');
+    // print('[STREAM LOG] close(): Attempting to CANCEL subscription...');
+    await _subscription?.cancel(); // Cancel listening FIRST
+    await _socket?.close(); // Graceful close socket if possible
+    _cleanup(); // Then cleanup resources. Ensure resources are released
     // Complete the completer with an error if it wasn't completed? Or just let onDone handle it?
     // Let onDone handle it for now.
     // Fail pending commands immediately? _handleSocketDone will do it eventually.
     // Reset pub/sub state immediately
-    print('Connection closed by client.');
+    // print('Connection closed by client.');
     // (No need to fail commands here, _handleSocketDone will do it)
-    _resetPubSubState();
+    _resetPubSubState(); // Reset pubsub state
   }
 
   /// Internal helper to clean up socket and subscription resources.
-  /// Cleans up resources like socket and subscription.
+  /// Cleans up resources like socket and subscription. MUST be safe to call multiple times.
   void _cleanup() {
-    print('[DEBUG CL.1] Cleaning up client resources.');
-    print('[STREAM LOG] _cleanup(): Attempting to CANCEL subscription...');
+    // print('[DEBUG CL.1] Cleaning up client resources.');
+    // print('[STREAM LOG] _cleanup(): Attempting to CANCEL subscription...');
 
-    _subscription?.cancel();
+    // _subscription?.cancel();
+    _subscription?.cancel().catchError((_) {}); // Errors are likely if already closed/cancelled
+
     _socket?.destroy(); // Force close // Ensure the socket is fully destroyed.
     _socket = null;
     _subscription = null;
     _buffer.clear();
     // Reset flags
     _isAuthenticating = false;
-    // Don't reset _isSubscribed here, rely on _resetPubSubState
+
+    // Do not reset _isInPubSubMode here, rely on _resetPubSubState if needed via handlers
     // Do not create a new completer here, let connect() handle it.
+    // e.g., _isInPubSubMode = false; // Reset pubsub mode on cleanup
   }
 }

@@ -128,7 +128,7 @@ abstract class ValkeyClientBase {
   /// Returns `-2` if the key does not exist.
   Future<int> ttl(String key);
 
-  // --- PUB/SUB (v0.9.0) ---
+  // --- PUB/SUB (v0.9.0 / v0.9.1) ---
 
   /// Posts a [message] to the given [channel].
   /// Returns the number of clients that received the message.
@@ -142,29 +142,48 @@ abstract class ValkeyClientBase {
   /// and a future indicating when the subscription is ready.
   Subscription subscribe(List<String> channels);
 
-  // TODO: Add unsubscribe, psubscribe, punsubscribe later
+  // --- ADVANCED PUB/SUB COMMANDS (v0.10.0) ---
+
+  /// Unsubscribes the client from the given [channels], or all channels if none are given.
+  Future<void> unsubscribe([List<String> channels = const []]);
+
+  /// Subscribes the client to the given [patterns].
+  Subscription psubscribe(List<String> patterns);
+
+  /// Unsubscribes the client from the given [patterns], or all patterns if none are given.
+  Future<void> punsubscribe([List<String> patterns = const []]);
 }
 
-/// Represents a message received from a subscribed channel.
+/// Represents a message received from a subscribed channel or pattern.
 class ValkeyMessage {
-  final String channel;
+  /// The channel the message was sent to. Null for pattern messages.
+  final String? channel;
+  /// The message payload.
   final String message;
+  /// The pattern that matched the channel (only for pmessage). Null otherwise.
+  final String? pattern;
 
-  ValkeyMessage(this.channel, this.message);
+  ValkeyMessage({this.channel, required this.message, this.pattern});
 
   @override
-  String toString() => 'Message{channel: $channel, message: $message}';
+  String toString() {
+    if (pattern != null) {
+      return 'Message{pattern: $pattern, channel: $channel, message: $message}';
+    } else {
+      return 'Message{channel: $channel, message: $message}';
+    }
+  }
 }
 
-/// Represents an active subscription to channels.
+/// Represents an active subscription to channels or patterns.
 class Subscription {
-  /// A stream that emits messages received on the subscribed channels.
+  /// A stream that emits messages received on the subscribed channels/patterns.
   final Stream<ValkeyMessage> messages;
 
   /// A future that completes when the initial subscription to all requested
-  /// channels is confirmed by the server.
+  /// channels/patterns is confirmed by the server.
   final Future<void> ready;
-  // TODO: Add an unsubscribe() method here later.
+  // TODO: Add an unsubscribe() / punsubscribe() method here for convenience later.
 
   Subscription(this.messages, this.ready);
 }
