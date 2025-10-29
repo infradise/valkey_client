@@ -112,6 +112,40 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
     print("Sending: EXISTS mylist");
     final existsResponse = await client.exists('mylist');
     print("Received (1=exists, 0=not exist): $existsResponse"); // Should be 0
+
+    // --- TRANSACTIONS (v0.11.0) ---
+    print("\n--- TRANSACTIONS (Atomic Operations) ---");
+    try {
+      print("Sending: MULTI");
+      await client.multi(); // Start transaction
+
+      print("Queueing: SET tx:1 'hello'");
+      final setFuture = client.set('tx:1', 'hello'); // Queued
+      print("Queueing: INCR tx:counter");
+      final incrFuture = client.execute(['INCR', 'tx:counter']); // Queued
+
+      // Await queued responses (optional)
+      print("Awaited SET response: ${await setFuture}");     // Should be 'QUEUED'
+      print("Awaited INCR response: ${await incrFuture}"); // Should be 'QUEUED'
+
+      print("Sending: EXEC");
+      final execResponse = await client.exec(); // Execute transaction
+
+      print("Received EXEC results: $execResponse"); // Should be [OK, 1]
+
+      // Example of DISCARD (uncomment to test)
+      print("Sending: MULTI... SET... DISCARD");
+      await client.multi();
+      await client.set('tx:2', 'discarded');
+      await client.discard(); // Cancel transaction
+      print("Value of tx:2 (should be null): ${await client.get('tx:2')}");
+
+    } catch (e) {
+      print("❌ Transaction Failed: $e");
+      // Ensure transaction state is reset if something went wrong
+      try { await client.discard(); } catch (_) {}
+    }
+
   } catch (e) {
     // Handle connection or authentication errors
     print('❌ Failed: $e');
@@ -120,6 +154,7 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
     print('\nClosing connection...');
     await client.close();
   }
+
 }
 
 /// Main entry point to demonstrate connection patterns.

@@ -142,7 +142,7 @@ abstract class ValkeyClientBase {
   /// and a future indicating when the subscription is ready.
   Subscription subscribe(List<String> channels);
 
-  // --- ADVANCED PUB/SUB COMMANDS (v0.10.0) ---
+  // --- ADVANCED PUB/SUB (v0.10.0) ---
 
   /// Unsubscribes the client from the given [channels], or all channels if none are given.
   /// The Future completes when the server confirms *all* relevant subscriptions are cancelled.
@@ -154,6 +154,22 @@ abstract class ValkeyClientBase {
   /// Unsubscribes the client from the given [patterns], or all patterns if none are given.
   /// The Future completes when the server confirms *all* relevant subscriptions are cancelled.
   Future<void> punsubscribe([List<String> patterns = const []]);
+
+  // --- TRANSACTION (v0.11.0) ---
+
+  /// Marks the start of a transaction block.
+  /// Subsequent commands will be queued until EXEC is called.
+  /// Returns 'OK'.
+  Future<String> multi();
+
+  /// Executes all commands queued after MULTI.
+  /// Returns a list of replies for each command in the transaction,
+  /// or null if the transaction was aborted (e.g., due to WATCH).
+  Future<List<dynamic>?> exec();
+
+  /// Discards all commands queued after MULTI.
+  /// Returns 'OK'.
+  Future<String> discard();
 }
 
 /// Represents a message received from a subscribed channel or pattern.

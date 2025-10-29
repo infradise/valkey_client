@@ -145,6 +145,12 @@ class ValkeyClient implements ValkeyClientBase {
   /// Completer for the current PUNSUBSCRIBE command.
   Completer<void>? _punsubscribeCompleter;
 
+  // Transaction State
+  /// Flag indicating if the client is currently in a MULTI...EXEC block.
+  bool _isInTransaction = false;
+  /// Queue to hold commands during a MULTI...EXEC block.
+  final Queue<List<String>> _transactionQueue = Queue();
+
   /// Creates a new Valkey client instance.
   ///
   /// [host], [port], [username], and [password] are the default
@@ -281,7 +287,7 @@ class ValkeyClient implements ValkeyClientBase {
         // if (response is List) { print('[DEBUG 4.1] Parsed Response (List): ${response.map((e) => e?.toString() ?? 'null').join(', ')}'); } else { print('[DEBUG 4.1] Parsed Response: $response'); }
 
         // --- Handle Push Messages (Pub/Sub) ---
-        // 1. Is it a Pub/Sub push message?
+        // Is it a Pub/Sub push message?
         // Check if it's a PUSH message FIRST
         if (_isPubSubPushMessage(response)) {
           // print('[DEBUG 5.1] Handling as PubSub Push Message...');
@@ -289,19 +295,34 @@ class ValkeyClient implements ValkeyClientBase {
         }
 
         // --- Handle Regular Command Responses ---
-        // 2. Is it the response to the initial AUTH command?
+        // Is it the response to the initial AUTH command?
         // If NOT a push message, check if we are AUTHENTICATING
         else if (_isAuthenticating) {
           // print('[DEBUG 5.2] Handling as AUTH Response...');
           _resolveNextCommand(response); // Completes _connectionCompleter
         }
-        // 3. Is it a response to a command we sent via execute()?
+
+        // If we are in a transaction, most responses are just '+QUEUED'.
+        else if (_isInTransaction) {
+          // Check if it's the response to MULTI, EXEC, or DISCARD itself
+          final lastQueuedCommand = _transactionQueue.isNotEmpty ? _transactionQueue.last[0].toUpperCase() : '';
+
+          if (response == 'QUEUED') {
+            // If in transaction, 'QUEUED' response completes the command's future.
+             _resolveNextCommand(response);
+          }
+          // Handle EXEC or DISCARD responses
+          else if (_responseQueue.isNotEmpty) {
+             _resolveNextCommand(response);
+          }
+        }
+        // Is it a response to a command we sent via execute()?
         // If NOT push and NOT auth, check if it's a COMMAND response
         else if (_responseQueue.isNotEmpty) {
           // print('[DEBUG 5.3] Handling as Command Response (Queue has ${_responseQueue.length})...');
           _resolveNextCommand(response); // Completes command completer
         }
-        // 4. Otherwise, it's unexpected data.
+        // Otherwise, it's unexpected data.
         else {
           print(
               'Warning: Discarding unexpected message when queue is empty: $response');
@@ -411,7 +432,7 @@ class ValkeyClient implements ValkeyClientBase {
         _subscribedChannels.add(channel);
         // Completer is handled in _resolveNextCommand
 
-        // --- FIX: Check if all expected channels are confirmed ---
+        // Check if all expected channels are confirmed ---
         // Decrement expected count (or check if _subscribedChannels.length reaches expected)
         // Complete the 'ready' future for SUBSCRIBE
         _expectedSubscribeConfirmations--;
@@ -690,6 +711,18 @@ class ValkeyClient implements ValkeyClientBase {
   @override
   Future<dynamic> execute(List<String> command) async {
     final cmdUpper = command.isNotEmpty ? command[0].toUpperCase() : '';
+
+    if (_isInTransaction && cmdUpper != 'EXEC' && cmdUpper != 'DISCARD' && cmdUpper != 'MULTI') {
+      // _transactionQueue.add(command);
+    }
+    // Handle starting or ending a transaction
+    if (cmdUpper == 'MULTI') {
+      _isInTransaction = true;
+      _transactionQueue.clear(); // Clear previous (if any)
+    } else if (cmdUpper == 'EXEC' || cmdUpper == 'DISCARD') {
+      _isInTransaction = false; // Transaction ends
+    }
+
     // Identify ALL Pub/Sub management commands
     const pubSubManagementCommands = {
       'SUBSCRIBE',
@@ -780,7 +813,7 @@ class ValkeyClient implements ValkeyClientBase {
     // 4. Return the Future
     // return completer.future;
 
-    // --- FIX: Return the correct Future ---
+    // Return the correct Future ---
     if (cmdUpper == 'SUBSCRIBE') {
       return _subscribeReadyCompleter?.future ??
           Future.error('Subscribe completer not initialized');
@@ -995,7 +1028,7 @@ class ValkeyClient implements ValkeyClientBase {
     return response as int;
   }
 
-  // --- PUB/SUB COMMANDS (v0.9.0 / v0.9.1) ---
+  // --- PUB/SUB (v0.9.0 / v0.9.1) ---
 
   @override
   Future<int> publish(String channel, String message) async {
@@ -1101,7 +1134,7 @@ class ValkeyClient implements ValkeyClientBase {
     }
   }
 
-  // --- Advanced Pub/Sub Commands (v0.10.0) ---
+  // --- Advanced Pub/Sub (v0.10.0) ---
 
   @override
   Future<void> unsubscribe([List<String> channels = const []]) async {
@@ -1202,6 +1235,43 @@ class ValkeyClient implements ValkeyClientBase {
     // }
 
     // State updated in _handlePubSubMessage
+  }
+
+  // --- TRANSACTION (v0.11.0) ---
+
+  @override
+  Future<String> multi() async {
+    // MULTI itself shouldn't be queued if already in transaction
+    if (_isInTransaction) {
+      throw Exception('Cannot call MULTI inside an existing transaction.');
+    }
+    final response = await execute(['MULTI']);
+    // Server should respond '+OK'
+    return response as String;
+  }
+
+  @override
+  Future<List<dynamic>?> exec() async {
+    if (!_isInTransaction) {
+      throw Exception('Cannot call EXEC without MULTI.');
+    }
+    final response = await execute(['EXEC']);
+    // Server responds with an Array (*) of responses
+    // or Null ($-1 or *-1) if transaction was aborted (e.g., WATCH)
+    if (response == null) {
+      return null;
+    }
+    return response as List<dynamic>;
+  }
+
+  @override
+  Future<String> discard() async {
+     if (!_isInTransaction) {
+      throw Exception('Cannot call DISCARD without MULTI.');
+    }
+    final response = await execute(['DISCARD']);
+    // Server responds '+OK'
+    return response as String;
   }
 
   // --- Socket Lifecycle Handlers ---

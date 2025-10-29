@@ -696,4 +696,123 @@ Future<void> main() async {
       skip: !isServerRunning
           ? 'Valkey server not running on $noAuthHost:$noAuthPort'
           : false);
+
+  // --- GROUP FOR v0.11.0 (Transactions) ---
+  group('ValkeyClient Transactions', () {
+    late ValkeyClient client;
+
+    // Connect and clean DB before each test in this group
+    setUp(() async {
+      client = ValkeyClient(host: noAuthHost, port: noAuthPort);
+      await client.connect();
+      await client.execute(['FLUSHDB']);
+      // Ensure we are not in a transaction state from a failed test
+      try {
+        await client.discard();
+      } catch (e) {
+        // Ignore errors (e.g., "ERR DISCARD without MULTI")
+      }
+    });
+
+    tearDown(() async {
+      await client.close();
+    });
+
+    test('MULTI/EXEC successfully executes a simple transaction', () async {
+      // 1. Start transaction
+      final multiResponse = await client.multi();
+      expect(multiResponse, 'OK');
+
+      // 2. Queue commands
+      // Note: The futures complete with 'QUEUED'
+      final setFuture = client.set('tx:key1', 'tx:value1');
+      final incrFuture = client.execute(['INCR', 'tx:counter']);
+
+      // Verify they are queued
+      await expectLater(setFuture, completion('QUEUED'));
+      await expectLater(incrFuture, completion('QUEUED'));
+
+      // 3. Execute transaction
+      final execResponse = await client.exec();
+
+      // 4. Verify EXEC response (array of replies)
+      expect(execResponse, isA<List<dynamic>>());
+      expect(execResponse, [
+        'OK', // Response for SET
+        1,    // Response for INCR
+      ]);
+
+      // 5. Verify data in DB
+      final value = await client.get('tx:key1');
+      expect(value, 'tx:value1');
+    });
+
+    test('DISCARD cancels a transaction', () async {
+      // 1. Start transaction
+      await client.multi();
+
+      // 2. Queue commands
+      await client.set('tx:key2', 'value_to_discard');
+
+      // 3. Discard transaction
+      final discardResponse = await client.discard();
+      expect(discardResponse, 'OK');
+
+      // 4. Verify data was NOT set
+      final value = await client.get('tx:key2');
+      expect(value, isNull);
+    });
+
+    test('exec() throws an Exception if transaction was aborted (e.g., by syntax error)', () async {
+      await client.multi();
+
+      // Send a command with a syntax error
+      // Note: execute() returns a Future<Exception> here, not 'QUEUED'
+      final badCommandFuture = client.execute(['INVALID_COMMAND', 'arg']);
+
+      // Server replies with an error immediately for syntax errors
+      await expectLater(badCommandFuture, throwsA(isA<Exception>().having(
+        (e) => e.toString(), 'message', contains('ERR unknown command')
+      )));
+
+      // Subsequent valid command (will be queued by server, but TX fails)
+      await client.set('tx:key3', 'value_to_fail'); // This will return 'QUEUED'
+
+      // EXEC should now return null because the transaction was aborted
+      // final execResponse = await client.exec();
+      // expect(execResponse, isNull);
+
+      // Expect an EXECABORT Exception, not null
+      final execFuture = await client.exec();
+      await expectLater(
+        execFuture,
+        throwsA(isA<Exception>().having(
+          (e) => e.toString(), 'message', contains('EXECABORT')
+        ))
+      );
+
+      // Verify data was not set
+      final value = await client.get('tx:key3');
+      expect(value, isNull);
+    });
+
+    test('calling EXEC without MULTI throws', () async {
+      await expectLater(
+        client.exec(),
+        throwsA(isA<Exception>().having((e) => e.toString(), 'message', contains('without MULTI')))
+      );
+    });
+
+    test('calling DISCARD without MULTI throws', () async {
+       await expectLater(
+        client.discard(),
+        throwsA(isA<Exception>().having((e) => e.toString(), 'message', contains('without MULTI')))
+      );
+    });
+
+  },
+      // Skip this entire group if the server is down
+      skip: !isServerRunning
+          ? 'Valkey server not running on $noAuthHost:$noAuthPort'
+          : false);
 }
