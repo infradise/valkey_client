@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.11.0
+
+### Added
+- **Transactions:** Implemented basic transaction support.
+  - `client.multi()`: Marks the start of a transaction block.
+  - `client.exec()`: Executes all queued commands and returns their replies as a `List<dynamic>?`.
+  - `client.discard()`: Flushes all commands queued in a transaction.
+- **Client State:** The client now tracks transaction state (`_isInTransaction`). Most commands sent during this state will return `+QUEUED` (which the client now handles).
+
+
 ## 0.10.0
 
 ### Added
