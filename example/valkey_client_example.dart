@@ -459,16 +459,17 @@ Future<void> runPubSubIntrospectionExample({
     // Run introspection commands on adminClient
     print("Sending: PUBSUB CHANNELS 'channel:*'");
     final channels = await adminClient.pubsubChannels('channel:*');
-    print("Received active channels: $channels"); // e.g., Should be [channel:inspect]
+    print(
+        "Received active channels: $channels"); // e.g., Should be [channel:inspect]
 
     print("Sending: PUBSUB NUMSUB 'channel:$channelName'");
     final numsub = await adminClient.pubsubNumSub(['channel:$channelName']);
-    print("Received subscriber count: $numsub"); // e.g., Should be {channel:inspect: 1}
+    print(
+        "Received subscriber count: $numsub"); // e.g., Should be {channel:inspect: 1}
 
     print("Sending: PUBSUB NUMPAT");
     final numpat = await adminClient.pubsubNumPat();
     print("Received pattern subscription count: $numpat"); // Should be 1
-
   } catch (e) {
     print('❌ Pub/Sub Introspection Example Failed: $e');
   } finally {

@@ -903,7 +903,8 @@ Future<void> main() async {
       await Future.delayed(Duration(milliseconds: 100));
 
       // 2. Check counts
-      final counts = await client.pubsubNumSub([channel1, channel2, 'non_existent']);
+      final counts =
+          await client.pubsubNumSub([channel1, channel2, 'non_existent']);
 
       expect(counts, isA<Map<String, int>>());
       expect(counts[channel1], 1); // subClient is 1 subscriber
@@ -926,7 +927,6 @@ Future<void> main() async {
       numPat = await client.pubsubNumPat();
       expect(numPat, 2);
     });
-
   },
       // Skip this entire group if the server is down
       skip: !isServerRunning
