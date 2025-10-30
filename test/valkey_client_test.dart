@@ -717,6 +717,42 @@ Future<void> main() async {
     tearDown(() async {
       await client.close();
     });
+    test('exec() returns null when transaction succeeds with no results', () async {
+      // Start a transaction
+      await client.multi();
+      // Do not add any commands
+      final execResponse = await client.exec();
+
+      // Since there are no commands, exec() should return null
+      expect(execResponse, []);
+    });
+
+    test('exec() throws Exception when transaction is aborted', () async {
+      await client.multi();
+
+      // Intentionally send an invalid command to cause transaction failure (missing value argument for SET)
+      // 1) Queue invalid command and assert its immediate error
+      final enqueueFuture = client.execute(['SET', 'key']); // Missing argument → error // wrong arity
+      await expectLater(
+        enqueueFuture,
+        throwsA(isA<Exception>().having(
+          (e) => e.toString(),
+          'message',
+          contains("wrong number of arguments"),
+        )),
+      );
+
+      // 2) Now verify that EXEC reports the aborted transaction
+      final execFuture = client.exec(); // Do not await here!
+      await expectLater(
+        execFuture,
+        throwsA(isA<Exception>().having(
+          (e) => e.toString(),
+          'message',
+          contains('EXECABORT'),
+        )),
+      );
+    });
 
     test('MULTI/EXEC successfully executes a simple transaction', () async {
       // 1. Start transaction
