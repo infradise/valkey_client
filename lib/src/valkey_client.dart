@@ -560,19 +560,19 @@ class ValkeyClient implements ValkeyClientBase {
       final completer = _responseQueue.removeFirst();
       if (!completer.isCompleted) {
         // Complete in the next event loop cycle
-        Future.delayed(Duration.zero, () {
+        scheduleMicrotask(() {
           if (!completer.isCompleted) {
             // Double check completion
             if (isError) {
-              // print('[DEBUG Q.2a] Completing command with ERROR via Future.delayed: $result');
+              // print('[DEBUG Q.2a] Completing command with ERROR via microtask: $result');
               completer.completeError(
                   result ?? Exception("Unknown error"), stackTrace);
             } else {
-              // print('[DEBUG Q.3a] Completing command successfully via Future.delayed with result: $result');
+              // print('[DEBUG Q.3a] Completing command successfully via microtask with result: $result');
               completer.complete(result);
             }
           } else {
-            // print("[DEBUG Q.4a] Warning: Completer was already done before Future.delayed ran.");
+            // print("[DEBUG Q.4a] Warning: Completer was already done before microtask ran.");
           }
         });
       } else {
