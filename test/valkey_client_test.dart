@@ -717,7 +717,8 @@ Future<void> main() async {
     tearDown(() async {
       await client.close();
     });
-    test('exec() returns null when transaction succeeds with no results', () async {
+    test('exec() returns null when transaction succeeds with no results',
+        () async {
       // Start a transaction
       await client.multi();
       // Do not add any commands
@@ -732,7 +733,8 @@ Future<void> main() async {
 
       // Intentionally send an invalid command to cause transaction failure (missing value argument for SET)
       // 1) Queue invalid command and assert its immediate error
-      final enqueueFuture = client.execute(['SET', 'key']); // Missing argument → error // wrong arity
+      final enqueueFuture = client
+          .execute(['SET', 'key']); // Missing argument → error // wrong arity
       await expectLater(
         enqueueFuture,
         throwsA(isA<Exception>().having(
@@ -775,7 +777,7 @@ Future<void> main() async {
       expect(execResponse, isA<List<dynamic>>());
       expect(execResponse, [
         'OK', // Response for SET
-        1,    // Response for INCR
+        1, // Response for INCR
       ]);
 
       // 5. Verify data in DB
@@ -799,7 +801,9 @@ Future<void> main() async {
       expect(value, isNull);
     });
 
-    test('exec() throws an Exception if transaction was aborted (e.g., by syntax error)', () async {
+    test(
+        'exec() throws an Exception if transaction was aborted (e.g., by syntax error)',
+        () async {
       await client.multi();
 
       // Send a command with a syntax error
@@ -807,9 +811,10 @@ Future<void> main() async {
       final badCommandFuture = client.execute(['INVALID_COMMAND', 'arg']);
 
       // Server replies with an error immediately for syntax errors
-      await expectLater(badCommandFuture, throwsA(isA<Exception>().having(
-        (e) => e.toString(), 'message', contains('ERR unknown command')
-      )));
+      await expectLater(
+          badCommandFuture,
+          throwsA(isA<Exception>().having((e) => e.toString(), 'message',
+              contains('ERR unknown command'))));
 
       // Subsequent valid command (will be queued by server, but TX fails)
       await client.set('tx:key3', 'value_to_fail'); // This will return 'QUEUED'
@@ -817,11 +822,9 @@ Future<void> main() async {
       // Expect an EXECABORT Exception, not null
       final execFuture = client.exec();
       await expectLater(
-        execFuture,
-        throwsA(isA<Exception>().having(
-          (e) => e.toString(), 'message', contains('EXECABORT')
-        ))
-      );
+          execFuture,
+          throwsA(isA<Exception>()
+              .having((e) => e.toString(), 'message', contains('EXECABORT'))));
 
       // Verify data was not set
       final value = await client.get('tx:key3');
@@ -830,18 +833,17 @@ Future<void> main() async {
 
     test('calling EXEC without MULTI throws', () async {
       await expectLater(
-        client.exec(),
-        throwsA(isA<Exception>().having((e) => e.toString(), 'message', contains('without MULTI')))
-      );
+          client.exec(),
+          throwsA(isA<Exception>().having(
+              (e) => e.toString(), 'message', contains('without MULTI'))));
     });
 
     test('calling DISCARD without MULTI throws', () async {
-       await expectLater(
-        client.discard(),
-        throwsA(isA<Exception>().having((e) => e.toString(), 'message', contains('without MULTI')))
-      );
+      await expectLater(
+          client.discard(),
+          throwsA(isA<Exception>().having(
+              (e) => e.toString(), 'message', contains('without MULTI'))));
     });
-
   },
       // Skip this entire group if the server is down
       skip: !isServerRunning

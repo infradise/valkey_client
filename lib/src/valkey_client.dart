@@ -148,6 +148,7 @@ class ValkeyClient implements ValkeyClientBase {
   // Transaction State
   /// Flag indicating if the client is currently in a MULTI...EXEC block.
   bool _isInTransaction = false;
+
   /// Queue to hold commands during a MULTI...EXEC block.
   final Queue<List<String>> _transactionQueue = Queue();
 
@@ -305,15 +306,15 @@ class ValkeyClient implements ValkeyClientBase {
         // If we are in a transaction, most responses are just '+QUEUED'.
         else if (_isInTransaction) {
           // Check if it's the response to MULTI, EXEC, or DISCARD itself
-          final lastQueuedCommand = _transactionQueue.isNotEmpty ? _transactionQueue.last[0].toUpperCase() : '';
+          // final lastQueuedCommand = _transactionQueue.isNotEmpty ? _transactionQueue.last[0].toUpperCase() : '';
 
           if (response == 'QUEUED') {
             // If in transaction, 'QUEUED' response completes the command's future.
-             _resolveNextCommand(response);
+            _resolveNextCommand(response);
           }
           // Handle EXEC or DISCARD responses
           else if (_responseQueue.isNotEmpty) {
-             _resolveNextCommand(response);
+            _resolveNextCommand(response);
           }
         }
         // Is it a response to a command we sent via execute()?
@@ -712,7 +713,10 @@ class ValkeyClient implements ValkeyClientBase {
   Future<dynamic> execute(List<String> command) async {
     final cmdUpper = command.isNotEmpty ? command[0].toUpperCase() : '';
 
-    if (_isInTransaction && cmdUpper != 'EXEC' && cmdUpper != 'DISCARD' && cmdUpper != 'MULTI') {
+    if (_isInTransaction &&
+        cmdUpper != 'EXEC' &&
+        cmdUpper != 'DISCARD' &&
+        cmdUpper != 'MULTI') {
       // _transactionQueue.add(command);
     }
     // Handle starting or ending a transaction
@@ -1266,7 +1270,7 @@ class ValkeyClient implements ValkeyClientBase {
 
   @override
   Future<String> discard() async {
-     if (!_isInTransaction) {
+    if (!_isInTransaction) {
       throw Exception('Cannot call DISCARD without MULTI.');
     }
     final response = await execute(['DISCARD']);

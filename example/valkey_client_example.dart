@@ -125,7 +125,7 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
       final incrFuture = client.execute(['INCR', 'tx:counter']); // Queued
 
       // Await queued responses (optional)
-      print("Awaited SET response: ${await setFuture}");     // Should be 'QUEUED'
+      print("Awaited SET response: ${await setFuture}"); // Should be 'QUEUED'
       print("Awaited INCR response: ${await incrFuture}"); // Should be 'QUEUED'
 
       print("Sending: EXEC");
@@ -139,13 +139,13 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
       await client.set('tx:2', 'discarded');
       await client.discard(); // Cancel transaction
       print("Value of tx:2 (should be null): ${await client.get('tx:2')}");
-
     } catch (e) {
       print("❌ Transaction Failed: $e");
       // Ensure transaction state is reset if something went wrong
-      try { await client.discard(); } catch (_) {}
+      try {
+        await client.discard();
+      } catch (_) {}
     }
-
   } catch (e) {
     // Handle connection or authentication errors
     print('❌ Failed: $e');
@@ -154,7 +154,6 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
     print('\nClosing connection...');
     await client.close();
   }
-
 }
 
 /// Main entry point to demonstrate connection patterns.
