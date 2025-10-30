@@ -778,12 +778,8 @@ Future<void> main() async {
       // Subsequent valid command (will be queued by server, but TX fails)
       await client.set('tx:key3', 'value_to_fail'); // This will return 'QUEUED'
 
-      // EXEC should now return null because the transaction was aborted
-      // final execResponse = await client.exec();
-      // expect(execResponse, isNull);
-
       // Expect an EXECABORT Exception, not null
-      final execFuture = await client.exec();
+      final execFuture = client.exec();
       await expectLater(
         execFuture,
         throwsA(isA<Exception>().having(
