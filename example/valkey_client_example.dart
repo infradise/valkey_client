@@ -166,31 +166,36 @@ Future<void> main() async {
   // Choose ONE of the following client configurations
   // to match your server setup from the README.
 
+  final host = '127.0.0.1';
+  final port = 6379;
+  final username = 'default';
+  final password = 'my-super-secret-password';
+
   // ====================================================================
   // Configuration for README Option 1: No Authentication
   // ====================================================================
   // final fixedClient = ValkeyClient(
-  //   host: '127.0.0.1',
-  //   port: 6379,
+  //   host: host,
+  //   port: port,
   // );
 
   // ====================================================================
   // Configuration for README Option 2: Password Only
   // ====================================================================
   // final fixedClient = ValkeyClient(
-  //   host: '127.0.0.1',
-  //   port: 6379,
-  //   password: 'my-super-secret-password',
+  //   host: host,
+  //   port: port,
+  //   password: password,
   // );
 
   // ====================================================================
   // Configuration for README Option 3: Username + Password (ACL)
   // ====================================================================
   final fixedClient = ValkeyClient(
-    host: '127.0.0.1',
-    port: 6379,
-    username: 'default',
-    password: 'my-super-secret-password',
+    host: host,
+    port: port,
+    username: username,
+    password: password,
   );
 
   print('=' * 40);
@@ -214,10 +219,10 @@ Future<void> main() async {
 
   // Create a reusable connection object (e.g., from a config file)
   final config = (
-    host: '127.0.0.1',
-    port: 6379,
-    username: 'default',
-    password: 'my-super-secret-password',
+    host: host,
+    port: port,
+    username: username,
+    password: password,
   );
 
   // We must re-wrap the logic in a try/catch
@@ -248,8 +253,8 @@ Future<void> main() async {
   print('=' * 40);
 
   // Use two clients: one to subscribe, one to publish
-  final subscriber = ValkeyClient(host: '127.0.0.1', port: 6379);
-  final publisher = ValkeyClient(host: '127.0.0.1', port: 6379);
+  final subscriber = ValkeyClient(host: host, port: port);
+  final publisher = ValkeyClient(host: host, port: port);
   StreamSubscription<ValkeyMessage>? listener; // Keep track of the listener
 
   try {
@@ -302,20 +307,44 @@ Future<void> main() async {
     print('Pub/Sub clients closed.');
   }
 
-  await runPatternSubscriptionExample();
+  // --- ADVANCED PUB/SUB (v0.10.0) ---
+  await runPatternSubscriptionExample(
+    host: host,
+    port: port,
+    username: username,
+    password: password,
+  );
+
+  // --- PUBSUB INTROSPECTION (v0.12.0) ---
+  // (Note: These commands are usually run from a *different* client
+  // than the one that is subscribed, as a subscribed client can't
+  // run most normal commands.)
+  print("\n--- PUBSUB INTROSPECTION (Admin/Info) ---");
+  await runPubSubIntrospectionExample(
+    host: host,
+    port: port,
+    username: username,
+    password: password,
+  );
 } // End of main
 
 // ====================================================================
 // Advanced Pub/Sub Example (v0.10.0) - Pattern Subscription
 // ====================================================================
-Future<void> runPatternSubscriptionExample() async {
+Future<void> runPatternSubscriptionExample({
+  // Pass in connection details from main
+  required String host,
+  required int port,
+  String? username,
+  String? password,
+}) async {
   print('\n' * 2);
   print('=' * 40);
   print('Running Advanced Pub/Sub Example (Pattern Subscription)');
   print('=' * 40);
 
-  final subscriber = ValkeyClient(host: '127.0.0.1', port: 6379);
-  final publisher = ValkeyClient(host: '127.0.0.1', port: 6379);
+  final subscriber = ValkeyClient(host: host, port: port);
+  final publisher = ValkeyClient(host: host, port: port);
   StreamSubscription<ValkeyMessage>? listener;
 
   try {
@@ -375,5 +404,78 @@ Future<void> runPatternSubscriptionExample() async {
     await listener?.cancel();
     await Future.wait([subscriber.close(), publisher.close()]);
     print('Advanced Pub/Sub clients closed.');
+  }
+}
+
+// ====================================================================
+// Pub/Sub Introspection Example (v0.12.0)
+// ====================================================================
+Future<void> runPubSubIntrospectionExample({
+  // Pass in connection details from main
+  required String host,
+  required int port,
+  String? username,
+  String? password,
+}) async {
+  print('\n' * 2);
+  print('=' * 40);
+  print('Running Pub/Sub Introspection Example');
+  print('=' * 40);
+
+  // Use the config from main() for both clients
+  final adminClient = ValkeyClient(
+    host: host,
+    port: port,
+    username: username,
+    password: password,
+  );
+  final subClient = ValkeyClient(
+    host: host,
+    port: port,
+    username: username,
+    password: password,
+  );
+  StreamSubscription? listener;
+  StreamSubscription? pListener;
+
+  try {
+    // Connect both clients
+    await Future.wait([
+      adminClient.connect(),
+      subClient.connect(), // We need a subscriber client to check against
+    ]);
+    print('✅ Admin and Subscriber clients connected!');
+
+    // Subscribe to a channel and a pattern
+    // Create a subscription on subClient
+    final channelName = 'inspect'; // or admin
+    final sub = subClient.subscribe(['channel:$channelName']);
+    final psub = subClient.psubscribe(['log:*']);
+    await Future.wait([sub.ready, psub.ready]);
+    listener = sub.messages.listen(null); // Keep subscription active
+    pListener = psub.messages.listen(null);
+    await Future.delayed(Duration(milliseconds: 50)); // Give server time
+
+    // Run introspection commands on adminClient
+    print("Sending: PUBSUB CHANNELS 'channel:*'");
+    final channels = await adminClient.pubsubChannels('channel:*');
+    print("Received active channels: $channels"); // e.g., Should be [channel:inspect]
+
+    print("Sending: PUBSUB NUMSUB 'channel:$channelName'");
+    final numsub = await adminClient.pubsubNumSub(['channel:$channelName']);
+    print("Received subscriber count: $numsub"); // e.g., Should be {channel:inspect: 1}
+
+    print("Sending: PUBSUB NUMPAT");
+    final numpat = await adminClient.pubsubNumPat();
+    print("Received pattern subscription count: $numpat"); // Should be 1
+
+  } catch (e) {
+    print('❌ Pub/Sub Introspection Example Failed: $e');
+  } finally {
+    // Clean up the subscriber client
+    await listener?.cancel();
+    await pListener?.cancel();
+    await Future.wait([adminClient.close(), subClient.close()]);
+    print('Introspection clients closed.');
   }
 }

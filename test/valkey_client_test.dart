@@ -849,4 +849,87 @@ Future<void> main() async {
       skip: !isServerRunning
           ? 'Valkey server not running on $noAuthHost:$noAuthPort'
           : false);
+
+  // --- GROUP FOR v0.12.0 (Pub/Sub Introspection) ---
+  group('ValkeyClient Pub/Sub Introspection', () {
+    late ValkeyClient client; // Client for sending commands
+    late ValkeyClient subClient; // Client to create subscriptions
+    StreamSubscription? subListener; // To manage the subscription
+
+    setUp(() async {
+      // Create two clients for these tests
+      client = ValkeyClient(host: noAuthHost, port: noAuthPort);
+      subClient = ValkeyClient(host: noAuthHost, port: noAuthPort);
+      await Future.wait([client.connect(), subClient.connect()]);
+      await client.execute(['FLUSHDB']);
+    });
+
+    tearDown(() async {
+      // Ensure listener is cancelled and clients are closed
+      await subListener?.cancel();
+      await Future.wait([client.close(), subClient.close()]);
+    });
+
+    test('pubsubChannels lists active channels', () async {
+      final channel1 = 'inspect:channel:1';
+      final channel2 = 'inspect:channel:2';
+
+      // 1. No channels active
+      var channels = await client.pubsubChannels();
+      expect(channels, isEmpty);
+
+      // 2. Subscribe with subClient
+      final sub = subClient.subscribe([channel1, channel2]);
+      await sub.ready; // Wait for confirmation
+      subListener = sub.messages.listen(null); // Attach listener
+
+      // 3. Give server a moment to register subscriptions
+      await Future.delayed(Duration(milliseconds: 100));
+
+      // 4. Check active channels
+      channels = await client.pubsubChannels('inspect:channel:*');
+      expect(channels, containsAll([channel1, channel2]));
+      expect(channels.length, 2);
+    });
+
+    test('pubsubNumSub returns subscriber counts', () async {
+      final channel1 = 'inspect:numsub:1';
+      final channel2 = 'inspect:numsub:2';
+
+      // 1. Subscribe with subClient
+      final sub = subClient.subscribe([channel1, channel2]);
+      await sub.ready;
+      subListener = sub.messages.listen(null);
+      await Future.delayed(Duration(milliseconds: 100));
+
+      // 2. Check counts
+      final counts = await client.pubsubNumSub([channel1, channel2, 'non_existent']);
+
+      expect(counts, isA<Map<String, int>>());
+      expect(counts[channel1], 1); // subClient is 1 subscriber
+      expect(counts[channel2], 1);
+      expect(counts['non_existent'], 0);
+    });
+
+    test('pubsubNumPat returns pattern subscription count', () async {
+      // 1. No patterns active
+      var numPat = await client.pubsubNumPat();
+      expect(numPat, 0);
+
+      // 2. PSubscribe with subClient
+      final sub = subClient.psubscribe(['inspect:pat:*', 'inspect:another:*']);
+      await sub.ready;
+      subListener = sub.messages.listen(null);
+      await Future.delayed(Duration(milliseconds: 100));
+
+      // 3. Check pattern count
+      numPat = await client.pubsubNumPat();
+      expect(numPat, 2);
+    });
+
+  },
+      // Skip this entire group if the server is down
+      skip: !isServerRunning
+          ? 'Valkey server not running on $noAuthHost:$noAuthPort'
+          : false);
 }

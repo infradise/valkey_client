@@ -1278,6 +1278,41 @@ class ValkeyClient implements ValkeyClientBase {
     return response as String;
   }
 
+  // --- PUBSUB INTROSPECTION (v0.12.0) ---
+
+  @override
+  Future<List<String?>> pubsubChannels([String? pattern]) async {
+    final command = ['PUBSUB', 'CHANNELS'];
+    if (pattern != null) {
+      command.add(pattern);
+    }
+    // Returns an Array (*) of channel names (Bulk Strings)
+    final response = await execute(command);
+    return (response as List<dynamic>?)?.cast<String?>() ?? [];
+  }
+
+  @override
+  Future<Map<String, int>> pubsubNumSub(List<String> channels) async {
+    final command = ['PUBSUB', 'NUMSUB', ...channels];
+    // Returns a flat Array: [channel1, count1, channel2, count2, ...]
+    final response = await execute(command) as List<dynamic>?;
+    if (response == null || response.isEmpty) return {};
+
+    final map = <String, int>{};
+    for (var i = 0; i < response.length; i += 2) {
+      // Server returns channel as String, count as Integer
+      map[response[i] as String] = response[i + 1] as int;
+    }
+    return map;
+  }
+
+  @override
+  Future<int> pubsubNumPat() async {
+    // Returns an Integer (:)
+    final response = await execute(['PUBSUB', 'NUMPAT']);
+    return response as int;
+  }
+
   // --- Socket Lifecycle Handlers ---
 
   void _handleSocketError(Object error, StackTrace stackTrace) {

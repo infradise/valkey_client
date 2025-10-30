@@ -170,6 +170,25 @@ abstract class ValkeyClientBase {
   /// Discards all commands queued after MULTI.
   /// Returns 'OK'.
   Future<String> discard();
+
+  // --- PUBSUB INTROSPECTION (v0.12.0) ---
+
+  /// Lists the currently active channels.
+  ///
+  /// An empty list is returned when no channels are active.
+  /// [pattern] is an optional glob-style pattern.
+  Future<List<String?>> pubsubChannels([String? pattern]);
+
+  /// Returns the number of subscribers for the specified [channels].
+  ///
+  /// Returns a Map where keys are the channel names
+  /// and values are the number of subscribers.
+  Future<Map<String, int>> pubsubNumSub(List<String> channels);
+
+  /// Returns the number of subscriptions to patterns.
+  /// (Not the number of clients subscribed to patterns, but the total
+  /// number of patterns all clients are subscribed to.)
+  Future<int> pubsubNumPat();
 }
 
 /// Represents a message received from a subscribed channel or pattern.
