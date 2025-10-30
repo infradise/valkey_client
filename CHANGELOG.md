@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.0
+
+### Added
+- **New Commands (Pub/Sub Introspection):** Added commands to inspect the Pub/Sub system state. These commands *do not* require the client to be in Pub/Sub mode.
+  - `client.pubsubChannels([pattern])`: Lists active channels.
+  - `client.pubsubNumSub(channels)`: Returns a `Map` of channels and their subscriber counts.
+  - `client.pubsubNumPat()`: Returns the total number of pattern subscriptions.
+
+
 ## 0.11.0
 
 ### Added
