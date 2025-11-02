@@ -1,26 +1,48 @@
 # Valkey client
 
-[](https://pub.dev/packages/valkey_client)
+[![pub package](https://img.shields.io/pub/v/valkey_client.svg)](https://pub.dev/packages/valkey_client)
+[![pub points](https://img.shields.io/pub/points/valkey_client.svg)](https://pub.dev/packages/valkey_client/score)
+
 
 A modern, production-ready Dart client for Valkey (9.0.0+). Fully Redis 7.x compatible.
 
------
+---
 
-## ⚠️ Under Active Development
+## ⚠️ Important Note: Connection Pooling
 
-**This package is currently in its early stages.**
+This client **does not include built-in connection pooling** in `v1.0.0`.
 
-It is under active development and is **not yet ready for production use**. We are building the foundation, starting with core connection logic. Do not use this in a production environment until version 1.0.0 is released. See the [roadmap](https://github.com/infradise/valkey_client/wiki#roadmap) for upcoming features.
+For high-concurrency production applications (like backend servers), you **MUST** use an external pooling package (like [`package:pool`](https://pub.dev/packages/pool)) to manage connections. Using `ValkeyClient.connect()` and `ValkeyClient.close()` for every request will result in poor performance.
 
+Built-in connection pooling is a top priority for `v2.0.0` (see [Roadmap](https://github.com/infradise/valkey_client/wiki/Roadmap)).
+
+---
+
+## Features
+
+* **Broad Command Support:**
+    * Strings (`GET`, `SET`, `MGET`)
+    * Hashes (`HSET`, `HGET`, `HGETALL`)
+    * Lists (`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`)
+    * Sets (`SADD`, `SREM`, `SMEMBERS`)
+    * Sorted Sets (`ZADD`, `ZREM`, `ZRANGE`)
+    * Key Management (`DEL`, `EXISTS`, `EXPIRE`, `TTL`)
+    * Transactions (`MULTI`, `EXEC`, `DISCARD`)
+    * Full Pub/Sub (`SUBSCRIBE`, `UNSUBSCRIBE`, `PSUBSCRIBE`, `PUNSUBSCRIBE`)
+    * Pub/Sub Introspection (`PUBSUB CHANNELS`, `NUMSUB`, `NUMPAT`)
+* **Robust Parsing:** Full RESP3 parser handling all core data types (`+`, `-`, `$`, `*`, `:`).
+* **Type-Safe Exceptions:** Clear distinction between connection errors (`ValkeyConnectionException`), server errors (`ValkeyServerException`), and client errors (`ValkeyClientException`).
+* **Pub/Sub Ready:** `subscribe()` returns a `Subscription` object with a `Stream` and a `Future<void> ready` for easy and reliable message handling.
+* **Production-Ready (Standalone/Sentinel):** `v1.0.0` is stable for production use in non-clustered environments (when used with a connection pool).
 
 ## Getting Started
 
 ### Prerequisites: Running a Valkey Server
 
-This client requires a running Valkey server to connect to. For local development and testing, we strongly recommend using Docker.
+This client requires a running Valkey server. For local development, we recommend Docker.
 
 1.  Install a container environment like [Docker Desktop](https://www.docker.com/products/docker-desktop/) or [Rancher Desktop](https://rancherdesktop.io/).
-2.  Start a Valkey server instance by running one of the following commands in your terminal:
+2.  Start a Valkey server instance:
 
 **Option 1: No Authentication (Default)**
 ```bash
@@ -28,7 +50,7 @@ docker run -d --name my-valkey -p 6379:6379 valkey/valkey:latest
 ````
 
 **Option 2: With Password Only**
-(This sets the password for the `default` user. Use with `username: null` in the client.)
+(Sets the password for the `default` user)
 
 ```bash
 docker run -d --name my-valkey-auth -p 6379:6379 valkey/valkey:latest \
@@ -36,35 +58,58 @@ docker run -d --name my-valkey-auth -p 6379:6379 valkey/valkey:latest \
 ```
 
 **Option 3: With Username and Password (ACL)**
-(This sets the password for the `default` user. Use with `username: 'default'` in the client.)
+(Sets the password for the `default` user)
 
 ```bash
 docker run -d --name my-valkey-acl -p 6379:6379 valkey/valkey:latest \
   --user default --pass "my-super-secret-password"
 ```
 
-  * Valkey/Redis 6+ uses ACLs. The `default` user exists by default. To create a new user instead, simply change `--user default` to `--user my-user`.
+  * Valkey/Redis 6+ uses ACLs. To create a new user, change `--user default` to `--user my-user`.
+  * The `-d` flag runs the container in "detached" mode. Remove it to see server logs in your terminal.
 
-*(Note: The '-d' flag runs the container in "detached" mode (in the background). You can remove it if you want to see the server logs directly in your terminal.)*
+## Usage
 
+See the **[Example](https://pub.dev/packages/valkey_client/example)** tab for comprehensive usage examples covering all command groups.
 
-## The Goal 🎯
+A simple example:
 
-The Dart ecosystem needs a high-performance, actively maintained client for the next generation of in-memory databases. This package aims to be the standard Dart client for **Valkey (9.0.0+)** while maintaining full compatibility with **Redis (7.x+)**.
+```dart
+import 'package:valkey_client/valkey_client.dart';
 
-It is designed primarily for server-side Dart applications (`server.dart`) requiring a robust and fast connection to Valkey.
+void main() async {
+  // 1. Configure the client
+  final client = ValkeyClient(
+    host: '127.0.0.1',
+    port: 6379,
+    // password: 'my-super-secret-password',
+  );
 
-## Planned Features
+  try {
+    // 2. Connect
+    await client.connect();
+    
+    // 3. Run commands
+    await client.set('greeting', 'Hello, Valkey!');
+    final value = await client.get('greeting');
+    print(value); // Output: Hello, Valkey!
+    
+  } on ValkeyConnectionException catch (e) {
+    print('Connection failed: $e');
+  } on ValkeyServerException catch (e) {
+    print('Server returned an error: $e');
+  } finally {
+    // 4. Close the connection
+    await client.close();
+  }
+}
+```
 
-  * **Valkey 9.0.0+ Support:** Full implementation of the latest commands and features.
-  * **RESP3 Protocol:** Built on the modern RESP3 protocol for richer data types and performance.
-  * **High-Performance Async I/O:** Non-blocking, asynchronous networking.
-  * **Connection Pooling:** Production-grade connection pooling suitable for high-concurrency backend servers.
-  * **Type-Safe & Modern API:** A clean, easy-to-use API for Dart developers.
+---
 
 ## Contributing
 
-This project is just getting started. If you are interested in contributing to the development of the standard Valkey client for Dart, please check the **[GitHub repository](https://github.com/infradise/valkey_client)** or file an issue to discuss ideas.
+Your contributions are welcome\! Please check the [GitHub repository](https://github.com/infradise/valkey_client) for open issues or submit a Pull Request. For major changes, please open an issue first to discuss the approach.
 
 ---
 
@@ -84,9 +129,9 @@ This project was initially licensed under the MIT License. As of October 29, 202
 
 We chose Apache 2.0 for its robust, clear, and balanced terms, which benefit both users and contributors:
 
-* **Contributor Protection (Patent Defense):** Includes a defensive patent termination clause. This strongly deters users from filing patent infringement lawsuits against contributors (us).
-* **User Protection (Patent Grant):** Explicitly grants users a patent license for any contributor patents embodied in the code, similar to MIT.
-* **Trademark Protection (Non-Endorsement):** Includes a clause (Section 6) that restricts the use of our trademarks (like `Infradise Inc.` or `Visualkube`), providing an effect similar to the "non-endorsement" clause in the BSD-3 license.
+  * **Contributor Protection (Patent Defense):** Includes a defensive patent termination clause. This strongly deters users from filing patent infringement lawsuits against contributors (us).
+  * **User Protection (Patent Grant):** Explicitly grants users a patent license for any contributor patents embodied in the code, similar to MIT.
+  * **Trademark Protection (Non-Endorsement):** Includes a clause (Section 6) that restricts the use of our trademarks (like `Infradise Inc.` or `Visualkube`), providing an effect similar to the "non-endorsement" clause in the BSD-3 license.
 
 **License Compatibility:** Please note that the Apache 2.0 license is **compatible with GPLv3**, but it is **not compatible with GPLv2**.
 
