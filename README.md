@@ -10,7 +10,7 @@ A modern, production-ready Dart client for Valkey (9.0.0+). Fully Redis 7.x comp
 
 **This package is currently in its early stages.**
 
-It is under active development and is **not yet ready for production use**. We are building the foundation, starting with core connection logic. Do not use this in a production environment until version 1.0.0 is released.
+It is under active development and is **not yet ready for production use**. We are building the foundation, starting with core connection logic. Do not use this in a production environment until version 1.0.0 is released. See the [roadmap](https://github.com/infradise/valkey_client/wiki#roadmap) for upcoming features.
 
 
 ## Getting Started
