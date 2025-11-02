@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.0
+
+**🎉 First Production-Ready Stable Release (Standalone/Sentinel) 🎉**
+
+This release marks the first stable version of `valkey_client` suitable for production use in Standalone and Sentinel environments. All core data types, transactions, and Pub/Sub features are implemented and tested.
+
+### Changed
+* **Production-Ready Cleanup:** Removed all internal debug `print` statements.
+* **Error Handling:** Replaced standard `Exceptions` with specific exception classes (`ValkeyConnectionException`, `ValkeyServerException`, `ValkeyClientException`, `ValkeyParsingException`) for robust error handling.
+* **Logging:** Added an internal lightweight logger (via `ValkeyClient.setLogLevel(ValkeyLogLevel)`) instead of requiring `package:logging`. (Logging is `OFF` by default).
+
+### Fixed
+* **Test Suite:** Corrected several tests (e.g., `WRONGTYPE`, `EXECABORT`) to correctly expect the new specific exception types (`ValkeyServerException`).
+* **Lints:** Addressed `constant_identifier_names` lint for `ValkeyLogLevel` via `analysis_options.yaml`.
+
+### Documentation
+* **README.md:** Updated to reflect `v1.0.0` status. Added an **Important Note** regarding the lack of built-in connection pooling and recommending `package:pool`.
+* **API Reference:** Added comprehensive Dart Doc comments for all public classes and methods in `valkey_client_base.dart` and `exceptions.dart`.
+
+
 ## 0.12.0
 
 ### Added
