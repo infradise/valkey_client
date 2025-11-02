@@ -8,5 +8,8 @@ export 'valkey_client_base.dart';
 // Export the concrete implementation
 export 'src/valkey_client.dart';
 
+// Export public exception classes
+export 'src/exceptions.dart';
+
 // Re-export shared data classes for convenience
 export 'valkey_client_base.dart' show ValkeyMessage, Subscription;
