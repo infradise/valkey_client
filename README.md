@@ -1,8 +1,6 @@
 # Valkey client
 
 [![pub package](https://img.shields.io/pub/v/valkey_client.svg)](https://pub.dev/packages/valkey_client)
-[![pub points](https://img.shields.io/pub/points/valkey_client.svg)](https://pub.dev/packages/valkey_client/score)
-
 
 A modern, production-ready Dart client for Valkey (9.0.0+). Fully Redis 7.x compatible.
 
