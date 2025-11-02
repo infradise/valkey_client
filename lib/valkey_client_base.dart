@@ -52,7 +52,6 @@ class Subscription {
   Subscription(this.messages, this.ready);
 }
 
-
 /// The abstract base class for a Valkey client.
 ///
 /// This interface defines the public API for interacting with a Valkey/Redis server.
@@ -228,7 +227,6 @@ abstract class ValkeyClientBase {
   ///
   /// Returns `1` if the timeout was set, `0` if the key doesn't exist.
   Future<int> expire(String key, int seconds);
-
 
   /// Gets the remaining time to live of a [key] in seconds.
   ///

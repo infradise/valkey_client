@@ -18,7 +18,8 @@ class ValkeyConnectionException extends ValkeyException {
   ValkeyConnectionException(super.message, [this.originalException]);
 
   @override
-  String toString() => 'ValkeyConnectionException: $message (Original: $originalException)';
+  String toString() =>
+      'ValkeyConnectionException: $message (Original: $originalException)';
 }
 
 /// Thrown when the Valkey server returns an error reply (e.g., -ERR, -WRONGPASS).
@@ -28,8 +29,7 @@ class ValkeyServerException extends ValkeyException {
   /// The error code or type returned by the server (e.g., "ERR", "WRONGPASS", "EXECABORT").
   final String code;
 
-  ValkeyServerException(super.message)
-      : code = message.split(' ').first;
+  ValkeyServerException(super.message) : code = message.split(' ').first;
 
   @override
   String toString() => 'ValkeyServerException($code): $message';

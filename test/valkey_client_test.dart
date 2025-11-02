@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+// import 'dart:io';
 
 import 'package:test/test.dart';
 import 'package:valkey_client/valkey_client.dart';
@@ -96,22 +96,24 @@ Future<void> main() async {
           : false);
 
   group('ValkeyClient Connection (Failure Scenarios)', () {
-    test('should throw a SocketException if connection fails', () async {
+    test('should throw a ValkeyConnectionException if connection fails',
+        () async {
       // Act: Attempt to connect to a port where no server is running.
       final client = ValkeyClient(
-          host: noAuthHost, port: closedPort); // Bad or Non-standard port
+          // host: noAuthHost,
+          port: closedPort); // Bad or Non-standard port
 
       // This test runs regardless of the server status
       final connectFuture = client.connect();
 
       await expectLater(
         connectFuture,
-        throwsA(isA<SocketException>()),
+        throwsA(isA<ValkeyConnectionException>()),
       );
     });
 
     test(
-        'should throw an Exception when providing auth to a server that does not require it',
+        'should throw a ValkeyConnectionException when providing auth to a server that does not require it',
         () async {
       // This test requires the NO-AUTH server to be running
       final client = ValkeyClient(
@@ -126,11 +128,12 @@ Future<void> main() async {
       // which our client should throw as an Exception.
       await expectLater(
         connectFuture,
-        throwsA(isA<Exception>().having(
-            (e) => e.toString(),
+        throwsA(isA<ValkeyConnectionException>().having(
+            // (e) => e.toString(),
+            (e) => e.message,
             'message',
             contains(
-                'ERR AUTH'))), // Changed from 'Valkey authentication failed'
+                'Authentication failed'))), // ERR AUTH, Changed from 'Valkey authentication failed'
       );
     },
         skip: !isServerRunning
@@ -428,6 +431,24 @@ Future<void> main() async {
       // Test 3: Key does not exist
       final ttl3 = await client.ttl('test:ttl:non_existent');
       expect(ttl3, -2);
+    });
+
+    test('should throw ValkeyServerException on WRONGTYPE operation', () async {
+      // 1. Set a normal string key
+      final key = 'test:wrongtype:key';
+      await client.set(key, 'i am a string');
+
+      // 2. Try to use a Hash command (HSET) on the String key
+      final hsetFuture = client.hset(key, 'field', 'value');
+
+      // 3. Expect the specific WRONGTYPE error from the server
+      await expectLater(
+          hsetFuture,
+          throwsA(isA<ValkeyServerException>()
+              .having((e) => e.code, 'code', 'WRONGTYPE')));
+
+      // 4. Clean up the key
+      await client.del(key);
     });
   },
 
@@ -728,7 +749,8 @@ Future<void> main() async {
       expect(execResponse, []);
     });
 
-    test('exec() throws Exception when transaction is aborted', () async {
+    test('exec() throws ValkeyServerException when transaction is aborted',
+        () async {
       await client.multi();
 
       // Intentionally send an invalid command to cause transaction failure (missing value argument for SET)
@@ -737,8 +759,9 @@ Future<void> main() async {
           .execute(['SET', 'key']); // Missing argument → error // wrong arity
       await expectLater(
         enqueueFuture,
-        throwsA(isA<Exception>().having(
-          (e) => e.toString(),
+        throwsA(isA<ValkeyServerException>().having(
+          // (e) => e.toString(),
+          (e) => e.message,
           'message',
           contains("wrong number of arguments"),
         )),
@@ -802,7 +825,7 @@ Future<void> main() async {
     });
 
     test(
-        'exec() throws an Exception if transaction was aborted (e.g., by syntax error)',
+        'exec() throws ValkeyServerException if transaction was aborted (e.g., by syntax error)',
         () async {
       await client.multi();
 
@@ -813,7 +836,10 @@ Future<void> main() async {
       // Server replies with an error immediately for syntax errors
       await expectLater(
           badCommandFuture,
-          throwsA(isA<Exception>().having((e) => e.toString(), 'message',
+          throwsA(isA<ValkeyServerException>().having(
+              // (e) => e.toString(),
+              (e) => e.message,
+              'message',
               contains('ERR unknown command'))));
 
       // Subsequent valid command (will be queued by server, but TX fails)
