@@ -4,10 +4,12 @@ import 'dart:typed_data';
 import 'dart:convert'; // For UTF8 encoding
 import 'dart:collection'; // A Queue to manage pending commands
 
-// Import the base class AND the new ValkeyMessage
-import 'package:valkey_client/src/valkey_client_base.dart';
+// Import the base class and the ValkeyMessage / Subscription
+import 'package:valkey_client/valkey_client_base.dart';
+// Import the new exceptions file
+import 'package:valkey_client/src/exceptions.dart';
 // Re-export ValkeyMessage from the main library file
-export 'package:valkey_client/src/valkey_client_base.dart'
+export 'package:valkey_client/valkey_client_base.dart'
     show ValkeyMessage, Subscription;
 
 // Internal helper class to read bytes from the buffer.
