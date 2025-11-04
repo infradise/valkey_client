@@ -1,23 +1,24 @@
-# Valkey client
-
 [![pub package](https://img.shields.io/pub/v/valkey_client.svg)](https://pub.dev/packages/valkey_client)
+
+# Valkey client
 
 A modern, production-ready Dart client for Valkey (9.0.0+). Fully Redis 7.x compatible.
 
 ---
 
-## ⚠️ Important Note: Connection Pooling
+## Recommended Usage: Connection Pooling (v1.1.0+)
 
-This client **does not include built-in connection pooling** in `v1.0.0`.
+For all applications (especially high-concurrency production servers), it is **strongly recommended** to use the built-in **`ValkeyPool`** class instead of connecting/closing individual clients.
 
-For high-concurrency production applications (like backend servers), you **MUST** use an external pooling package (like [`package:pool`](https://pub.dev/packages/pool)) to manage connections. Using `ValkeyClient.connect()` and `ValkeyClient.close()` for every request will result in poor performance.
+The pool manages connections efficiently, preventing performance issues and resource exhaustion.
 
-Built-in connection pooling is a top priority for `v2.0.0` (see [Roadmap](https://github.com/infradise/valkey_client/wiki/Roadmap)).
+(See the main `Usage` example below.)
 
 ---
 
 ## Features
 
+* **Built-in Connection Pooling (v1.1.0):** `ValkeyPool` for efficient connection management.
 * **Broad Command Support:**
     * Strings (`GET`, `SET`, `MGET`)
     * Hashes (`HSET`, `HGET`, `HGETALL`)
@@ -68,37 +69,43 @@ docker run -d --name my-valkey-acl -p 6379:6379 valkey/valkey:latest \
 
 ## Usage
 
-See the **[Example](https://pub.dev/packages/valkey_client/example)** tab for comprehensive usage examples covering all command groups.
-
-A simple example:
+The recommended way to use this client is via `ValkeyPool`.
 
 ```dart
 import 'package:valkey_client/valkey_client.dart';
 
 void main() async {
-  // 1. Configure the client
-  final client = ValkeyClient(
+  // 1. Define connection settings
+  final settings = ValkeyConnectionSettings(
     host: '127.0.0.1',
     port: 6379,
     // password: 'my-super-secret-password',
   );
 
+  // 2. Create a pool (e.g., max 10 connections)
+  final pool = ValkeyPool(connectionSettings: settings, maxConnections: 10);
+  ValkeyClient? client;
+
   try {
-    // 2. Connect
-    await client.connect();
+    // 3. Acquire a client from the pool
+    client = await pool.acquire();
     
-    // 3. Run commands
-    await client.set('greeting', 'Hello, Valkey!');
+    // 4. Run commands
+    await client.set('greeting', 'Hello from ValkeyPool!');
     final value = await client.get('greeting');
-    print(value); // Output: Hello, Valkey!
+    print(value); // Output: Hello from ValkeyPool!
     
   } on ValkeyConnectionException catch (e) {
-    print('Connection failed: $e');
+    print('Connection or pool acquisition failed: $e');
   } on ValkeyServerException catch (e) {
     print('Server returned an error: $e');
   } finally {
-    // 4. Close the connection
-    await client.close();
+    // 5. Release the client back to the pool
+    if (client != null) {
+      pool.release(client);
+    }
+    // 6. Close the pool when the application shuts down
+    await pool.close();
   }
 }
 ```
