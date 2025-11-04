@@ -1,4 +1,4 @@
-// lib/src/logging.dart
+// ignore_for_file: constant_identifier_names
 
 /// Defines logging severity levels.
 ///
@@ -10,22 +10,38 @@ class ValkeyLogLevel {
   const ValkeyLogLevel(this.name, this.value);
 
   /// Serious failures
-  static const ValkeyLogLevel SEVERE = ValkeyLogLevel('SEVERE', 1000);
+  static const ValkeyLogLevel severe = ValkeyLogLevel('SEVERE', 1000);
 
   /// Potential problems
-  static const ValkeyLogLevel WARNING = ValkeyLogLevel('WARNING', 800);
+  static const ValkeyLogLevel warning = ValkeyLogLevel('WARNING', 800);
 
   /// Informational messages
-  static const ValkeyLogLevel INFO = ValkeyLogLevel('INFO', 700);
+  static const ValkeyLogLevel info = ValkeyLogLevel('INFO', 700);
 
   /// Fine-grained tracing
-  static const ValkeyLogLevel FINE = ValkeyLogLevel('FINE', 500);
+  static const ValkeyLogLevel fine = ValkeyLogLevel('FINE', 500);
 
   /// Disables logging.
-  static const ValkeyLogLevel OFF = ValkeyLogLevel('OFF', 2000);
+  static const ValkeyLogLevel off = ValkeyLogLevel('OFF', 2000);
 
   bool operator <(ValkeyLogLevel other) => value < other.value;
   bool operator <=(ValkeyLogLevel other) => value <= other.value;
+
+  // Legacy identifiers kept for backward compatibility (deprecated)
+  @Deprecated('Since 1.1.0: Use "severe" instead')
+  static const ValkeyLogLevel SEVERE = severe;
+
+  @Deprecated('Since 1.1.0: Use "warning" instead')
+  static const ValkeyLogLevel WARNING = warning;
+
+  @Deprecated('Since 1.1.0: Use "info" instead')
+  static const ValkeyLogLevel INFO = info;
+
+  @Deprecated('Since 1.1.0: Use "fine" instead')
+  static const ValkeyLogLevel FINE = fine;
+
+  @Deprecated('Since 1.1.0: Use "off" instead')
+  static const ValkeyLogLevel OFF = off;
 }
 
 /// A simple internal logger for the valkey_client.
@@ -33,7 +49,7 @@ class ValkeyLogLevel {
 /// This avoids adding an external dependency on `package:logging`.
 class ValkeyLogger {
   final String name;
-  static ValkeyLogLevel level = ValkeyLogLevel.OFF; // Logging is OFF by default
+  static ValkeyLogLevel level = ValkeyLogLevel.off; // Logging is off by default
 
   ValkeyLogger(this.name);
 
@@ -56,18 +72,18 @@ class ValkeyLogger {
   }
 
   void severe(String message, [Object? error, StackTrace? stackTrace]) {
-    _log(ValkeyLogLevel.SEVERE, message, error, stackTrace);
+    _log(ValkeyLogLevel.severe, message, error, stackTrace);
   }
 
   void warning(String message, [Object? error]) {
-    _log(ValkeyLogLevel.WARNING, message, error);
+    _log(ValkeyLogLevel.warning, message, error);
   }
 
   void info(String message) {
-    _log(ValkeyLogLevel.INFO, message);
+    _log(ValkeyLogLevel.info, message);
   }
 
   void fine(String message) {
-    _log(ValkeyLogLevel.FINE, message);
+    _log(ValkeyLogLevel.fine, message);
   }
 }

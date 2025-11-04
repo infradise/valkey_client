@@ -96,8 +96,8 @@ class ValkeyClient implements ValkeyClientBase {
 
   /// Sets the logging level for all ValkeyClient instances.
   ///
-  /// By default, logging is `ValkeyLogLevel.OFF`.
-  /// Use `ValkeyLogLevel.INFO` or `ValkeyLogLevel.WARNING` for debugging connection
+  /// By default, logging is `ValkeyLogLevel.off`.
+  /// Use `ValkeyLogLevel.info` or `ValkeyLogLevel.warning` for debugging connection
   /// or parsing issues.
   static void setLogLevel(ValkeyLogLevel level) {
     ValkeyLogger.level = level;
