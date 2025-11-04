@@ -46,6 +46,9 @@ class ValkeyPool {
   ///
   /// If the pool is full (`maxConnections` reached), this will wait
   /// until a connection is released back into the pool.
+  ///
+  /// (The acquired client **MUST** be returned using [release]
+  /// when done.)
   Future<ValkeyClient> acquire() async {
     if (_isClosing) {
       throw ValkeyClientException(
