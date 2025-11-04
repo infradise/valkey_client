@@ -17,10 +17,13 @@ class ValkeyPool {
   /// --- Pool State ---
   /// Available clients ready for use.
   final Queue<ValkeyClient> _availableConnections = Queue();
+
   /// Number of connections currently in use (acquired).
   int _connectionsInUse = 0;
+
   /// Requests waiting for a connection to become available.
   final Queue<Completer<ValkeyClient>> _waitQueue = Queue();
+
   /// Flag to prevent new acquires after close() is called.
   bool _isClosing = false;
   // --------------------
@@ -45,7 +48,8 @@ class ValkeyPool {
   /// until a connection is released back into the pool.
   Future<ValkeyClient> acquire() async {
     if (_isClosing) {
-      throw ValkeyClientException('Pool is closing, cannot acquire new connections.');
+      throw ValkeyClientException(
+          'Pool is closing, cannot acquire new connections.');
     }
 
     // 1. Check if a client is available in the pool
@@ -87,7 +91,8 @@ class ValkeyPool {
     } catch (e) {
       // Ensure client is cleaned up if connect() fails
       await client.close(); // close() calls _cleanup()
-      throw ValkeyConnectionException('Failed to create new pool connection: $e', e);
+      throw ValkeyConnectionException(
+          'Failed to create new pool connection: $e', e);
     }
   }
 
@@ -114,12 +119,14 @@ class ValkeyPool {
   }
 
   /// Helper to check client health (e.g., PING) before reusing.
-  void _checkHealthAndPass(ValkeyClient client, Completer<ValkeyClient> completer) async {
+  void _checkHealthAndPass(
+      ValkeyClient client, Completer<ValkeyClient> completer) async {
     try {
       // Simple health check. Does PING still work?
       final response = await client.ping().timeout(Duration(seconds: 2));
       if (response != 'PONG') {
-        throw ValkeyClientException('Health check failed (response was not PONG).');
+        throw ValkeyClientException(
+            'Health check failed (response was not PONG).');
       }
       // Health check passed, pass client to waiter
       completer.complete(client);
