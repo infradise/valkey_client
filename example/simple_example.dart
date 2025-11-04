@@ -4,7 +4,7 @@ void main() async {
   // 1. Configure the client
   final client = ValkeyClient(
     host: '127.0.0.1',
-    port: 6380,
+    port: 6379,
     // password: 'my-super-secret-password',
   );
 
