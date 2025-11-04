@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:collection'; // Import Queue
-import 'package:valkey_client/valkey_client_base.dart';
+// import 'package:valkey_client/valkey_client_base.dart';
 import 'package:valkey_client/valkey_client.dart'; // Import the concrete implementation
-import 'package:valkey_client/src/exceptions.dart'; // Import exceptions
+// import 'package:valkey_client/src/exceptions.dart'; // Import exceptions
 
 // TODO: Add src/pool_manager.dart
 
@@ -53,12 +53,26 @@ class ValkeyPool {
     }
 
     // 1. Check if a client is available in the pool
-    if (_availableConnections.isNotEmpty) {
-      _connectionsInUse++;
-      return _availableConnections.removeFirst();
+    while (_availableConnections.isNotEmpty) {
+      final client = _availableConnections.removeFirst();
+
+      // Health check on acquire
+      try {
+        // Check if the client is still healthy
+        await client.ping().timeout(Duration(seconds: 2));
+        // Health check passed, return the client
+        _connectionsInUse++;
+        return client;
+      } catch (e) {
+        // Health check failed, client is unhealthy
+        // Destroy this client and try the next one in the queue
+        await client.close();
+        _connectionsInUse--; // Decrement count for the bad client we acquired and closed
+        // Loop continues to try the next available client
+      }
     }
 
-    // 2. Check if we can create a new connection
+    // 2. No healthy clients available, check if we can create a new connection
     if (_connectionsInUse < _maxConnections) {
       _connectionsInUse++;
       try {
