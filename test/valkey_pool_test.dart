@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:test/test.dart';
 import 'package:valkey_client/valkey_client.dart';
-import 'package:valkey_client/src/exceptions.dart';
+// import 'package:valkey_client/src/exceptions.dart';
 
 const noAuthHost = 'localhost'; // or 127.0.0.1
 const noAuthPort = 6379;
