@@ -114,6 +114,16 @@ class ValkeyPool {
   }
 
   /// Releases a [client] back into the pool, making it available for reuse.
+  ///
+  /// Call this in a `finally` block to ensure connections are always returned.
+  /// ```dart
+  /// final client = await pool.acquire();
+  /// try {
+  ///   await client.set('key', 'value');
+  /// } finally {
+  ///   pool.release(client);
+  /// }
+  /// ```
   void release(ValkeyClient client) {
     if (_isClosing) {
       // If pool is closing, just destroy the client
