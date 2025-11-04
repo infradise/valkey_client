@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.0
+
+### Added
+- **Built-in Connection Pooling:** Implemented `ValkeyPool` for efficient, high-concurrency connection management.
+  - Includes `pool.acquire()` and `pool.release()` methods.
+  - Automatically handles connection creation up to `maxConnections`.
+  - Implemented a wait queue for requests when the pool is full.
+  - Added health checks (`PING`) on `acquire` to discard unhealthy connections.
+- **`ValkeyConnectionSettings`:** Added a class to hold connection parameters for the pool.
+
+### Fixed
+- Fixed a bug in the pool's `release()` logic where unhealthy (closed) clients were incorrectly returned to the pool, causing errors on reuse.
+
+
 ## 1.0.0
 
 **🎉 First Production-Ready Stable Release (Standalone/Sentinel) 🎉**
