@@ -305,3 +305,20 @@ abstract class ValkeyClientBase {
   /// Returns 'OK'.
   Future<String> discard();
 }
+
+/// Holds all configuration options for creating a new connection.
+///
+/// Used by [ValkeyPool] to create new client instances.
+class ValkeyConnectionSettings {
+  final String host;
+  final int port;
+  final String? username;
+  final String? password;
+
+  ValkeyConnectionSettings({
+    this.host = '127.0.0.1',
+    this.port = 6379,
+    this.username,
+    this.password,
+  });
+}
