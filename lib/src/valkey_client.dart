@@ -5,8 +5,6 @@ import 'dart:convert'; // For UTF8 encoding
 import 'dart:collection'; // A Queue to manage pending commands
 
 // Import the base class and the ValkeyMessage / Subscription
-import 'package:valkey_client/src/cluster_slots_parser.dart'
-    show ClusterSlotsParser;
 import 'package:valkey_client/valkey_client_base.dart';
 // Import the new exceptions file
 import 'package:valkey_client/src/exceptions.dart';
@@ -14,6 +12,9 @@ import 'package:valkey_client/src/logging.dart';
 // Re-export ValkeyMessage from the main library file
 export 'package:valkey_client/valkey_client_base.dart'
     show ValkeyMessage, Subscription;
+// Import the top-level function from the parser file
+import 'package:valkey_client/src/cluster_slots_parser.dart'
+    show parseClusterSlotsResponse;
 
 // Internal helper class to read bytes from the buffer.
 class _BufferReader {
@@ -1358,8 +1359,8 @@ class ValkeyClient implements ValkeyClientBase {
       // 1. Execute the command
       final dynamic response = await execute(['CLUSTER', 'SLOTS']);
 
-      // 2. Parse the response using the dedicated parser
-      return ClusterSlotsParser.parse(response);
+      // 2. Parse the response using the dedicated parser (top-level function)
+      return parseClusterSlotsResponse(response);
     } catch (e, s) {
       // 3. Use the v1.1.0 logger
       _log.severe('Error executing CLUSTER SLOTS: $e', e, s);
