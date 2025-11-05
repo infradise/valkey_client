@@ -5,6 +5,8 @@ import 'dart:convert'; // For UTF8 encoding
 import 'dart:collection'; // A Queue to manage pending commands
 
 // Import the base class and the ValkeyMessage / Subscription
+import 'package:valkey_client/src/cluster_slots_parser.dart'
+    show ClusterSlotsParser;
 import 'package:valkey_client/valkey_client_base.dart';
 // Import the new exceptions file
 import 'package:valkey_client/src/exceptions.dart';
@@ -1348,6 +1350,25 @@ class ValkeyClient implements ValkeyClientBase {
     // Returns an Integer (:)
     final response = await execute(['PUBSUB', 'NUMPAT']);
     return response as int;
+  }
+
+  @override
+  Future<List<ClusterSlotRange>> clusterSlots() async {
+    try {
+      // 1. Execute the command
+      final dynamic response = await execute(['CLUSTER', 'SLOTS']);
+
+      // 2. Parse the response using the dedicated parser
+      return ClusterSlotsParser.parse(response);
+    } catch (e, s) {
+      // 3. Use the v1.1.0 logger
+      _log.severe('Error executing CLUSTER SLOTS: $e', e, s);
+      // 4. Re-throw v1.1.0 exceptions
+      // Re-throw as a ValkeyException if it's not one already
+      if (e is ValkeyException) rethrow;
+      // Wrap unknown errors
+      throw ValkeyClientException('Failed to execute CLUSTER SLOTS: $e');
+    }
   }
 
   // --- Socket Lifecycle Handlers ---

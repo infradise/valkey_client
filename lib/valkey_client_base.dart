@@ -1,5 +1,9 @@
 import 'dart:async';
 
+import 'package:valkey_client/src/cluster_info.dart';
+export 'package:valkey_client/src/cluster_info.dart'
+    show ClusterNodeInfo, ClusterSlotRange;
+
 /// Represents a message received from a subscribed channel or pattern.
 class ValkeyMessage {
   /// The channel the message was sent to.
@@ -285,6 +289,12 @@ abstract class ValkeyClientBase {
 
   /// Returns the number of subscriptions to patterns.
   Future<int> pubsubNumPat();
+
+  /// Fetches the cluster topology information from the server.
+  ///
+  /// Returns a list of [ClusterSlotRange] objects, describing which
+  /// slots are mapped to which master and replica nodes.
+  Future<List<ClusterSlotRange>> clusterSlots();
 
   /// Marks the start of a transaction block.
   ///
