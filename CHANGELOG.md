@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.2.0
+
+### Added
+- **Cluster Auto-Discovery (Foundation):** Implemented the `client.clusterSlots()` command. This is the first step towards full cluster support (v2.0.0), allowing the client to fetch the cluster's slot topology.
+- **New Cluster Models:** Added `ClusterNodeInfo` and `ClusterSlotRange` (in `lib/src/cluster_info.dart`) to represent the parsed slot map returned by the server.
+- **Internal (Parser):** Added a new, testable, top-level function `parseClusterSlotsResponse` (in `lib/src/cluster_slots_parser.dart`) to handle the complex `CLUSTER SLOTS` array response, respecting the `avoid_classes_with_only_static_members` lint rule.
+
+### Fixed
+- **Critical Hang Bug (Command Timeout):** Fixed a critical bug where the client would hang indefinitely if the server did not send a response (e.g., a standalone server receiving the `CLUSTER SLOTS` command).
+- **`commandTimeout` Implementation:**
+  - Added a `commandTimeout` (default 10s) property to `ValkeyConnectionSettings` and the `ValkeyClient` constructor.
+  - `ValkeyPool` now correctly propagates this setting to newly created clients.
+  - The core `execute` method now applies this timeout to all standard commands, throwing a `ValkeyClientException` on timeout.
+- **Queue Desync Prevention:** The `onTimeout` handler now correctly removes the stale `Completer` from the `_responseQueue`, preventing potential desynchronization issues on late responses.
+
+### Documentation
+- **New Example:** Added `example/cluster_auto_discovery_example.dart` to demonstrate the usage of the new `clusterSlots()` command and its correct timeout behavior when run against a standalone (non-cluster) server.
+
+
 ## 1.1.0
 
 ### Added
