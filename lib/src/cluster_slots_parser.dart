@@ -7,7 +7,7 @@ import 'package:valkey_client/src/exceptions.dart'; // For ValkeyParsingExceptio
 ///
 /// This logic is separated from [ValkeyClient] to improve testability,
 /// as the response format is complex.
-/// 
+///
 /// Throws a [ValkeyParsingException] if the response format is invalid.
 List<ClusterSlotRange> parseClusterSlotsResponse(dynamic response) {
   if (response is! List) {

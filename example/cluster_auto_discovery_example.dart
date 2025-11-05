@@ -27,8 +27,7 @@ void main() async {
       if (range.replicas.isNotEmpty) {
         print('  Replicas:');
         for (final replica in range.replicas) {
-          print(
-              '    - ${replica.host}:${replica.port} (ID: ${replica.id})');
+          print('    - ${replica.host}:${replica.port} (ID: ${replica.id})');
         }
       } else {
         print('  Replicas: None');
@@ -39,8 +38,7 @@ void main() async {
     print('Ensure a Valkey CLUSTER node is running on 127.0.0.1:7000.');
   } on ValkeyServerException catch (e) {
     print('\n❌ Server Error: $e');
-    print(
-        'Did you run this against a standalone (non-cluster) server?');
+    print('Did you run this against a standalone (non-cluster) server?');
   } on ValkeyParsingException catch (e) {
     print('\n❌ Parsing Error: $e');
     print('Failed to parse the server response.');
