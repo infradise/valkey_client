@@ -12,7 +12,7 @@ For all applications (especially high-concurrency production servers), it is **s
 
 The pool manages connections efficiently, preventing performance issues and resource exhaustion.
 
-(See the main `Usage` example below.)
+(See the main `Usage` example below for a simple case, or the [**advanced pool example**](https://github.com/infradise/valkey_client/blob/main/example/pool_example.dart) for concurrent requests.)
 
 ---
 
@@ -69,7 +69,9 @@ docker run -d --name my-valkey-acl -p 6379:6379 valkey/valkey:latest \
 
 ## Usage
 
-The recommended way to use this client is via `ValkeyPool`.
+See the **[Example tab](https://pub.dev/packages/valkey_client/example)** for all examples, including the [**advanced pool example**](https://github.com/infradise/valkey_client/blob/main/example/pool_example.dart).
+
+A simple example (`simple_pool_example.dart`):
 
 ```dart
 import 'package:valkey_client/valkey_client.dart';
