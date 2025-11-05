@@ -120,6 +120,9 @@ class ValkeyClient implements ValkeyClientBase {
   String? _lastUsername;
   String? _lastPassword;
 
+  /// The timeout duration for commands.
+  final Duration _commandTimeout;
+
   // Command/Response Queue
   /// A queue of Completers, each waiting for a response.
   final Queue<Completer<dynamic>> _responseQueue = Queue();
@@ -174,15 +177,20 @@ class ValkeyClient implements ValkeyClientBase {
   ///
   /// [host], [port], [username], and [password] are the default
   /// connection parameters used when [connect] is called.
+  ///
+  /// [commandTimeout] specifies the maximum duration to wait for a command
+  /// response before throwing a [ValkeyClientException].
   ValkeyClient({
     String host = '127.0.0.1',
     int port = 6379,
     String? username,
     String? password,
+    Duration commandTimeout = const Duration(seconds: 10),
   })  : _defaultHost = host,
         _defaultPort = port,
         _defaultUsername = username,
-        _defaultPassword = password;
+        _defaultPassword = password,
+        _commandTimeout = commandTimeout;
 
   /// A Future that completes once the connection and authentication are successful.
   @override
@@ -873,6 +881,26 @@ class ValkeyClient implements ValkeyClientBase {
           Future.error('Punsubscribe completer not initialized');
     }
 
+    // If it's a regular command (completer is not null)
+    if (completer != null) {
+      return completer.future.timeout(
+        _commandTimeout,
+        onTimeout: () {
+          // IMPORTANT: Remove the stale completer from the queue
+          // to prevent desynchronization on a late response.
+          // We check 'contains' for safety, though it should be there.
+          if (_responseQueue.contains(completer)) {
+            _responseQueue.remove(completer);
+          }
+
+          // Throw a clear exception (this will be caught by the example)
+          throw ValkeyClientException(
+              'Command timed out after ${_commandTimeout.inMilliseconds}ms: ${command.join(' ')}');
+        },
+      );
+    }
+
+    // Fallback for commands that don't queue (e.g., PING in Pub/Sub mode)
     return completer?.future ??
         Future.value(null); // Default case (e.g., PING in Pub/Sub mode)
   }

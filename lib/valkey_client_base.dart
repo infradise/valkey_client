@@ -325,10 +325,15 @@ class ValkeyConnectionSettings {
   final String? username;
   final String? password;
 
+  /// The maximum duration to wait for a response to any command.
+  /// Defaults to 10 seconds.
+  final Duration commandTimeout;
+
   ValkeyConnectionSettings({
     this.host = '127.0.0.1',
     this.port = 6379,
     this.username,
     this.password,
+    this.commandTimeout = const Duration(seconds: 10),
   });
 }

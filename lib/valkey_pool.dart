@@ -101,6 +101,7 @@ class ValkeyPool {
       port: _connectionSettings.port,
       username: _connectionSettings.username,
       password: _connectionSettings.password,
+      commandTimeout: _connectionSettings.commandTimeout,
     );
     try {
       await client.connect();
