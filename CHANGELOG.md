@@ -11,6 +11,9 @@
 - **`ValkeyCommandsBase`:** Created a new base interface (`lib/valkey_commands_base.dart`) to abstract common data commands, preventing code duplication between `ValkeyClientBase` and `ValkeyClusterClientBase`.
 - **Internal (Hash Slot):** Added a dependency-free hash slot calculator (`lib/src/cluster_hash.dart`) implementing CRC-16/XMODEM.
 - **Internal (Slot Map):** Added `ClusterSlotMap` (`lib/src/cluster_slot_map.dart`) to manage the mapping of slots to nodes efficiently.
+- **Example (Cluster):** Added `example/cluster_client_example.dart` to demonstrate `ValkeyClusterClient` usage and routing.
+- **Testing (Cluster):** - Added `test/cluster_hash_test.dart` for validating the CRC-16 hash slot calculator.
+  - Added `test/valkey_cluster_client_test.dart` for integration testing of the new cluster client.
 
 ### Known Limitations
 - **`MGET`:** The `mget` command (defined in `ValkeyCommandsBase`) is **not** implemented in `ValkeyClusterClient` in this version and will throw an `UnimplementedError`. Multi-key scatter-gather operations are planned for **v1.4.0**.
