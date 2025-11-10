@@ -19,7 +19,7 @@ The pool manages connections efficiently, preventing performance issues and reso
 ## Features
 
 * **Built-in Connection Pooling (v1.1.0):** `ValkeyPool` for efficient connection management.
-* **Cluster Auto-Discovery (v1.2.0):** Added `client.clusterSlots()` to fetch cluster topology, laying the foundation for full cluster support.
+* **Cluster Auto-Discovery (v1.2.0):** Added `client.clusterSlots()` to fetch cluster topology (via the CLUSTER SLOTS command), laying the foundation for full cluster support.
 * **Command Timeout (v1.2.0):** Includes a built-in command timeout (via `ValkeyConnectionSettings`) to prevent client hangs on non-responsive servers.
 * **Broad Command Support:**
     * Strings (`GET`, `SET`, `MGET`)
