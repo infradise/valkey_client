@@ -71,7 +71,7 @@ docker run -d --name my-valkey-acl -p 6379:6379 valkey/valkey:latest \
 
 ## Usage
 
-See the **[Example tab](https://pub.dev/packages/valkey_client/example)** for all examples, including the [**advanced pool example**](https://github.com/infradise/valkey_client/blob/main/example/pool_example.dart) and the new [**cluster auto-discovery example**](https://github.com/infradise/valkey_client/blob/main/example/cluster_auto_discovery_example.dart).
+See the **[Example tab](https://pub.dev/packages/valkey_client/example)** for all examples. Additionally, the [**advanced pool example**](https://github.com/infradise/valkey_client/blob/main/example/pool_example.dart) and the [**cluster auto-discovery example**](https://github.com/infradise/valkey_client/blob/main/example/cluster_auto_discovery_example.dart) are linked to their respective files in the GitHub repository. Check the example folder for more examples.
 
 A simple example (`simple_pool_example.dart`):
 
