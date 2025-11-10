@@ -3,15 +3,16 @@ import 'package:valkey_client/valkey_client.dart';
 void main() async {
   // 1. Define the initial nodes to connect to.
   // The client only needs one node to discover the entire cluster.
-  // We assume a cluster node is running on port 7000.
+  // We assume a cluster node is running on port 7001.
   final initialNodes = [
     ValkeyConnectionSettings(
       host: '127.0.0.1',
-      port: 7000,
+      port: 7001,
       commandTimeout: Duration(seconds: 5), // Set timeout for all commands
     ),
     // You could add other seed nodes here if desired
-    // ValkeyConnectionSettings(host: '127.0.0.1', port: 7001),
+    // ValkeyConnectionSettings(host: '127.0.0.1', port: 7002),
+    // ValkeyConnectionSettings(host: '127.0.0.1', port: 7003),
   ];
 
   // 2. Create the new ValkeyClusterClient
@@ -49,7 +50,7 @@ void main() async {
 
   } on ValkeyConnectionException catch (e) {
     print('\n❌ Connection Failed: $e');
-    print('Ensure a Valkey CLUSTER node is running on 127.0.0.1:7000.');
+    print('Ensure a Valkey CLUSTER node is running.');
   } on ValkeyServerException catch (e) {
     print('\n❌ Server Error: $e');
   } on ValkeyClientException catch (e) {
