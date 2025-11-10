@@ -1,0 +1,79 @@
+# version: ""
+#   NOTE: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion.
+services:
+  valkey-7001:
+    image: valkey/valkey:latest
+    container_name: valkey-7001
+    command: >
+      valkey-server --port 7001
+      --cluster-enabled yes
+      --cluster-config-file nodes-7001.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 127.0.0.1
+      --cluster-announce-port 7001
+      --cluster-announce-bus-port 17001
+      --appendonly yes
+    ports:
+      - "7001:7001"
+      - "17001:17001"
+    # networks:
+    #   - valkey-net
+
+  valkey-7002:
+    image: valkey/valkey:latest
+    container_name: valkey-7002
+    command: >
+      valkey-server --port 7002
+      --cluster-enabled yes
+      --cluster-config-file nodes-7002.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 127.0.0.1
+      --cluster-announce-port 7002
+      --cluster-announce-bus-port 17002
+      --appendonly yes
+    ports:
+      - "7002:7002"
+      - "17002:17002"
+    # networks:
+    #   - valkey-net
+
+  valkey-7003:
+    image: valkey/valkey:latest
+    container_name: valkey-7003
+    command: >
+      valkey-server --port 7003
+      --cluster-enabled yes
+      --cluster-config-file nodes-7003.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 127.0.0.1
+      --cluster-announce-port 7003
+      --cluster-announce-bus-port 17003
+      --appendonly yes
+    ports:
+      - "7003:7003"
+      - "17003:17003"
+    # networks:
+    #   - valkey-net
+
+  # --- Cluster Initializer ---
+  cluster-init:
+    image: valkey/valkey:latest
+    container_name: valkey-cluster-init
+    depends_on:
+      - valkey-7001
+      - valkey-7002
+      - valkey-7003
+    entrypoint: /bin/sh -c '
+      echo "Waiting for cluster nodes to be ready..."
+      sleep 10
+      echo "Yes" | valkey-cli --cluster create \
+        127.0.0.1:7001 \
+        127.0.0.1:7002 \
+        127.0.0.1:7003 \
+        --cluster-replicas 0
+      '
+
+# networks:
+#   valkey-net:
+#     driver: bridge
+
