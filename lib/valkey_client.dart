@@ -20,8 +20,11 @@ export 'valkey_cluster_client_base.dart';
 // Export public exception classes (v1.0.0)
 export 'src/exceptions.dart';
 
-// Export the concrete implementation
+// Export the concrete *standalone* implementation
 export 'src/valkey_client.dart';
+
+// Export the concrete *cluster* implementation
+export 'src/valkey_cluster_client.dart';
 
 // Re-export shared data classes and enums for convenience
 export 'valkey_client_base.dart' show ValkeyMessage, Subscription;
