@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.3.0
+
+### Added
+- **Command Routing (Foundation):** Introduced the new `ValkeyClusterClient`.
+- **`ValkeyClusterClient`:** A cluster-aware client that:
+  - Fetches topology using `clusterSlots()` on `connect()`.
+  - Manages internal `ValkeyPool`s for each master node.
+  - Automatically routes single-key commands (`GET`, `SET`, `HSET`, etc.) to the correct node using the `getHashSlot` calculator.
+- **`ValkeyCommandsBase`:** Created a new base interface (`lib/valkey_commands_base.dart`) to abstract common data commands, preventing code duplication between `ValkeyClientBase` and `ValkeyClusterClientBase`.
+- **Internal (Hash Slot):** Added a dependency-free hash slot calculator (`lib/src/cluster_hash.dart`) implementing CRC-16/XMODEM.
+- **Internal (Slot Map):** Added `ClusterSlotMap` (`lib/src/cluster_slot_map.dart`) to manage the mapping of slots to nodes efficiently.
+
+### Known Limitations
+- **`MGET`:** The `mget` command (defined in `ValkeyCommandsBase`) is **not** implemented in `ValkeyClusterClient` in this version and will throw an `UnimplementedError`. Multi-key scatter-gather operations are planned for **v1.4.0**.
+- **`Transactions` & `Pub/Sub`:** Cluster-aware Transactions (which require multi-node coordination) and Sharded Pub/Sub (`SSUBSCRIBE`, `SPUBLISH`) are not implemented *in this version*. Sharded Pub/Sub is planned for **v1.6.0** as part of the v2.0.0 cluster roadmap.
+
+
 ## 1.2.0
 
 ### Added
