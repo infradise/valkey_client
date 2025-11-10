@@ -5,6 +5,9 @@ library;
 // Export the public API interface and related classes
 export 'valkey_client_base.dart';
 
+// Export the common command interface
+export 'valkey_commands_base.dart';
+
 // Export the connection pool (v1.1.0)
 export 'valkey_pool.dart';
 
