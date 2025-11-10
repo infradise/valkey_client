@@ -18,8 +18,12 @@ The pool manages connections efficiently, preventing performance issues and reso
 
 ## Features
 
-* **Built-in Connection Pooling (v1.1.0):** `ValkeyPool` for efficient connection management.
-* **Cluster Auto-Discovery (v1.2.0):** Added `client.clusterSlots()` to fetch cluster topology (via the CLUSTER SLOTS command), laying the foundation for full cluster support.
+* **Cluster Client (v1.3.0):** Added `ValkeyClusterClient` for automatic command routing in cluster mode.
+    * This client automatically routes commands to the correct node.
+    * We recommend using `ValkeyClient` for Standalone/Sentinel and `ValkeyClusterClient` for cluster environments.
+    * *Note: Multi-key commands (like `MGET`) are planned for v1.4.0.*
+* **Built-in Connection Pooling (v1.1.0):** `ValkeyPool` for efficient connection management (used by Standalone and Cluster clients).
+* **Cluster Auto-Discovery (v1.2.0):** Added `client.clusterSlots()` to fetch cluster topology (via the `CLUSTER SLOTS` command), laying the foundation for full cluster support.
 * **Command Timeout (v1.2.0):** Includes a built-in command timeout (via `ValkeyConnectionSettings`) to prevent client hangs on non-responsive servers.
 * **Broad Command Support:**
     * Strings (`GET`, `SET`, `MGET`)
@@ -33,8 +37,8 @@ The pool manages connections efficiently, preventing performance issues and reso
     * Pub/Sub Introspection (`PUBSUB CHANNELS`, `NUMSUB`, `NUMPAT`)
 * **Robust Parsing:** Full RESP3 parser handling all core data types (`+`, `-`, `$`, `*`, `:`).
 * **Type-Safe Exceptions:** Clear distinction between connection errors (`ValkeyConnectionException`), server errors (`ValkeyServerException`), and client errors (`ValkeyClientException`).
-* **Pub/Sub Ready:** `subscribe()` returns a `Subscription` object with a `Stream` and a `Future<void> ready` for easy and reliable message handling.
-* **Production-Ready (Standalone/Sentinel):** `v1.0.0` is stable for production use in non-clustered environments (when used with a connection pool).
+* **Pub/Sub Ready (Standalone/Sentinel):** `subscribe()` returns a `Subscription` object with a `Stream` and a `Future<void> ready` for easy and reliable message handling.
+* **Production-Ready (Standalone/Sentinel):** `v1.0.0` is stable for production use in non-clustered environments (when used with a connection pool). This lays the foundation for the full cluster support planned for v2.0.0 (see [Roadmap](https://github.com/infradise/valkey_client/wiki/Roadmap#roadmap-towards-v200-production-ready-for-cluster-)).
 
 ## Getting Started
 
