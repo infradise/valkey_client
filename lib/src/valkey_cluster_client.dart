@@ -212,6 +212,6 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
     // MGET is complex as keys can span multiple nodes.
     // This requires a "scatter-gather" operation.
     // Stubbed for v1.3.0, requires separate implementation.
-    throw UnimplementedError('MGET (multi-node scatter-gather) is not yet implemented in v1.3.0.');
+    throw UnimplementedError('MGET (multi-node scatter-gather) is not yet implemented in v1.3.0 and is planned for v1.4.0.');
   }
 }
