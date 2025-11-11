@@ -24,7 +24,7 @@ function printOutput() {
     # pid="echo '$output' | grep ':7000' | awk '{ print \$2 }' | sort -u"
     getPid="lsof -nP | grep ':7000' | awk '{ print \$2 }' | sort -u"
     pid=`eval $getPid`
-    echo $pid
+    # echo $pid
     getProc="ps -p $pid -o comm="
     res=`eval $getProc`
     echo $res
@@ -57,10 +57,33 @@ checkPorts() {
   done
 }
 
+detect_os() {
+  case "$(uname -s)" in
+    Linux*)   OS_TYPE="Linux" ;;
+    Darwin*)  OS_TYPE="macOS" ;;
+    CYGWIN*|MINGW*|MSYS*) OS_TYPE="Windows" ;;
+    *)        OS_TYPE="UNKNOWN" ;;
+  esac
+
+  if [ "$OS_TYPE" = "macOS" ]; then
+    noticeToMacOS
+  elif [ "$OS_TYPE" = "UNKNOWN" ]; then
+    echo "Error: Unsupported Operating System. Terminating script."
+    exit 1
+  fi
+  # echo "Operating System detected: $OS_TYPE"
+}
+
+noticeToMacOS() {
+  echo "On macOS, port 7000 is reserved by the system (ControlCenter/AirPlay)."
+  echo "Please start your Valkey cluster from port 7001 instead."
+}
+
 if [ $# -lt 2 ]; then
   usage
 fi
 
+detect_os
 checkPorts "$1" "$2"
 
 # docker ps | grep 7000
