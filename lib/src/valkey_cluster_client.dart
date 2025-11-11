@@ -131,22 +131,28 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   // --- Implemented Commands (from ValkeyCommandsBase) ---
 
   @override
-  Future<String?> get(String key) => _executeOnKey(key, (client) => client.get(key));
+  Future<String?> get(String key) =>
+      _executeOnKey(key, (client) => client.get(key));
 
   @override
-  Future<String> set(String key, String value) => _executeOnKey(key, (client) => client.set(key, value));
+  Future<String> set(String key, String value) =>
+      _executeOnKey(key, (client) => client.set(key, value));
 
   @override
-  Future<int> del(String key) => _executeOnKey(key, (client) => client.del(key));
+  Future<int> del(String key) =>
+      _executeOnKey(key, (client) => client.del(key));
 
   @override
-  Future<int> exists(String key) => _executeOnKey(key, (client) => client.exists(key));
+  Future<int> exists(String key) =>
+      _executeOnKey(key, (client) => client.exists(key));
 
   @override
-  Future<String?> hget(String key, String field) => _executeOnKey(key, (client) => client.hget(key, field));
+  Future<String?> hget(String key, String field) =>
+      _executeOnKey(key, (client) => client.hget(key, field));
 
   @override
-  Future<int> hset(String key, String field, String value) => _executeOnKey(key, (client) => client.hset(key, field, value));
+  Future<int> hset(String key, String field, String value) =>
+      _executeOnKey(key, (client) => client.hset(key, field, value));
 
   // (Note: We must implement ALL methods from ValkeyCommandsBase here)
   // ... (hgetall, lpush, lpop, sadd, zadd, etc. follow the same pattern)
@@ -179,39 +185,54 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   // (These must be implemented to satisfy the interface)
 
   @override
-  Future<Map<String, String>> hgetall(String key) => _executeOnKey(key, (client) => client.hgetall(key));
+  Future<Map<String, String>> hgetall(String key) =>
+      _executeOnKey(key, (client) => client.hgetall(key));
   @override
-  Future<int> lpush(String key, String value) => _executeOnKey(key, (client) => client.lpush(key, value));
+  Future<int> lpush(String key, String value) =>
+      _executeOnKey(key, (client) => client.lpush(key, value));
   @override
-  Future<List<String?>> lrange(String key, int start, int stop) => _executeOnKey(key, (client) => client.lrange(key, start, stop));
+  Future<List<String?>> lrange(String key, int start, int stop) =>
+      _executeOnKey(key, (client) => client.lrange(key, start, stop));
   @override
-  Future<String?> lpop(String key) => _executeOnKey(key, (client) => client.lpop(key));
+  Future<String?> lpop(String key) =>
+      _executeOnKey(key, (client) => client.lpop(key));
   @override
-  Future<int> rpush(String key, String value) => _executeOnKey(key, (client) => client.rpush(key, value));
+  Future<int> rpush(String key, String value) =>
+      _executeOnKey(key, (client) => client.rpush(key, value));
   @override
-  Future<String?> rpop(String key) => _executeOnKey(key, (client) => client.rpop(key));
+  Future<String?> rpop(String key) =>
+      _executeOnKey(key, (client) => client.rpop(key));
   @override
-  Future<int> sadd(String key, String member) => _executeOnKey(key, (client) => client.sadd(key, member));
+  Future<int> sadd(String key, String member) =>
+      _executeOnKey(key, (client) => client.sadd(key, member));
   @override
-  Future<List<String?>> smembers(String key) => _executeOnKey(key, (client) => client.smembers(key));
+  Future<List<String?>> smembers(String key) =>
+      _executeOnKey(key, (client) => client.smembers(key));
   @override
-  Future<int> srem(String key, String member) => _executeOnKey(key, (client) => client.srem(key, member));
+  Future<int> srem(String key, String member) =>
+      _executeOnKey(key, (client) => client.srem(key, member));
   @override
-  Future<int> zadd(String key, double score, String member) => _executeOnKey(key, (client) => client.zadd(key, score, member));
+  Future<int> zadd(String key, double score, String member) =>
+      _executeOnKey(key, (client) => client.zadd(key, score, member));
   @override
-  Future<List<String?>> zrange(String key, int start, int stop) => _executeOnKey(key, (client) => client.zrange(key, start, stop));
+  Future<List<String?>> zrange(String key, int start, int stop) =>
+      _executeOnKey(key, (client) => client.zrange(key, start, stop));
   @override
-  Future<int> zrem(String key, String member) => _executeOnKey(key, (client) => client.zrem(key, member));
+  Future<int> zrem(String key, String member) =>
+      _executeOnKey(key, (client) => client.zrem(key, member));
   @override
-  Future<int> expire(String key, int seconds) => _executeOnKey(key, (client) => client.expire(key, seconds));
+  Future<int> expire(String key, int seconds) =>
+      _executeOnKey(key, (client) => client.expire(key, seconds));
   @override
-  Future<int> ttl(String key) => _executeOnKey(key, (client) => client.ttl(key));
+  Future<int> ttl(String key) =>
+      _executeOnKey(key, (client) => client.ttl(key));
 
   @override
   Future<List<String?>> mget(List<String> keys) {
     // MGET is complex as keys can span multiple nodes.
     // This requires a "scatter-gather" operation.
     // Stubbed for v1.3.0, requires separate implementation.
-    throw UnimplementedError('MGET (multi-node scatter-gather) is not yet implemented in v1.3.0 and is planned for v1.4.0.');
+    throw UnimplementedError(
+        'MGET (multi-node scatter-gather) is not yet implemented in v1.3.0 and is planned for v1.4.0.');
   }
 }

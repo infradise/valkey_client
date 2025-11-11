@@ -47,7 +47,6 @@ void main() async {
 
     // Note: MGET is not supported in v1.3.0
     // await client.mget(['key:A', 'key:B']); // Throws UnimplementedError
-
   } on ValkeyConnectionException catch (e) {
     print('\n❌ Connection Failed: $e');
     print('Ensure a Valkey CLUSTER node is running.');

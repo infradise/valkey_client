@@ -62,7 +62,8 @@ void detectOS() {
 }
 
 void noticeToMacOS() {
-  print('On macOS, port 7000 is reserved by the system (ControlCenter/AirPlay).');
+  print(
+      'On macOS, port 7000 is reserved by the system (ControlCenter/AirPlay).');
   print('Please start your Valkey cluster from port 7001 instead.');
 }
 
