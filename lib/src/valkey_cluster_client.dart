@@ -27,10 +27,9 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   bool _isClosed = false;
 
   ValkeyClusterClient(
-    List<ValkeyConnectionSettings> initialNodes,
-  )   : _initialNodes = initialNodes,
-        _defaultSettings = initialNodes.first {
-    if (initialNodes.isEmpty) {
+    this._initialNodes,
+  ) : _defaultSettings = _initialNodes.first {
+    if (_initialNodes.isEmpty) {
       throw ArgumentError('At least one initial node must be provided.');
     }
   }
