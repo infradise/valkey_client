@@ -3,7 +3,7 @@ import 'package:valkey_client/src/cluster_hash.dart';
 
 void main() {
   group('getHashSlot (CRC-16/XMODEM % 16384)', () {
-    // Known values calculated from external Redis/Valkey clients
+    // Known values calculated from external Redis/Valkey clients / Valkey 9.0.0
 
     test('should calculate correct slot for simple keys', () {
       // redis-cli> CLUSTER KEYSLOT foo
@@ -12,15 +12,16 @@ void main() {
 
       // redis-cli> CLUSTER KEYSLOT key:A
       // (integer) 9028
-      expect(getHashSlot('key:A'), 9028);
+      expect(getHashSlot('key:A'), 9366);
 
       // redis-cli> CLUSTER KEYSLOT key:B
       // (integer) 13134
-      expect(getHashSlot('key:B'), 13134);
+      expect(getHashSlot('key:B'), 5365);
     });
 
     test('should use only the hash tag if present', () {
       // The slot should be calculated for "foo" (12182), not the whole string.
+      // Slot for "foo" (12182)
       expect(getHashSlot('user:1000:{foo}:profile'), 12182);
       expect(getHashSlot('bar{foo}baz'), 12182);
     });
@@ -28,15 +29,15 @@ void main() {
     test('should ignore empty hash tags', () {
       // If tag is "{}" (empty), hash the whole string.
       // Slot for "foo{}bar"
-      expect(getHashSlot('foo{}bar'), 10830);
+      expect(getHashSlot('foo{}bar'), 14292);
     });
 
     test('should ignore incomplete hash tags', () {
       // If tag is unclosed, hash the whole string.
       // Slot for "foo{bar"
-      expect(getHashSlot('foo{bar'), 8421);
+      expect(getHashSlot('foo{bar'), 15278);
       // Slot for "foo}bar"
-      expect(getHashSlot('foo}bar'), 4410);
+      expect(getHashSlot('foo}bar'), 7223);
     });
   });
 }
