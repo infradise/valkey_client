@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'package:valkey_client/valkey_client.dart';
 // import 'package:valkey_client/valkey_cluster_client_base.dart';
-import 'package:valkey_client/src/cluster_hash.dart';
-import 'package:valkey_client/src/cluster_slot_map.dart';
+import 'cluster_hash.dart';
+import 'cluster_slot_map.dart';
+import 'logging.dart';
 
 /// The concrete implementation of [ValkeyClusterClientBase].
 ///
 /// This client manages connections to all master nodes in a Valkey Cluster,
 /// automatically routing commands to the correct node based on the key's hash slot.
 class ValkeyClusterClient implements ValkeyClusterClientBase {
+  static final _log = ValkeyLogger('ValkeyClusterClient');
+
   /// The initial nodes to connect to for discovering the cluster topology.
   final List<ValkeyConnectionSettings> _initialNodes;
 
@@ -26,6 +29,9 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
 
   bool _isClosed = false;
 
+  /// Stores the NAT mapping rule, e.g., {'192.168.65.254': '127.0.0.1'}
+  Map<String, String> _hostMap = {};
+
   ValkeyClusterClient(
     this._initialNodes,
   ) : _defaultSettings = _initialNodes.first {
@@ -42,33 +48,102 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
           'Client is closed and cannot be reconnected.');
     }
 
+    _hostMap = {}; // Reset map on (re)connect
+
     ValkeyClient? tempClient;
     try {
-      // 1. Create a temporary client to one of the initial nodes
+      // 1-1. Get the host we are using to connect (e.g., '127.0.0.1')
+      final initialHost = _defaultSettings.host; // e.g., '127.0.0.1'
+      final initialPort = _defaultSettings.port; // e.g., 7001
+
+      // 1-2. Create a temporary client to one of the initial nodes
       tempClient = ValkeyClient(
-        host: _defaultSettings.host,
-        port: _defaultSettings.port,
+        host: initialHost,
+        port: initialPort,
         commandTimeout: _defaultSettings.commandTimeout,
       );
       await tempClient.connect();
 
       // 2. Fetch the cluster topology (v1.2.0 feature)
       final ranges = await tempClient.clusterSlots();
+      if (ranges.isEmpty) {
+        // This happens if the 'cluster-init' script failed
+        throw ValkeyClientException(
+            'CLUSTER SLOTS returned an empty topology. Is the cluster stable?');
+      }
 
-      // 3. Build the slot map (v1.3.0 Step 1)
-      final slotMap = ClusterSlotMap.fromRanges(ranges);
-      _slotMap = slotMap;
+      // --- BEGIN: Automatic NAT/Docker Mapping (v1.3.0) ---
 
-      // 4. Create connection pools for each master node
-      for (final node in slotMap.masterNodes) {
+      // 3. Find what the cluster calls the node we connected to.
+      //    Find the announced IP for the node we connected to
+      String? announcedHost;
+      for (final range in ranges) {
+        // Check master
+        if (range.master.port == initialPort) {
+          announcedHost = range.master.host;
+          break;
+        }
+        // Check replicas
+        for (final replica in range.replicas) {
+          if (replica.port == initialPort) {
+            announcedHost = replica.host;
+            break;
+          }
+        }
+        if (announcedHost != null) break;
+      }
+
+      if (announcedHost == null) {
+        throw ValkeyClientException(
+            'Failed to find initial node ($initialHost:$initialPort) in CLUSTER SLOTS response.');
+      }
+
+      // --- Keyman. Core Patch ---
+      // 4. Create the mapping rule if IPs don't match
+      // e.g., if initialHost = '127.0.0.1' and announcedHost = '192.168.65.254'
+      if (initialHost != announcedHost) {
+        // We log this for debugging, using the client's static logger
+        ValkeyClient.setLogLevel(ValkeyLogLevel.info); // Ensure info is on
+        _log.info(
+            'Detected NAT/Docker environment: Mapping announced IP $announcedHost -> $initialHost');
+        _hostMap[announcedHost] = initialHost;
+      }
+
+      // --- END: Automatic NAT/Docker Mapping ---
+
+      // 5. Build the slot map (v1.3.0 Step 1)
+      // final slotMap = ClusterSlotMap.fromRanges(ranges);
+      // _slotMap = slotMap;
+      _slotMap = ClusterSlotMap.fromRanges(ranges);
+
+      // 6. Create connection pools for each master node
+      for (final node in _slotMap!.masterNodes) {
+      // for (final node in slotMap.masterNodes) {
+        // node.host = '192.168.65.254', node.port = 7001, 7002, 7003
+
+
+        // --- BEGIN FIX (v1.3.0) ---
+        // Apply host mapping if provided
+        // node.host here is '192.168.65.254'
+        // final mappedHost = hostMapper?.call(node.host) ?? node.host; // It works too.
+        // Apply mapping rule: Get '127.0.0.1' if it exists, otherwise use original
+        // Apply the mapping rule CONSISTENTLY
+        final mappedHost = _hostMap[node.host] ?? node.host; // '127.0.0.1' (Correct)
+        // mappedHost is now '127.0.0.1'
+        // --- END FIX ---
+
         final nodeSettings = ValkeyConnectionSettings(
-          host: node.host,
-          port: node.port,
+          host: mappedHost, // Use the MAPPED host (e.g., '127.0.0.1')
+          port: node.port,  // Use the correct port (e.g., 7002)
           commandTimeout: _defaultSettings.commandTimeout,
           // Note: Auth settings would need to be passed here if required
         );
+
+        final nodeId = '$mappedHost:${node.port}'; // Key is '127.0.0.1:7002' (Correct pool ID)
+        if (_nodePools.containsKey(nodeId)) continue;
+
         final pool = ValkeyPool(connectionSettings: nodeSettings);
-        _nodePools[_getNodeId(node)] = pool;
+        _nodePools[nodeId] = pool;
       }
     } on ValkeyException {
       rethrow; // Re-throw known Valkey exceptions
@@ -90,7 +165,14 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   }
 
   /// Helper to get a unique string ID for a node.
-  String _getNodeId(ClusterNodeInfo node) => '${node.host}:${node.port}';
+  String _getNodeId(ClusterNodeInfo node) {
+    // Apply the auto-discovered mapping
+    // This method MUST consistently use the same _hostMap
+    // as the connect() method.
+    // This method now *only* uses the automatic _hostMap.
+    final mappedHost = _hostMap[node.host] ?? node.host;
+    return '$mappedHost:${node.port}';
+  }
 
   /// Internal helper to acquire, run, and release a client from the correct pool.
   /// This is the core of the routing logic.
@@ -101,23 +183,26 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
           'Client is not connected. Call connect() first.');
     }
 
-    // 1. Find the correct node for this key
+    // 1. Find the correct node for this key (node.host will be '192.168.65.254')
     final node = _slotMap!.getNodeForKey(key);
     if (node == null) {
       throw ValkeyClientException(
           'Could not find a master node for key "$key" (Slot: ${getHashSlot(key)}).');
     }
 
-    // 2. Find the correct pool for that node
-    final pool = _nodePools[_getNodeId(node)];
+    // 2-1. Get the MAPPED pool ID (e.g., '127.0.0.1:7002')
+    final poolId = _getNodeId(node);
+    // 2-2. Find the correct pool for that node
+    final pool = _nodePools[poolId];
     if (pool == null) {
       throw ValkeyClientException(
-          'No connection pool found for node ${_getNodeId(node)}. Topology may be stale.');
+          'No connection pool found for node $poolId. Topology may be stale.');
     }
 
     // 3. Acquire, execute, and release
     ValkeyClient? client;
     try {
+      // The pool will connect to '127.0.0.1:7002'
       client = await pool.acquire();
       return await command(client);
     } finally {
@@ -158,11 +243,12 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   // (Implementation of all other commands is omitted for brevity)
 
   // --- Example: A command that doesn't exist on the base ---
+  // --- Cluster-specific Admin Commands ---
   @override
   Future<Map<String, String>> pingAll([String? message]) async {
     final Map<String, String> results = {};
     for (final entry in _nodePools.entries) {
-      final nodeId = entry.key;
+      final nodeId = entry.key; // e.g., '127.0.0.1:7001'
       final pool = entry.value;
 
       ValkeyClient? client;

@@ -9,13 +9,6 @@ export 'package:valkey_client/valkey_client.dart'
         ValkeyClientException,
         ValkeyParsingException;
 
-/// A function that maps a host address announced by the cluster
-/// to a host address reachable by the client.
-///
-/// Used to solve Docker/NAT networking issues.
-/// Example: (announcedHost) => (announcedHost == '192.168.65.254') ? '127.0.0.1' : announcedHost
-typedef ClusterHostMapper = String Function(String announcedHost);
-
 /// The abstract base class for a **cluster-aware** Valkey client.
 ///
 /// This interface automatically routes commands to the correct node
