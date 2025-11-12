@@ -1,7 +1,7 @@
 import 'package:valkey_client/valkey_client.dart';
 
 void main() async {
-  // 1. Define the initial nodes to connect to.
+  // 1. Define the initial nodes to connect to. (use 127.0.0.1 as telnet works)
   // The client only needs one node to discover the entire cluster.
   // We assume a cluster node is running on port 7001.
   final initialNodes = [
@@ -16,7 +16,22 @@ void main() async {
   ];
 
   // 2. Create the new ValkeyClusterClient
-  final client = ValkeyClusterClient(initialNodes);
+  final client = ValkeyClusterClient(
+
+    // (Option 1) Create the new ValkeyClusterClient
+    initialNodes,
+
+    // (Option 2) Create the client with the hostMapper
+    // hostMapper: (announcedHost) {
+    //   // If the server announces its internal IP...
+    //   if (announcedHost == '192.168.65.254') {
+    //     // ...map it to '127.0.0.1'
+    //     print('Mapping $announcedHost -> 127.0.0.1');
+    //     return '127.0.0.1';
+    //   }
+    //   return announcedHost;
+    // },
+  );
 
   try {
     // 3. Connect to the cluster.
@@ -29,7 +44,7 @@ void main() async {
     // 4. Run commands.
     // The client will automatically route these commands to the correct node
     // based on the key's hash slot.
-    print('\nRunning SET command for "key:A"...');
+    print('\nRunning SET command for "key:A" (Slot 9366)...');
     final setResponse = await client.set('key:A', 'Hello from Cluster!');
     print('SET response: $setResponse');
 
