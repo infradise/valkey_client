@@ -14,6 +14,8 @@ The pool manages connections efficiently, preventing performance issues and reso
 
 (See the main `Usage` example below for a simple case, or the [**advanced pool example**](https://github.com/infradise/valkey_client/blob/main/example/pool_example.dart) for concurrent requests.)
 
+(See the **"Usage: Group 2"** section below for both **basic** and **application** pooling examples for concurrent requests.)
+
 ---
 
 ## Features
