@@ -43,7 +43,6 @@ void main() async {
 
   // 2. Create the new ValkeyClusterClient
   final client = ValkeyClusterClient(
-
     // (Option 1) Create the new ValkeyClusterClient
     initialNodes,
 

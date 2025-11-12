@@ -118,9 +118,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
 
       // 6. Create connection pools for each master node
       for (final node in _slotMap!.masterNodes) {
-      // for (final node in slotMap.masterNodes) {
+        // for (final node in slotMap.masterNodes) {
         // node.host = '192.168.65.254', node.port = 7001, 7002, 7003
-
 
         // --- BEGIN FIX (v1.3.0) ---
         // Apply host mapping if provided
@@ -128,18 +127,20 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
         // final mappedHost = hostMapper?.call(node.host) ?? node.host; // It works too.
         // Apply mapping rule: Get '127.0.0.1' if it exists, otherwise use original
         // Apply the mapping rule CONSISTENTLY
-        final mappedHost = _hostMap[node.host] ?? node.host; // '127.0.0.1' (Correct)
+        final mappedHost =
+            _hostMap[node.host] ?? node.host; // '127.0.0.1' (Correct)
         // mappedHost is now '127.0.0.1'
         // --- END FIX ---
 
         final nodeSettings = ValkeyConnectionSettings(
           host: mappedHost, // Use the MAPPED host (e.g., '127.0.0.1')
-          port: node.port,  // Use the correct port (e.g., 7002)
+          port: node.port, // Use the correct port (e.g., 7002)
           commandTimeout: _defaultSettings.commandTimeout,
           // Note: Auth settings would need to be passed here if required
         );
 
-        final nodeId = '$mappedHost:${node.port}'; // Key is '127.0.0.1:7002' (Correct pool ID)
+        final nodeId =
+            '$mappedHost:${node.port}'; // Key is '127.0.0.1:7002' (Correct pool ID)
         if (_nodePools.containsKey(nodeId)) continue;
 
         final pool = ValkeyPool(connectionSettings: nodeSettings);
