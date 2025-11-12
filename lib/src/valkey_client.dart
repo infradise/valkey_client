@@ -242,7 +242,22 @@ class ValkeyClient implements ValkeyClientBase {
 
     try {
       // 1. Attempt to connect the socket.
-      _socket = await Socket.connect(_lastHost, _lastPort);
+      // _socket = await Socket.connect(_lastHost, _lastPort);
+
+      // --- BEGIN: v1.3.0 IPv6 HOTFIX ---
+      // On macOS/Windows, Docker often binds to IPv4 (127.0.0.1) but not
+      // IPv6 (::1). Dart's Socket.connect defaults to IPv6 first when
+      // 'localhost' or '127.0.0.1' is used, causing a connection hang.
+      // We explicitly force IPv4 for loopback addresses.
+      dynamic hostToConnect = _lastHost;
+      if (_lastHost == '127.0.0.1' || _lastHost == 'localhost') {
+        _log.fine('Forcing IPv4 loopback address for 127.0.0.1/localhost');
+        hostToConnect = InternetAddress.loopbackIPv4;
+      }
+
+      // 1. Attempt to connect the socket using the corrected host.
+      _socket = await Socket.connect(hostToConnect, _lastPort);
+      // --- END: v1.3.0 IPv6 HOTFIX ---
 
       // 2. Set up the socket stream listener.
       _subscription = _socket!.listen(
