@@ -3,17 +3,23 @@
 ## 1.3.0
 
 ### Added
-- **Command Routing (Foundation):** Introduced the new `ValkeyClusterClient`.
-- **`ValkeyClusterClient`:** A cluster-aware client that:
+- **Cluster Client (v1.3.0):** Introduced the new `ValkeyClusterClient` for automatic command routing in cluster mode.
+  - This cluster-aware client fetches the topology using `clusterSlots()` during the `connect()` call.
+  - Automatically detects NAT/Docker environments by comparing the initial connection IPs with `CLUSTER SLOTS` response, enabling correct routing without manual configuration. 
   - Fetches topology using `clusterSlots()` on `connect()`.
-  - Manages internal `ValkeyPool`s for each master node.
+  - Manages internal `ValkeyPool`s for each discovered master node.
   - Automatically routes single-key commands (`GET`, `SET`, `HSET`, etc.) to the correct node using the `getHashSlot` calculator.
 - **`ValkeyCommandsBase`:** Created a new base interface (`lib/valkey_commands_base.dart`) to abstract common data commands, preventing code duplication between `ValkeyClientBase` and `ValkeyClusterClientBase`.
 - **Internal (Hash Slot):** Added a dependency-free hash slot calculator (`lib/src/cluster_hash.dart`) implementing CRC-16/XMODEM.
 - **Internal (Slot Map):** Added `ClusterSlotMap` (`lib/src/cluster_slot_map.dart`) to manage the mapping of slots to nodes efficiently.
-- **Example (Cluster):** Added `example/cluster_client_example.dart` to demonstrate `ValkeyClusterClient` usage and routing.
-- **Testing (Cluster):** - Added `test/cluster_hash_test.dart` for validating the CRC-16 hash slot calculator.
+- **Example (Cluster):** Added `example/cluster_client_example.dart` to demonstrate `ValkeyClusterClient` usage and its auto-NAT routing.
+- **Testing (Cluster):** 
+  - Added `test/cluster_hash_test.dart` for validating the CRC-16 hash slot calculator.
   - Added `test/valkey_cluster_client_test.dart` for integration testing of the new cluster client.
+
+### Fixed
+- **Critical `ValkeyClient` Hang (IPv6):** Fixed a bug in `ValkeyClient.connect` where connecting to `127.0.0.1` on macOS/Windows could hang indefinitely by attempting an IPv6 connection (`::1`) first. The client now forces `InternetAddress.loopbackIPv4` for loopback addresses.
+- **Critical `ValkeyClusterClient` Routing Bug:** Fixed a bug where the client's NAT auto-detection logic (`_hostMap`) was not being used consistently, causing connection pools to be created with incorrect (internal) IPs.
 
 ### Known Limitations
 - **`MGET`:** The `mget` command (defined in `ValkeyCommandsBase`) is **not** implemented in `ValkeyClusterClient` in this version and will throw an `UnimplementedError`. Multi-key scatter-gather operations are planned for **v1.4.0**.
