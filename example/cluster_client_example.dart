@@ -1,5 +1,31 @@
 import 'package:valkey_client/valkey_client.dart';
 
+/*
+EXPECTED OUTPUT:
+
+    Connecting to cluster...
+    [2025-11-12T12:11:25.380975] ValkeyClusterClient - INFO: Detected NAT/Docker environment: Mapping announced IP 192.168.65.254 -> 127.0.0.1
+    ✅ Cluster connected and slot map loaded.
+
+    Running SET command for "key:A" (Slot 9366)...
+    // Mapping 192.168.65.254 -> 127.0.0.1
+    SET response: OK
+
+    Running GET command for "key:A"...
+    // Mapping 192.168.65.254 -> 127.0.0.1
+    GET response: Hello from Cluster!
+
+    Running SET command for "key:B"...
+    // Mapping 192.168.65.254 -> 127.0.0.1
+    SET response: OK
+
+    Running GET command for "key:B"...
+    // Mapping 192.168.65.254 -> 127.0.0.1
+    GET response: Valkey rocks!
+
+    Closing all cluster connections...
+*/
+
 void main() async {
   // 1. Define the initial nodes to connect to. (use 127.0.0.1 as telnet works)
   // The client only needs one node to discover the entire cluster.
