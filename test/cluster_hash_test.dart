@@ -12,11 +12,11 @@ void main() {
 
       // redis-cli> CLUSTER KEYSLOT key:A
       // (integer) 9028
-      expect(getHashSlot('key:A'), 9366);
+      expect(getHashSlot('key:A'), 9366); // 7002
 
       // redis-cli> CLUSTER KEYSLOT key:B
       // (integer) 13134
-      expect(getHashSlot('key:B'), 5365);
+      expect(getHashSlot('key:B'), 5365); // 7001
     });
 
     test('should use only the hash tag if present', () {
