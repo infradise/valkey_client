@@ -313,7 +313,7 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
       _executeOnKey(key, (client) => client.ttl(key));
 
   @override
-  Future<List<String?>> mget(List<String> keys) {
+  Future<List<String?>> mget(List<String> keys) async {
     // MGET is complex as keys can span multiple nodes.
     // This requires a "scatter-gather" operation.
     // Stubbed for v1.3.0, requires separate implementation.
