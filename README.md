@@ -224,15 +224,15 @@ void main() async {
 
 ### Group 2: Production Pool (Standalone/Sentinel)
 
-#### 1. Connection Pooling (v1.1.0+)
+#### Connection Pooling (v1.1.0+)
 
 For all applications — and especially for **production server environments** with high concurrency — it is **strongly recommended** to use the built-in **`ValkeyPool`** class instead of managing single `ValkeyClient` connections or connecting/closing individual clients.
 
 The pool manages connections efficiently, preventing performance issues and resource exhaustion.
 
-(See below for both **basic** and **application** pooling examples for concurrent requests.)
+See below for both **basic** and **application** pooling examples for concurrent requests, including acquiring/releasing connections, handling wait queues, and choosing the right approach for your workload.
 
-#### 2. Basic: Pool Usage (from [example/simple_pool_example.dart](https://github.com/infradise/valkey_client/blob/main/example/simple_pool_example.dart))
+#### 1. Basic: Pool Usage (from [example/simple_pool_example.dart](https://github.com/infradise/valkey_client/blob/main/example/simple_pool_example.dart))
 
 Acquire a connection with `pool.acquire()` and return it with `pool.release()`.
 
@@ -275,7 +275,7 @@ void main() async {
 }
 ```
 
-#### 3. Application: Concurrent Pool Handling (from [example/pool_example.dart](https://github.com/infradise/valkey_client/blob/main/example/pool_example.dart))
+#### 2. Application: Concurrent Pool Handling (from [example/pool_example.dart](https://github.com/infradise/valkey_client/blob/main/example/pool_example.dart))
 
 This shows how `ValkeyPool` handles concurrent requests up to `maxConnections` and uses a wait queue when the pool is full.
 
