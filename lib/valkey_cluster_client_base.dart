@@ -17,7 +17,7 @@ abstract class ValkeyClusterClientBase implements ValkeyCommandsBase {
   /// Connects to the cluster using the provided initial node(s).
   ///
   /// This method will perform the following steps:
-  /// 1. Connect to one of the [initialNodes].
+  /// 1. Connect to one of the `initialNodes` provided in the constructor.
   /// 2. Call `CLUSTER SLOTS` to fetch the topology.
   /// 3. Create connection pools for each discovered master node.
   ///
