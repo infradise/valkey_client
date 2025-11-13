@@ -4,15 +4,11 @@
 
 A modern, production-ready Dart client for Valkey (9.0.0+). Fully Redis 7.x compatible.
 
----
+## The Goal 🎯
 
-## Recommended Usage: Connection Pooling (v1.1.0+)
+The Dart ecosystem needs a high-performance, actively maintained client for the next generation of in-memory databases. This package aims to be the standard Dart client for **Valkey (9.0.0+)** while maintaining full compatibility with **Redis (7.x+)**.
 
-For all applications (especially high-concurrency production servers), it is **strongly recommended** to use the built-in **`ValkeyPool`** class instead of connecting/closing individual clients.
-
-The pool manages connections efficiently, preventing performance issues and resource exhaustion.
-
-(See the **"Usage: Group 2"** section below for both **basic** and **application** pooling examples for concurrent requests.)
+It is designed primarily for server-side Dart applications (`server.dart`) requiring a robust and fast connection to Valkey.
 
 ---
 
@@ -114,7 +110,7 @@ New users are encouraged to start with **Group 1**. Production applications shou
 
 This is the most basic way to connect and run commands using the `ValkeyClient` class. It is recommended for new users, simple tests, and scripts. (See more examples in the **[Example tab](https://pub.dev/packages/valkey_client/example)**.)
 
-#### Basic: Connection Patterns (from [example/valkey_client_example.dart](https://github.com/infradise/valkey_client/blob/main/example/valkey_client_example.dart))
+#### 1. Basic: Connection Patterns (from [example/valkey_client_example.dart](https://github.com/infradise/valkey_client/blob/main/example/valkey_client_example.dart))
 
 `ValkeyClient` can be configured via its constructor (`fixedClient`) or by passing settings to the `connect()` method (`flexibleClient`).
 
@@ -154,7 +150,7 @@ try {
 }
 ```
 
-#### Standard: Basic Usage (from [example/simple_example.dart](https://github.com/infradise/valkey_client/blob/main/example/simple_example.dart))
+#### 2. Standard: Basic Usage (from [example/simple_example.dart](https://github.com/infradise/valkey_client/blob/main/example/simple_example.dart))
 
 This is the standard `try-catch-finally` structure to handle exceptions and ensure `close()` is always called.
 
@@ -182,7 +178,7 @@ void main() async {
 }
 ```
 
-#### Application: Pub/Sub (from [example/valkey_client_example.dart](https://github.com/infradise/valkey_client/blob/main/example/valkey_client_example.dart))
+#### 3. Application: Pub/Sub (from [example/valkey_client_example.dart](https://github.com/infradise/valkey_client/blob/main/example/valkey_client_example.dart))
 
 `ValkeyClient` supports Pub/Sub. `subscribe()` returns a `Subscription` object, and you **must** `await sub.ready` to ensure the subscription is active before publishing.
 
@@ -228,9 +224,15 @@ void main() async {
 
 ### Group 2: Production Pool (Standalone/Sentinel)
 
-For **production server environments** with high concurrency, it is **strongly recommended** to use the built-in **`ValkeyPool`** instead of managing single `ValkeyClient` connections.
+#### 1. Connection Pooling (v1.1.0+)
 
-#### Basic: Pool Usage (from [example/simple_pool_example.dart](https://github.com/infradise/valkey_client/blob/main/example/simple_pool_example.dart))
+For all applications — and especially for **production server environments** with high concurrency — it is **strongly recommended** to use the built-in **`ValkeyPool`** class instead of managing single `ValkeyClient` connections or connecting/closing individual clients.
+
+The pool manages connections efficiently, preventing performance issues and resource exhaustion.
+
+(See below for both **basic** and **application** pooling examples for concurrent requests.)
+
+#### 2. Basic: Pool Usage (from [example/simple_pool_example.dart](https://github.com/infradise/valkey_client/blob/main/example/simple_pool_example.dart))
 
 Acquire a connection with `pool.acquire()` and return it with `pool.release()`.
 
@@ -273,7 +275,7 @@ void main() async {
 }
 ```
 
-#### Application: Concurrent Pool Handling (from [example/pool_example.dart](https://github.com/infradise/valkey_client/blob/main/example/pool_example.dart))
+#### 3. Application: Concurrent Pool Handling (from [example/pool_example.dart](https://github.com/infradise/valkey_client/blob/main/example/pool_example.dart))
 
 This shows how `ValkeyPool` handles concurrent requests up to `maxConnections` and uses a wait queue when the pool is full.
 
@@ -415,12 +417,6 @@ void main() async {
 ```
 
 ---
-
-## The Goal 🎯
-
-The Dart ecosystem needs a high-performance, actively maintained client for the next generation of in-memory databases. This package aims to be the standard Dart client for **Valkey (9.0.0+)** while maintaining full compatibility with **Redis (7.x+)**.
-
-It is designed primarily for server-side Dart applications (`server.dart`) requiring a robust and fast connection to Valkey.
 
 ## Planned Features
 
