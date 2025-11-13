@@ -10,31 +10,33 @@ The Dart ecosystem needs a high-performance, actively maintained client for the 
 
 It is designed primarily for server-side Dart applications (`server.dart`) requiring a robust and fast connection to Valkey.
 
+**We also strive to maintain zero external dependencies.** This is a core part of our design philosophy. It prevents dependency conflicts and ensures that `valkey_client` will never block your project's ability to upgrade its other packages.
+
 ---
 
 ## Features
 
-* **Cluster Client (v1.3.0):** Added `ValkeyClusterClient` for automatic command routing in cluster mode.
-    * This client automatically routes commands to the correct node.
-    * We recommend using `ValkeyClient` for Standalone/Sentinel and `ValkeyClusterClient` for cluster environments.
-    * *Note: Multi-key commands (like `MGET`) are planned for v1.4.0.*
-* **Built-in Connection Pooling (v1.1.0):** `ValkeyPool` for efficient connection management (used by Standalone and Cluster clients).
-* **Cluster Auto-Discovery (v1.2.0):** Added `client.clusterSlots()` to fetch cluster topology (via the `CLUSTER SLOTS` command), laying the foundation for full cluster support.
-* **Command Timeout (v1.2.0):** Includes a built-in command timeout (via `ValkeyConnectionSettings`) to prevent client hangs on non-responsive servers.
-* **Broad Command Support:**
-    * Strings (`GET`, `SET`, `MGET`)
-    * Hashes (`HSET`, `HGET`, `HGETALL`)
-    * Lists (`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`)
-    * Sets (`SADD`, `SREM`, `SMEMBERS`)
-    * Sorted Sets (`ZADD`, `ZREM`, `ZRANGE`)
-    * Key Management (`DEL`, `EXISTS`, `EXPIRE`, `TTL`)
-    * Transactions (`MULTI`, `EXEC`, `DISCARD`)
-    * Full Pub/Sub (`SUBSCRIBE`, `UNSUBSCRIBE`, `PSUBSCRIBE`, `PUNSUBSCRIBE`)
-    * Pub/Sub Introspection (`PUBSUB CHANNELS`, `NUMSUB`, `NUMPAT`)
-* **Robust Parsing:** Full RESP3 parser handling all core data types (`+`, `-`, `$`, `*`, `:`).
-* **Type-Safe Exceptions:** Clear distinction between connection errors (`ValkeyConnectionException`), server errors (`ValkeyServerException`), and client errors (`ValkeyClientException`).
-* **Pub/Sub Ready (Standalone/Sentinel):** `subscribe()` returns a `Subscription` object with a `Stream` and a `Future<void> ready` for easy and reliable message handling.
-* **Production-Ready (Standalone/Sentinel):** `v1.0.0` is stable for production use in non-clustered environments (when used with a connection pool). This lays the foundation for the full cluster support planned for v2.0.0 (see [Roadmap](https://github.com/infradise/valkey_client/wiki/Roadmap#roadmap-towards-v200-production-ready-for-cluster-)).
+  * **Cluster Client (v1.3.0):** Added `ValkeyClusterClient` for automatic command routing in cluster mode.
+      * This client automatically routes commands to the correct node.
+      * We recommend using `ValkeyClient` for Standalone/Sentinel and `ValkeyClusterClient` for cluster environments.
+      * *Note: Multi-key commands (like `MGET`) are planned for v1.4.0.*
+  * **Built-in Connection Pooling (v1.1.0):** `ValkeyPool` for efficient connection management (used by Standalone and Cluster clients).
+  * **Cluster Auto-Discovery (v1.2.0):** Added `client.clusterSlots()` to fetch cluster topology (via the `CLUSTER SLOTS` command), laying the foundation for full cluster support.
+  * **Command Timeout (v1.2.0):** Includes a built-in command timeout (via `ValkeyConnectionSettings`) to prevent client hangs on non-responsive servers.
+  * **Broad Command Support:**
+      * Strings (`GET`, `SET`, `MGET`)
+      * Hashes (`HSET`, `HGET`, `HGETALL`)
+      * Lists (`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`)
+      * Sets (`SADD`, `SREM`, `SMEMBERS`)
+      * Sorted Sets (`ZADD`, `ZREM`, `ZRANGE`)
+      * Key Management (`DEL`, `EXISTS`, `EXPIRE`, `TTL`)
+      * Transactions (`MULTI`, `EXEC`, `DISCARD`)
+      * Full Pub/Sub (`SUBSCRIBE`, `UNSUBSCRIBE`, `PSUBSCRIBE`, `PUNSUBSCRIBE`)
+      * Pub/Sub Introspection (`PUBSUB CHANNELS`, `NUMSUB`, `NUMPAT`)
+  * **Robust Parsing:** Full RESP3 parser handling all core data types (`+`, `-`, `$`, `*`, `:`).
+  * **Type-Safe Exceptions:** Clear distinction between connection errors (`ValkeyConnectionException`), server errors (`ValkeyServerException`), and client errors (`ValkeyClientException`).
+  * **Pub/Sub Ready (Standalone/Sentinel):** `subscribe()` returns a `Subscription` object with a `Stream` and a `Future<void> ready` for easy and reliable message handling.
+  * **Production-Ready (Standalone/Sentinel):** `v1.0.0` is stable for production use in non-clustered environments (when used with a connection pool). This lays the foundation for the full cluster support planned for v2.0.0 (see [Roadmap](https://github.com/infradise/valkey_client/wiki/Roadmap#roadmap-towards-v200-production-ready-for-cluster-)).
 
 ## Getting Started
 
@@ -46,9 +48,10 @@ This client requires a running Valkey server to connect to. For local developmen
 2.  Start a Valkey server instance by running one of the following commands in your terminal:
 
 **Option 1: No Authentication (Default)**
+
 ```bash
 docker run -d --name my-valkey -p 6379:6379 valkey/valkey:latest
-````
+```
 
 **Option 2: With Password Only**
 (This sets the password for the `default` user. Use with `username: null` in the client.)
@@ -110,7 +113,7 @@ New users are encouraged to start with **Group 1**. Production applications shou
 
 This is the most basic way to connect and run commands using the `ValkeyClient` class. It is recommended for new users, simple tests, and scripts. (See more examples in the **[Example tab](https://pub.dev/packages/valkey_client/example)**.)
 
-#### 1. Basic: Connection Patterns (from [example/valkey_client_example.dart](https://github.com/infradise/valkey_client/blob/main/example/valkey_client_example.dart))
+#### 1\. Basic: Connection Patterns (from [example/valkey\_client\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/valkey_client_example.dart))
 
 `ValkeyClient` can be configured via its constructor (`fixedClient`) or by passing settings to the `connect()` method (`flexibleClient`).
 
@@ -150,7 +153,7 @@ try {
 }
 ```
 
-#### 2. Standard: Basic Usage (from [example/simple_example.dart](https://github.com/infradise/valkey_client/blob/main/example/simple_example.dart))
+#### 2\. Standard: Basic Usage (from [example/simple\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/simple_example.dart))
 
 This is the standard `try-catch-finally` structure to handle exceptions and ensure `close()` is always called.
 
@@ -178,7 +181,7 @@ void main() async {
 }
 ```
 
-#### 3. Application: Pub/Sub (from [example/valkey_client_example.dart](https://github.com/infradise/valkey_client/blob/main/example/valkey_client_example.dart))
+#### 3\. Application: Pub/Sub (from [example/valkey\_client\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/valkey_client_example.dart))
 
 `ValkeyClient` supports Pub/Sub. `subscribe()` returns a `Subscription` object, and you **must** `await sub.ready` to ensure the subscription is active before publishing.
 
@@ -220,7 +223,7 @@ void main() async {
   }
 ```
 
------
+---
 
 ### Group 2: Production Pool (Standalone/Sentinel)
 
@@ -232,7 +235,7 @@ The pool manages connections efficiently, preventing performance issues and reso
 
 See below for both **basic** and **application** pooling examples for concurrent requests, including acquiring/releasing connections, handling wait queues, and choosing the right approach for your workload.
 
-#### 1. Basic: Pool Usage (from [example/simple_pool_example.dart](https://github.com/infradise/valkey_client/blob/main/example/simple_pool_example.dart))
+#### 1\. Basic: Pool Usage (from [example/simple\_pool\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/simple_pool_example.dart))
 
 Acquire a connection with `pool.acquire()` and return it with `pool.release()`.
 
@@ -275,7 +278,7 @@ void main() async {
 }
 ```
 
-#### 2. Application: Concurrent Pool Handling (from [example/pool_example.dart](https://github.com/infradise/valkey_client/blob/main/example/pool_example.dart))
+#### 2\. Application: Concurrent Pool Handling (from [example/pool\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/pool_example.dart))
 
 This shows how `ValkeyPool` handles concurrent requests up to `maxConnections` and uses a wait queue when the pool is full.
 
@@ -331,13 +334,13 @@ Future<void> main() async {
 }
 ```
 
------
+---
 
 ### Group 3: Cluster Mode (Advanced)
 
 This group is for connecting to a Valkey **Cluster Mode** environment.
 
-#### Recommended (v1.3.0+): Automatic Routing (from [example/cluster_client_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_client_example.dart))
+#### Recommended (v1.3.0+): Automatic Routing (from [example/cluster\_client\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_client_example.dart))
 
 Use `ValkeyClusterClient`. This client **auto-discovers** the cluster topology via `CLUSTER SLOTS` on `connect()` and **auto-routes** commands like `SET`/`GET` to the correct node.
 
@@ -382,7 +385,7 @@ void main() async {
 }
 ```
 
-#### Low-Level (v1.2.0): Manual Topology Fetch (from [example/cluster_auto_discovery_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_auto_discovery_example.dart))
+#### Low-Level (v1.2.0): Manual Topology Fetch (from [example/cluster\_auto\_discovery\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_auto_discovery_example.dart))
 
 If you need to manually inspect the topology, you can use a standard `ValkeyClient` (single connection) to call `clusterSlots()` directly.
 
