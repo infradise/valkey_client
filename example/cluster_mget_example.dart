@@ -32,7 +32,8 @@ void main() async {
     // and gather them back in the exact requested order.
     print('Executing MGET for [key:A, key:B, key:C, missing_key]...');
 
-    final results = await client.mget(['key:A', 'key:B', 'key:C', 'missing_key']);
+    final results =
+        await client.mget(['key:A', 'key:B', 'key:C', 'missing_key']);
 
     print('Results: $results');
 
@@ -41,7 +42,8 @@ void main() async {
         results[1] == 'Value-B' &&
         results[2] == 'Value-C' &&
         results[3] == null) {
-      print('✅ MGET Success: Retrieved values from multiple nodes in correct order!');
+      print(
+          '✅ MGET Success: Retrieved values from multiple nodes in correct order!');
     } else {
       print('❌ MGET Failed: Order mismatch or missing data.');
     }
@@ -50,7 +52,6 @@ void main() async {
     await client.del('key:A');
     await client.del('key:B');
     await client.del('key:C');
-
   } on ValkeyException catch (e) {
     print('❌ Error: $e');
   } finally {

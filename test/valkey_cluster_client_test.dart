@@ -111,7 +111,8 @@ Future<void> main() async {
       // key:B -> Slot 5365 (Node 7001)
       final keyA = 'key:A';
       final keyB = 'key:B';
-      final keyC = 'key:C'; // Let's assume this goes somewhere (Slot 7365 -> Node 7002)
+      final keyC =
+          'key:C'; // Let's assume this goes somewhere (Slot 7365 -> Node 7002)
 
       // 1. Setup data
       await client.set(keyA, 'Value A');
@@ -127,14 +128,13 @@ Future<void> main() async {
       expect(result[0], 'Value A'); // From Node 7002
       expect(result[1], 'Value B'); // From Node 7001
       expect(result[2], 'Value C'); // From Node 7002
-      expect(result[3], isNull);    // Missing key
+      expect(result[3], isNull); // Missing key
 
       // Clean up
       await client.del(keyA);
       await client.del(keyB);
       await client.del(keyC);
     });
-
   },
       // Skip this entire group if the cluster is not running
       skip: !isClusterRunning

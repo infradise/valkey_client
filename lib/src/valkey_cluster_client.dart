@@ -362,7 +362,7 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
 
       final pool = _nodePools[nodeId];
       if (pool == null) {
-         throw ValkeyClientException(
+        throw ValkeyClientException(
             'No connection pool found for node $nodeId. Topology may be stale.');
       }
 
@@ -383,7 +383,7 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
 
       // Sanity check
       if (nodeResult.length != originalIndices.length) {
-         throw ValkeyClientException(
+        throw ValkeyClientException(
             'MGET response length mismatch from node $nodeId. Expected ${originalIndices.length}, got ${nodeResult.length}.');
       }
 
@@ -398,7 +398,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   }
 
   /// Helper to execute MGET on a specific pool
-  // Future<List<String?>> _executeBatchMget(ValkeyPool pool, List<String> keys) async {
+  // Future<List<String?>> _executeBatchMget(
+  //     ValkeyPool pool, List<String> keys) async {
   //   ValkeyClient? client;
   //   try {
   //     client = await pool.acquire();
@@ -415,7 +416,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   /// Instead of sending a single 'MGET' command (which fails with CROSSSLOT
   /// if keys belong to different slots), we send multiple 'GET' commands
   /// in a pipeline (concurrently) on the same connection.
-  Future<List<String?>> _executeBatchMultiget(ValkeyPool pool, List<String> keys) async {
+  Future<List<String?>> _executeBatchMultiget(
+      ValkeyPool pool, List<String> keys) async {
     ValkeyClient? client;
     try {
       client = await pool.acquire();
