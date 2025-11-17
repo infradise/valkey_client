@@ -40,24 +40,33 @@ It is designed primarily for server-side Dart applications (`server.dart`) requi
 
 ## Getting Started
 
-### Prerequisites: Running a Valkey Server
+### Prerequisites: Running a Valkey Server or Redis Server
 
-This client requires a running Valkey server to connect to. For local development and testing, we strongly recommend using Docker.
+This client requires a running `Valkey` or `Redis` server to connect to. For local development and testing, we strongly recommend using Docker.
 
 1.  Install a container environment like [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or [Rancher Desktop](https://rancherdesktop.io/)).
-2.  Start a Valkey server instance by running one of the following commands in your terminal:
+2.  Start a [Valkey](https://hub.docker.com/r/valkey/valkey) or [Redis](https://hub.docker.com/_/redis) server instance by running one of the following commands in your terminal:
 
 **Option 1: No Authentication (Default)**
 
 ```bash
+# Valkey (latest, e.g., 9.0.0)
 docker run -d --name my-valkey -p 6379:6379 valkey/valkey:latest
+
+# Redis (latest, e.g., 8.2.3)
+docker run -d --name my-redis -p 6379:6379 redis:latest
 ```
 
 **Option 2: With Password Only**
 (This sets the password for the `default` user. Use with `username: null` in the client.)
 
 ```bash
+# Valkey (latest, e.g., 9.0.0)
 docker run -d --name my-valkey-auth -p 6379:6379 valkey/valkey:latest \
+  --requirepass "my-super-secret-password"
+
+# Redis (latest, e.g., 8.2.3)
+docker run -d --name my-redis-auth -p 6379:6379 redis:latest \
   --requirepass "my-super-secret-password"
 ```
 
@@ -65,7 +74,12 @@ docker run -d --name my-valkey-auth -p 6379:6379 valkey/valkey:latest \
 (This sets the password for the `default` user. Use with `username: 'default'` in the client.)
 
 ```bash
+# Valkey (latest, e.g., 9.0.0)
 docker run -d --name my-valkey-acl -p 6379:6379 valkey/valkey:latest \
+  --user default --pass "my-super-secret-password"
+
+# Redis (latest, e.g., 8.2.3)
+docker run -d --name my-redis-acl -p 6379:6379 redis:latest \
   --user default --pass "my-super-secret-password"
 ```
 
@@ -77,23 +91,31 @@ docker run -d --name my-valkey-acl -p 6379:6379 valkey/valkey:latest \
 
 ## ⚙️ Local Cluster Setup (for v1.3.0+ Testing)
 
-The **Usage (Group 3)** examples require a running Valkey Cluster.
+The **Usage (Group 3)** examples require a running Valkey Cluster or Redis Cluster.
 
 Setting up a cluster on Docker Desktop (macOS/Windows) is notoriously complex due to the networking required for NAT (mapping internal container IPs to `127.0.0.1`).
 
-To solve this and encourage contributions, this repository provides a pre-configured, one-command setup file.
+To solve this and encourage contributions, the GitHub repository provides a pre-configured, one-command setup file.
 
 **File Location:**
 
-  * [`setup/cluster-mode/prod/macos.yaml`](https://github.com/infradise/valkey_client/blob/main/setup/cluster-mode/prod/macos.yaml)
+  * [`setup/cluster-mode/prod/valkey_macos.yaml`](https://github.com/infradise/valkey_client/blob/main/setup/cluster-mode/prod/valkey_macos.yaml)
+  * [`setup/cluster-mode/prod/redis_macos.yaml`](https://github.com/infradise/valkey_client/blob/main/setup/cluster-mode/prod/redis_macos.yaml)
 
-This `docker-compose.yml` file launches a 6-node (3 Master, 3 Replica) cluster. It is already configured to handle all IP announcement (e.g., `--cluster-announce-ip`) and networking challenges automatically.
+Each provided YAML file is a Docker Compose configuration that launches a 6-node (3 Master, 3 Replica) cluster. It is already configured to handle all IP announcement (e.g., `--cluster-announce-ip`) and networking challenges automatically.
 
 **How to Run the Cluster:**
 
-1.  Download the `macos.yaml` file from the repository.
+1.  Download the `valkey_macos.yaml` or `redis_macos.yaml` file from the repository.
 2.  In your terminal, navigate to the file's location.
-3.  Run `docker compose -f macos.yaml up --force-recreate`.
+3.  To start the cluster, run one of the following commands:
+    ```sh
+    # To start Valkey Cluster
+    docker compose -f valkey_macos.yaml up --force-recreate
+
+    # To start Redis Cluster
+    docker compose -f redis_macos.yaml up --force-recreate
+    ```
 4.  Wait for the `cluster-init` service to log `✅ Cluster is stable and all slots are covered!`.
 
 Your 6-node cluster is now running on `127.0.0.1:7001-7006`, and you can successfully run the **Usage (Group 3)** examples.
