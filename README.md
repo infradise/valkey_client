@@ -16,13 +16,13 @@ It is designed primarily for server-side Dart applications (`server.dart`) requi
 
 ## Features
 
-  * **Cluster Client (v1.3.0):** Added `ValkeyClusterClient` for automatic command routing in cluster mode.
+  * **Cluster Client (v1.3.0+):** Added `ValkeyClusterClient` for automatic command routing in cluster mode.
       * This client automatically routes commands to the correct node.
       * We recommend using `ValkeyClient` for Standalone/Sentinel and `ValkeyClusterClient` for cluster environments.
-      * *Note: Multi-key commands (like `MGET`) are planned for v1.4.0.*
-  * **Built-in Connection Pooling (v1.1.0):** `ValkeyPool` for efficient connection management (used by Standalone and Cluster clients).
-  * **Cluster Auto-Discovery (v1.2.0):** Added `client.clusterSlots()` to fetch cluster topology (via the `CLUSTER SLOTS` command), laying the foundation for full cluster support.
-  * **Command Timeout (v1.2.0):** Includes a built-in command timeout (via `ValkeyConnectionSettings`) to prevent client hangs on non-responsive servers.
+      * **Multi-key Support (v1.4.0+):** Supports `MGET` across multiple nodes using smart Scatter-Gather pipelining.
+  * **Built-in Connection Pooling (v1.1.0+):** `ValkeyPool` for efficient connection management (used by Standalone and Cluster clients).
+  * **Cluster Auto-Discovery (v1.2.0+):** Added `client.clusterSlots()` to fetch cluster topology (via the `CLUSTER SLOTS` command), laying the foundation for full cluster support.
+  * **Command Timeout (v1.2.0+):** Includes a built-in command timeout (via `ValkeyConnectionSettings`) to prevent client hangs on non-responsive servers.
   * **Broad Command Support:**
       * Strings (`GET`, `SET`, `MGET`)
       * Hashes (`HSET`, `HGET`, `HGETALL`)
@@ -385,7 +385,17 @@ void main() async {
 }
 ```
 
-#### Low-Level (v1.2.0): Manual Topology Fetch (from [example/cluster\_auto\_discovery\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_auto_discovery_example.dart))
+#### Multi-key Operations (v1.4.0+): Scatter-Gather with Pipelined GETs (from [example/cluster\_mget\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_mget_example.dart))
+
+`ValkeyClusterClient` supports `MGET` even if keys are distributed across different nodes. It uses a Scatter-Gather strategy with pipelining to ensure high performance and correct ordering.
+
+```dart
+// Retrieve values from multiple nodes in parallel
+final results = await client.mget(['key:A', 'key:B', 'key:C']);
+print(results); // ['Value-A', 'Value-B', 'Value-C']
+```
+
+#### Low-Level (v1.2.0+): Manual Topology Fetch (from [example/cluster\_auto\_discovery\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_auto_discovery_example.dart))
 
 If you need to manually inspect the topology, you can use a standard `ValkeyClient` (single connection) to call `clusterSlots()` directly.
 
@@ -417,6 +427,21 @@ void main() async {
     await client.close();
   }
 }
+```
+
+---
+
+### Logging Configuration
+
+By default, the client logs are disabled (`ValkeyLogLevel.off`).
+You can enable logging globally to debug connection or parsing issues.
+
+```dart
+// Enable detailed logging
+ValkeyClient.setLogLevel(ValkeyLogLevel.info);
+
+// Disable logging (default)
+ValkeyClient.setLogLevel(ValkeyLogLevel.off);
 ```
 
 ---

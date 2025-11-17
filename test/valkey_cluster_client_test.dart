@@ -85,22 +85,56 @@ Future<void> main() async {
       await client.del(keyB);
     });
 
-    test('mget() should throw UnimplementedError (v1.3.0 limitation)',
+    // test('mget() should throw UnimplementedError (v1.3.0 limitation)',
+    //     () async {
+    //   await client.connect();
+
+    //   final mgetFuture = client.mget(['key:A', 'key:B']);
+
+    //   // Expect the specific error noted in the changelog
+    //   await expectLater(
+    //     mgetFuture,
+    //     throwsA(isA<UnimplementedError>().having(
+    //       (e) => e.message,
+    //       'message',
+    //       contains('MGET (multi-node scatter-gather)'),
+    //     )),
+    //   );
+    // });
+
+    test('mget() should retrieve values from multiple nodes in correct order',
         () async {
       await client.connect();
 
-      final mgetFuture = client.mget(['key:A', 'key:B']);
+      // Keys known to be on different nodes (from previous tests)
+      // key:A -> Slot 9366 (Node 7002)
+      // key:B -> Slot 5365 (Node 7001)
+      final keyA = 'key:A';
+      final keyB = 'key:B';
+      final keyC = 'key:C'; // Let's assume this goes somewhere (Slot 7365 -> Node 7002)
 
-      // Expect the specific error noted in the changelog
-      await expectLater(
-        mgetFuture,
-        throwsA(isA<UnimplementedError>().having(
-          (e) => e.message,
-          'message',
-          contains('MGET (multi-node scatter-gather)'),
-        )),
-      );
+      // 1. Setup data
+      await client.set(keyA, 'Value A');
+      await client.set(keyB, 'Value B');
+      await client.set(keyC, 'Value C');
+
+      // 2. Execute MGET with mixed keys
+      // Request order: [A, B, C, missing]
+      final result = await client.mget([keyA, keyB, keyC, 'non_existent']);
+
+      // 3. Verify results are in the EXACT same order as requested
+      expect(result, hasLength(4));
+      expect(result[0], 'Value A'); // From Node 7002
+      expect(result[1], 'Value B'); // From Node 7001
+      expect(result[2], 'Value C'); // From Node 7002
+      expect(result[3], isNull);    // Missing key
+
+      // Clean up
+      await client.del(keyA);
+      await client.del(keyB);
+      await client.del(keyC);
     });
+
   },
       // Skip this entire group if the cluster is not running
       skip: !isClusterRunning

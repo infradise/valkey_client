@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.0
+
+### Added
+- **Multi-key Command Support (MGET):** Implemented `mget` support for `ValkeyClusterClient`.
+  - **Core Update:** Updated `ValkeyClusterClient` to handle multi-key operations gracefully.
+  - **Strategy:** Uses a **Scatter-Gather** strategy to group keys by node.
+  - **Performance:** Utilizes **Pipelining** (sending multiple `GET` commands concurrently) instead of a single `MGET` to avoid `CROSSSLOT` errors while maintaining high performance.
+  - **Ordering:** Correctly re-assembles results in the requested order.
+
+### Fixed
+- **Logging:** Removed the unintended forced logging (`INFO` level) during cluster NAT detection. The client now correctly respects the user's globally configured log level.
+
+
 ## 1.3.0
 
 ### Added

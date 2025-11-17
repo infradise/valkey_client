@@ -102,8 +102,9 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
       // 4. Create the mapping rule if IPs don't match
       // e.g., if initialHost = '127.0.0.1' and announcedHost = '192.168.65.254'
       if (initialHost != announcedHost) {
-        // We log this for debugging, using the client's static logger
-        ValkeyClient.setLogLevel(ValkeyLogLevel.info); // Ensure info is on
+        // Only log if the user has enabled logging via ValkeyClient.setLogLevel()
+        // \ We log this for debugging, using the client's static logger
+        // \ ValkeyClient.setLogLevel(ValkeyLogLevel.info); // Ensure info is on
         _log.info(
             'Detected NAT/Docker environment: Mapping announced IP $announcedHost -> $initialHost');
         _hostMap[announcedHost] = initialHost;
@@ -313,12 +314,122 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   Future<int> ttl(String key) =>
       _executeOnKey(key, (client) => client.ttl(key));
 
+  // @override
+  // Future<List<String?>> mget(List<String> keys) async {
+  //   // MGET is complex as keys can span multiple nodes.
+  //   // This requires a "scatter-gather" operation.
+  //   // Stubbed for v1.3.0, requires separate implementation.
+  //   throw UnimplementedError(
+  //       'MGET (multi-node scatter-gather) is not yet implemented in v1.3.0 and is planned for v1.4.0.');
+  // }
+
   @override
   Future<List<String?>> mget(List<String> keys) async {
-    // MGET is complex as keys can span multiple nodes.
-    // This requires a "scatter-gather" operation.
-    // Stubbed for v1.3.0, requires separate implementation.
-    throw UnimplementedError(
-        'MGET (multi-node scatter-gather) is not yet implemented in v1.3.0 and is planned for v1.4.0.');
+    if (keys.isEmpty) return [];
+
+    if (_slotMap == null || _isClosed) {
+      throw ValkeyClientException(
+          'Client is not connected. Call connect() first.');
+    }
+
+    // 1. Scatter: Group keys by node ID
+    // Map<NodeId, List<originalIndex>>
+    final Map<String, List<int>> nodeToIndices = {};
+
+    for (var i = 0; i < keys.length; i++) {
+      final key = keys[i];
+      final node = _slotMap!.getNodeForKey(key);
+      if (node == null) {
+        throw ValkeyClientException(
+            'Could not find a master node for key "$key" (Slot: ${getHashSlot(key)}).');
+      }
+
+      final nodeId = _getNodeId(node);
+      // Add the original index to the list for this node
+      nodeToIndices.putIfAbsent(nodeId, () => []).add(i);
+    }
+
+    // 2. Execute: Send MGET commands to each node in parallel
+    final futures = <Future<List<String?>>>[];
+    final nodeIds = <String>[]; // To track which future belongs to which node
+
+    for (final entry in nodeToIndices.entries) {
+      final nodeId = entry.key;
+      final indices = entry.value;
+
+      // Extract the actual keys for this node
+      final nodeKeys = indices.map((i) => keys[i]).toList();
+
+      final pool = _nodePools[nodeId];
+      if (pool == null) {
+         throw ValkeyClientException(
+            'No connection pool found for node $nodeId. Topology may be stale.');
+      }
+
+      // Launch async request
+      // futures.add(_executeBatchMget(pool, nodeKeys));
+      futures.add(_executeBatchMultiget(pool, nodeKeys));
+      nodeIds.add(nodeId);
+    }
+
+    // 3. Gather: Wait for all results and re-assemble in original order
+    final List<List<String?>> results = await Future.wait(futures);
+    final finalResult = List<String?>.filled(keys.length, null);
+
+    for (var i = 0; i < results.length; i++) {
+      final nodeResult = results[i];
+      final nodeId = nodeIds[i];
+      final originalIndices = nodeToIndices[nodeId]!;
+
+      // Sanity check
+      if (nodeResult.length != originalIndices.length) {
+         throw ValkeyClientException(
+            'MGET response length mismatch from node $nodeId. Expected ${originalIndices.length}, got ${nodeResult.length}.');
+      }
+
+      // Map back to original positions
+      for (var j = 0; j < originalIndices.length; j++) {
+        final originalIndex = originalIndices[j];
+        finalResult[originalIndex] = nodeResult[j];
+      }
+    }
+
+    return finalResult;
+  }
+
+  /// Helper to execute MGET on a specific pool
+  // Future<List<String?>> _executeBatchMget(ValkeyPool pool, List<String> keys) async {
+  //   ValkeyClient? client;
+  //   try {
+  //     client = await pool.acquire();
+  //     return await client.mget(keys);
+  //   } finally {
+  //     if (client != null) {
+  //       pool.release(client);
+  //     }
+  //   }
+  // }
+
+  /// Helper to execute MGET logic on a specific pool using Pipelining.
+  ///
+  /// Instead of sending a single 'MGET' command (which fails with CROSSSLOT
+  /// if keys belong to different slots), we send multiple 'GET' commands
+  /// in a pipeline (concurrently) on the same connection.
+  Future<List<String?>> _executeBatchMultiget(ValkeyPool pool, List<String> keys) async {
+    ValkeyClient? client;
+    try {
+      client = await pool.acquire();
+
+      // FIX: Use Pipelining (multiple GETs) instead of MGET
+      // This avoids CROSSSLOT errors while maintaining high performance
+      // because ValkeyClient queues these commands and sends them in a batch.
+      final futures = keys.map((key) => client!.get(key));
+
+      return await Future.wait(futures);
+    } finally {
+      if (client != null) {
+        pool.release(client);
+      }
+    }
   }
 }
