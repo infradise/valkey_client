@@ -7,10 +7,10 @@ homepage: https://visualkube.com/opensource/valkey_client
 
 topics:
   - valkey
-  - client
-  - redis
-  - sentinel
+  - cache
+  - nosql
   - cluster
+  - in-memory
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
