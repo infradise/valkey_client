@@ -3,6 +3,7 @@ import 'package:test/test.dart';
 import 'package:valkey_client/valkey_client.dart';
 
 // Helper function (can be shared or duplicated from valkey_client_test.dart)
+// Helper to check if the cluster is reachable
 Future<bool> checkServerStatus(String host, int port) async {
   final client = ValkeyClient(host: host, port: port);
   try {
@@ -16,9 +17,9 @@ Future<bool> checkServerStatus(String host, int port) async {
 
 Future<void> main() async {
   const clusterHost = '127.0.0.1';
-  const clusterPort = 7001; // Default port for cluster discovery
+  const clusterPort = 7001; // Entry point. Default port for cluster discovery
 
-  // --- RUN THE CHECK *BEFORE* DEFINING TESTS ---
+  // Check if cluster is running (RUN THE CHECK BEFORE DEFINING TESTS)
   final isClusterRunning = await checkServerStatus(clusterHost, clusterPort);
 
   if (!isClusterRunning) {
@@ -26,7 +27,7 @@ Future<void> main() async {
     print(
         '⚠️  WARNING: Valkey CLUSTER not running on $clusterHost:$clusterPort.');
     print('Skipping ValkeyClusterClient tests.');
-    print('Please start a cluster (e.g., ports 7000-7005) to run all tests.');
+    print('Please start a cluster (e.g., ports 7001-7006) to run all tests.');
     print('=' * 70);
   }
 
@@ -51,8 +52,10 @@ Future<void> main() async {
       await client.connect();
       // Simple verification: pingAll should return multiple successful pongs
       // (assuming a cluster of at least 3 masters)
+      // Ping all masters to verify pools are active
       final pings = await client.pingAll();
-      expect(pings.length, greaterThanOrEqualTo(1)); // At least 1 master
+      // expect(pings.length, greaterThanOrEqualTo(1)); // At least 1 master
+      expect(pings.length, greaterThanOrEqualTo(3)); // Expect at least 3 masters
       expect(pings.values.first, 'PONG');
     });
 
@@ -61,8 +64,8 @@ Future<void> main() async {
 
       // These keys are known (from cluster_hash_test) to be on
       // different slots. The client must route them correctly.
-      final keyA = 'key:A'; // Slot 9028
-      final keyB = 'key:B'; // Slot 13134
+      final keyA = 'key:A'; // Slot 9366
+      final keyB = 'key:B'; // Slot 5365
 
       // Act
       final setARes = await client.set(keyA, 'Value A');
@@ -79,6 +82,18 @@ Future<void> main() async {
       // Assert Get
       expect(getARes, 'Value A');
       expect(getBRes, 'Value B');
+
+      // Clean up
+      await client.del(keyA);
+      await client.del(keyB);
+
+      // Act
+      await client.set(keyA, 'Value A');
+      await client.set(keyB, 'Value B');
+
+      // Assert
+      expect(await client.get(keyA), 'Value A');
+      expect(await client.get(keyB), 'Value B');
 
       // Clean up
       await client.del(keyA);
@@ -119,9 +134,13 @@ Future<void> main() async {
       await client.set(keyB, 'Value B');
       await client.set(keyC, 'Value C');
 
-      // 2. Execute MGET with mixed keys
-      // Request order: [A, B, C, missing]
-      final result = await client.mget([keyA, keyB, keyC, 'non_existent']);
+      // // 2. Execute MGET with mixed keys
+      // // Request order: [A, B, C, missing]
+      // final result = await client.mget([keyA, keyB, keyC, 'non_existent']);
+
+      // 2. Execute MGET (Scatter-Gather)
+      // Requesting keys that exist on different nodes + one missing key
+      final result = await client.mget([keyA, keyB, keyC, 'missing_key']);
 
       // 3. Verify results are in the EXACT same order as requested
       expect(result, hasLength(4));

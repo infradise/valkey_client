@@ -13,20 +13,20 @@ void main() {
       [
         0,
         5460,
-        ['127.0.0.1', 7000, 'master-id-1'],
-        ['127.0.0.1', 7003, 'replica-id-1-of-1']
+        ['127.0.0.1', 7001, 'master-id-1'],
+        ['127.0.0.1', 7004, 'replica-id-1-of-1']
       ],
       [
         5461,
         10922,
-        ['127.0.0.1', 7001, 'master-id-2'],
-        ['127.0.0.1', 7004, 'replica-id-1-of-2']
+        ['127.0.0.1', 7002, 'master-id-2'],
+        ['127.0.0.1', 7005, 'replica-id-1-of-2']
       ],
       [
         10923,
         16383,
-        ['127.0.0.1', 7002, 'master-id-3'],
-        ['127.0.0.1', 7005, 'replica-id-1-of-3']
+        ['127.0.0.1', 7003, 'master-id-3'],
+        ['127.0.0.1', 7006, 'replica-id-1-of-3']
       ]
     ];
 
@@ -42,28 +42,28 @@ void main() {
       expect(result[0].startSlot, 0);
       expect(result[0].endSlot, 5460);
       expect(result[0].master,
-          ClusterNodeInfo(host: '127.0.0.1', port: 7000, id: 'master-id-1'));
+          ClusterNodeInfo(host: '127.0.0.1', port: 7001, id: 'master-id-1'));
       expect(result[0].replicas.length, 1);
       expect(
           result[0].replicas[0],
           ClusterNodeInfo(
-              host: '127.0.0.1', port: 7003, id: 'replica-id-1-of-1'));
+              host: '127.0.0.1', port: 7004, id: 'replica-id-1-of-1'));
 
       // Check second slot range (5461-10922)
       expect(result[1].startSlot, 5461);
       expect(result[1].endSlot, 10922);
       expect(result[1].master,
-          ClusterNodeInfo(host: '127.0.0.1', port: 7001, id: 'master-id-2'));
+          ClusterNodeInfo(host: '127.0.0.1', port: 7002, id: 'master-id-2'));
       expect(result[1].replicas.length, 1);
-      expect(result[1].replicas[0].port, 7004);
+      expect(result[1].replicas[0].port, 7005);
 
       // Check third slot range (10923-16383)
       expect(result[2].startSlot, 10923);
       expect(result[2].endSlot, 16383);
       expect(result[2].master,
-          ClusterNodeInfo(host: '127.0.0.1', port: 7002, id: 'master-id-3'));
+          ClusterNodeInfo(host: '127.0.0.1', port: 7003, id: 'master-id-3'));
       expect(result[2].replicas.length, 1);
-      expect(result[2].replicas[0].port, 7005);
+      expect(result[2].replicas[0].port, 7006);
     });
 
     test('should handle nodes without IDs (older format)', () {
@@ -71,17 +71,17 @@ void main() {
         [
           0,
           16383,
-          ['127.0.0.1', 7000], // Master without ID
-          ['127.0.0.1', 7001] // Replica without ID
+          ['127.0.0.1', 7001], // Master without ID
+          ['127.0.0.1', 7002] // Replica without ID
         ]
       ];
 
       final result = parseClusterSlotsResponse(oldFormatResponse);
       expect(result.length, 1);
       expect(result[0].master,
-          ClusterNodeInfo(host: '127.0.0.1', port: 7000, id: null));
-      expect(result[0].replicas[0],
           ClusterNodeInfo(host: '127.0.0.1', port: 7001, id: null));
+      expect(result[0].replicas[0],
+          ClusterNodeInfo(host: '127.0.0.1', port: 7002, id: null));
     });
 
     test('should handle slot range with no replicas', () {
@@ -89,7 +89,7 @@ void main() {
         [
           0,
           16383,
-          ['127.0.0.1', 7000, 'master-id-1']
+          ['127.0.0.1', 7001, 'master-id-1']
           // No replica array
         ]
       ];

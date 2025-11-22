@@ -2,7 +2,7 @@ import 'dart:io';
 
 void usage() {
   print('Usage: dart script.dart <start_port> <end_port>');
-  print('Example: dart script.dart 7000 7005');
+  print('Example: dart script.dart 7001 7006');
   exit(1);
 }
 

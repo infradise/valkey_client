@@ -4,6 +4,7 @@ void main() async {
   // ValkeyClient.setLogLevel(ValkeyLogLevel.off); // default
 
   // 1. Configure cluster connection
+  // We use 127.0.0.1:7001 as the entry point (based on your Docker setup)
   final initialNodes = [
     ValkeyConnectionSettings(
       host: '127.0.0.1',
@@ -20,8 +21,9 @@ void main() async {
 
     // 2. Setup Data
     // We use keys that are known to hash to different slots/nodes.
-    // key:A -> Slot 9366
-    // key:B -> Slot 5365
+    // key:A (Slot 9366) -> Usually Node 2
+    // key:B (Slot 5365) -> Usually Node 1
+    // key:C (Slot 7365) -> Usually Node 2
     print('\nSetting up test data on multiple nodes...');
     await client.set('key:A', 'Value-A');
     await client.set('key:B', 'Value-B');
@@ -37,7 +39,7 @@ void main() async {
 
     print('Results: $results');
 
-    // 4. Verify
+    // 4. Verify Order
     if (results[0] == 'Value-A' &&
         results[1] == 'Value-B' &&
         results[2] == 'Value-C' &&

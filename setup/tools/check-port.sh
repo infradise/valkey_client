@@ -2,7 +2,7 @@
 
 usage() {
   echo "Usage: $0 <start_port> <end_port>"
-  echo "Example: $0 7000 7005"
+  echo "Example: $0 7001 7006"
   exit 1
 }
 
