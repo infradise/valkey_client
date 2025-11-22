@@ -19,6 +19,9 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   /// (We take the settings from the *first* initial node).
   final ValkeyConnectionSettings _defaultSettings;
 
+  /// Maximum number of redirections allowed before throwing an exception.
+  final int _maxRedirects; // (v1.5.0+)
+
   /// Manages the mapping of slots to nodes.
   /// This is the "brain" of the router.
   ClusterSlotMap? _slotMap;
@@ -33,8 +36,10 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   Map<String, String> _hostMap = {};
 
   ValkeyClusterClient(
-    this._initialNodes,
-  ) : _defaultSettings = _initialNodes.first {
+    this._initialNodes, {
+    int maxRedirects = 5, // Default to 5 (v1.5.0+)
+  }) : _defaultSettings = _initialNodes.first,
+      _maxRedirects = maxRedirects {
     if (_initialNodes.isEmpty) {
       throw ArgumentError('At least one initial node must be provided.');
     }
@@ -433,5 +438,22 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
         pool.release(client);
       }
     }
+  }
+
+  // --- Inspection Helper (v1.5.0 Feature) ---
+  /// Returns the [ClusterNodeInfo] of the master node that currently owns [key].
+  /// Returns `null` if the client is not connected or the map is not loaded.
+  ///
+  /// This relies on the client's cached slot map, which is updated automatically
+  /// when MOVED redirections occur.
+  ClusterNodeInfo? getMasterFor(String key) => _slotMap?.getNodeForKey(key);
+
+  // TESTING ONLY (test/valkey_cluster_redirection_test.dart)
+  void debugCorruptSlotMap(String key, int wrongPort) {
+     final slot = getHashSlot(key);
+     // Point this slot to a wrong port (e.g., 7005 instead of 7001)
+     // We assume localhost/127.0.0.1 for simplicity in tests
+     final wrongNode = ClusterNodeInfo(host: '127.0.0.1', port: wrongPort);
+     _slotMap!.updateSlot(slot, wrongNode);
   }
 }
