@@ -124,33 +124,7 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
 
       // 6. Create connection pools for each master node
       for (final node in _slotMap!.masterNodes) {
-        // for (final node in slotMap.masterNodes) {
-        // node.host = '192.168.65.254', node.port = 7001, 7002, 7003
-
-        // --- BEGIN FIX (v1.3.0) ---
-        // Apply host mapping if provided
-        // node.host here is '192.168.65.254'
-        // final mappedHost = hostMapper?.call(node.host) ?? node.host; // It works too.
-        // Apply mapping rule: Get '127.0.0.1' if it exists, otherwise use original
-        // Apply the mapping rule CONSISTENTLY
-        final mappedHost =
-            _hostMap[node.host] ?? node.host; // '127.0.0.1' (Correct)
-        // mappedHost is now '127.0.0.1'
-        // --- END FIX ---
-
-        final nodeSettings = ValkeyConnectionSettings(
-          host: mappedHost, // Use the MAPPED host (e.g., '127.0.0.1')
-          port: node.port, // Use the correct port (e.g., 7002)
-          commandTimeout: _defaultSettings.commandTimeout,
-          // Note: Auth settings would need to be passed here if required
-        );
-
-        final nodeId =
-            '$mappedHost:${node.port}'; // Key is '127.0.0.1:7002' (Correct pool ID)
-        if (_nodePools.containsKey(nodeId)) continue;
-
-        final pool = ValkeyPool(connectionSettings: nodeSettings);
-        _nodePools[nodeId] = pool;
+        _getOrCreatePool(node);
       }
     } on ValkeyException {
       rethrow; // Re-throw known Valkey exceptions
@@ -160,6 +134,44 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
       // 5. Close the temporary client
       await tempClient?.close();
     }
+  }
+
+  /// Helper to get or create a connection pool for a node.
+  /// Applies Auto-NAT mapping.
+  ValkeyPool _getOrCreatePool(ClusterNodeInfo node) {
+    // for (final node in slotMap.masterNodes) {
+    // node.host = '192.168.65.254', node.port = 7001, 7002, 7003
+
+    // --- BEGIN FIX (v1.3.0) ---
+    // Apply host mapping if provided
+    // node.host here is '192.168.65.254'
+    // final mappedHost = hostMapper?.call(node.host) ?? node.host; // It works too.
+    // Apply mapping rule: Get '127.0.0.1' if it exists, otherwise use original
+    // Apply the mapping rule CONSISTENTLY
+    final mappedHost =
+        _hostMap[node.host] ?? node.host; // '127.0.0.1' (Correct)
+    // mappedHost is now '127.0.0.1'
+    // --- END FIX ---
+
+    final nodeId =
+        '$mappedHost:${node.port}'; // Key is '127.0.0.1:7002' (Correct pool ID)
+
+    if (_nodePools.containsKey(nodeId)) {
+      // continue;
+      return _nodePools[nodeId]!;
+    }
+
+    final nodeSettings = ValkeyConnectionSettings(
+      host: mappedHost, // Use the MAPPED host (e.g., '127.0.0.1')
+      port: node.port, // Use the correct port (e.g., 7002)
+      commandTimeout: _defaultSettings.commandTimeout,
+      // Note: Auth settings would need to be passed here if required
+    );
+
+    final pool = ValkeyPool(connectionSettings: nodeSettings);
+    _nodePools[nodeId] = pool;
+
+    return pool;
   }
 
   @override
@@ -190,27 +202,119 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
           'Client is not connected. Call connect() first.');
     }
 
-    // 1. Find the correct node for this key (node.host will be '192.168.65.254')
-    final node = _slotMap!.getNodeForKey(key);
-    if (node == null) {
-      throw ValkeyClientException(
-          'Could not find a master node for key "$key" (Slot: ${getHashSlot(key)}).');
-    }
+    int redirects = 0;
 
-    // 2-1. Get the MAPPED pool ID (e.g., '127.0.0.1:7002')
-    final poolId = _getNodeId(node);
-    // 2-2. Find the correct pool for that node
-    final pool = _nodePools[poolId];
-    if (pool == null) {
-      throw ValkeyClientException(
-          'No connection pool found for node $poolId. Topology may be stale.');
-    }
+    // v1.5.0+: Retry Loop for Redirections
+    while (true) {
+      try {
 
-    // 3. Acquire, execute, and release
+        // 1. Find the correct node for this key (node.host will be '192.168.65.254')
+        final node = _slotMap!.getNodeForKey(key);
+        if (node == null) {
+          throw ValkeyClientException(
+              'Could not find a master node for key "$key" (Slot: ${getHashSlot(key)}).');
+        }
+
+        // // 2-1. Get the MAPPED pool ID (e.g., '127.0.0.1:7002')
+        // final poolId = _getNodeId(node);
+        // // 2-2. Find the correct pool for that node
+        // final pool = _nodePools[poolId];
+        // 2. Get the pool
+        final pool = _getOrCreatePool(node);
+
+        // TODO: REVIEW REQUIRED.
+        // if (pool == null) {
+        //   throw ValkeyClientException(
+        //       'No connection pool found for node $poolId. Topology may be stale.');
+        // }
+
+        // 3. Acquire, execute, and release
+        ValkeyClient? client;
+        try {
+          // The pool will connect to '127.0.0.1:7002'
+          client = await pool.acquire();
+          return await command(client);
+        } finally {
+          if (client != null) {
+            pool.release(client);
+          }
+        }
+      } on ValkeyServerException catch (e) {
+        // Check for Redirection Errors
+        final isMoved = e.message.startsWith('MOVED');
+        final isAsk = e.message.startsWith('ASK');
+
+        if (isMoved || isAsk) {
+          redirects++;
+          if (redirects > _maxRedirects) {
+            throw ValkeyClientException(
+                'Too many redirects ($redirects > $_maxRedirects). Last error: ${e.message}');
+          }
+
+          // Parse "MOVED <slot> <ip>:<port>"
+          final parts = e.message.split(' ');
+
+          // if (parts.length < 3) throw e; // Malformed error
+          // TODO: REVIEW REQUIRED.
+          if (parts.length < 3) rethrow; // Malformed error
+
+          final slot = int.parse(parts[1]);
+          final endpoint = parts[2];
+          final endpointParts = endpoint.split(':');
+          final targetHost = endpointParts[0];
+          final targetPort = int.parse(endpointParts[1]);
+
+          // Apply NAT mapping to the new target if needed
+          // If we already have a mapping for this host, use it.
+          // If not, we might be discovering a new NAT IP?
+          // For simplicity, we check if targetHost matches our known 'announcedHost'
+          // But here we just assume standard mapping logic applies.
+          if (_hostMap.containsKey(targetHost)) {
+            // Use existing mapping
+          } else {
+            // New host discovered? In simple NAT scenarios (like Docker),
+            // all internal IPs usually map to the same external IP (localhost).
+            // Heuristic: If we have *any* mapping, apply the targetHost -> mappedHost rule?
+            // For now, let's stick to explicit _hostMap.
+            // If targetHost is new, _getOrCreatePool will use it as is.
+          }
+
+          final targetNode = ClusterNodeInfo(host: targetHost, port: targetPort);
+
+          if (isMoved) {
+            // MOVED: 1. Update Slot Map, 2. Retry Loop
+            _log.fine('MOVED redirection: Slot $slot -> $targetHost:$targetPort');
+
+            // We need to update the _slotMap to point this slot to targetNode
+            // Note: ClusterSlotMap is currently immutable-ish in our implementation.
+            // We should add a method to update it or create a mutable version.
+            // For now, let's assume we add an update method to ClusterSlotMap or replace it.
+            _slotMap!.updateSlot(slot, targetNode);
+
+            continue; // Retry the loop (will use new map)
+          } else {
+            // ASK: 1. ASKING, 2. Execute Command
+            _log.fine('ASK redirection: Slot $slot -> $targetHost:$targetPort');
+            // return await _executeAsk(targetNode, command);
+            // FIXME: REVIEW REQUIRED.
+            return _executeAsk(targetNode, command);
+          }
+        }
+        rethrow; // Other server errors
+      }
+    }
+  }
+
+  /// Handles ASK redirection: Sends ASKING then the command to the target node.
+  Future<T> _executeAsk<T>(ClusterNodeInfo targetNode,
+      Future<T> Function(ValkeyClient client) command) async {
+    final pool = _getOrCreatePool(targetNode);
     ValkeyClient? client;
     try {
-      // The pool will connect to '127.0.0.1:7002'
       client = await pool.acquire();
+      // 1. Send ASKING
+      await client.execute(['ASKING']);
+      // 2. Send actual command
       return await command(client);
     } finally {
       if (client != null) {
@@ -349,7 +453,9 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
             'Could not find a master node for key "$key" (Slot: ${getHashSlot(key)}).');
       }
 
+      // TODO: REVIEW REQUIRED.
       final nodeId = _getNodeId(node);
+
       // Add the original index to the list for this node
       nodeToIndices.putIfAbsent(nodeId, () => []).add(i);
     }
