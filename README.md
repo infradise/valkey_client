@@ -129,6 +129,43 @@ Your 6-node cluster is now running on `127.0.0.1:7001-7006`, and you can success
 
 ## Usage
 
+### Redis
+
+`RedisClient` is available as an alias of `ValkeyClient` to enhance developer experience (DX).
+
+You can use either `ValkeyClient` or `RedisClient`.  
+Both classes and helper functions are fully compatible — choose whichever name feels natural for your project.
+
+### Quick Example (RedisClient)
+
+```dart
+// Since v1.5.0, you can import RedisClient directly — no need to switch to ValkeyClient.
+import 'package:valkey_client/redis_client.dart';
+
+void main() async {
+  final client = RedisClient();
+  try {
+    await client.connect(
+      host: '127.0.0.1',
+      port: 6379
+    );
+    await client.set('key', 'value');
+    print(await client.get('key'));
+
+  } catch (e) {
+    print('❌ Failed: $e');
+  } finally {
+    await client.close();
+  }
+}
+```
+
+👉 All examples below use ValkeyClient, but you can replace it with RedisClient without any changes.  
+**Note**: Not all examples are fully interchangeable yet, but we plan to make them 100% compatible.
+
+
+### Valkey
+
 `valkey_client` supports **Standalone, Sentinel, and Cluster** environments.
 New users are encouraged to start with **Group 1**. Production applications should use **Group 2** (for Standalone/Sentinel) or **Group 3** (for Cluster).
 
