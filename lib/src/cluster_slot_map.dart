@@ -39,7 +39,8 @@ class ClusterSlotMap {
 
   /// Updates the mapping for a specific [slot] to [newNode].
   /// Used when a MOVED redirection occurs.
-  void updateSlot(int slot, ClusterNodeInfo newNode) { // v1.5.0 Feature
+  void updateSlot(int slot, ClusterNodeInfo newNode) {
+    // v1.5.0 Feature
     _slotToNode[slot] = newNode;
     masterNodes.add(newNode); // Ensure the new node is in the set of masters
   }

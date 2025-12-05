@@ -29,7 +29,8 @@ void main() async {
     print('👉 TIP: Now open your terminal and try these chaos actions:');
     print('   1. valkey-cli -p 7001 DEBUG SEGFAULT (Kill a node)');
     print('   2. valkey-cli --cluster reshard ... (Move slots)');
-    print('   3. Watch this client recover automatically! (MOVED/ASK handling)\n');
+    print(
+        '   3. Watch this client recover automatically! (MOVED/ASK handling)\n');
 
     int count = 0;
     final key = 'resilience:key';
@@ -54,16 +55,17 @@ void main() async {
           // Print Success with Node info
           print('[SUCCESS $count] Node $nodeStr | $key = $result');
         } else {
-          print('[FAILURE $count] Node $nodeStr | Value mismatch! Expected $value, got $result');
+          print(
+              '[FAILURE $count] Node $nodeStr | Value mismatch! Expected $value, got $result');
         }
       } on ValkeyClientException catch (e) {
-         // Client-side errors (e.g. pool exhausted during failover)
-         print('[RETRY $count] Client error: $e');
+        // Client-side errors (e.g. pool exhausted during failover)
+        print('[RETRY $count] Client error: $e');
       } on ValkeyServerException catch (e) {
-         // Server errors (e.g. CLUSTERDOWN)
-         print('[RETRY $count] Server error: $e');
+        // Server errors (e.g. CLUSTERDOWN)
+        print('[RETRY $count] Server error: $e');
       } catch (e) {
-         print('[ERROR $count] Unexpected: $e');
+        print('[ERROR $count] Unexpected: $e');
       }
 
       // await client.del(key);
@@ -71,7 +73,6 @@ void main() async {
       // Wait a bit before next op
       await Future.delayed(Duration(seconds: 1));
     }
-
   } finally {
     await client.close();
   }

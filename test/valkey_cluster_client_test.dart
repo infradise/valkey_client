@@ -55,7 +55,8 @@ Future<void> main() async {
       // Ping all masters to verify pools are active
       final pings = await client.pingAll();
       // expect(pings.length, greaterThanOrEqualTo(1)); // At least 1 master
-      expect(pings.length, greaterThanOrEqualTo(3)); // Expect at least 3 masters
+      expect(
+          pings.length, greaterThanOrEqualTo(3)); // Expect at least 3 masters
       expect(pings.values.first, 'PONG');
     });
 

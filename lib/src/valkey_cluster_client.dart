@@ -38,8 +38,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   ValkeyClusterClient(
     this._initialNodes, {
     int maxRedirects = 5, // Default to 5 (v1.5.0+)
-  }) : _defaultSettings = _initialNodes.first,
-      _maxRedirects = maxRedirects {
+  })  : _defaultSettings = _initialNodes.first,
+        _maxRedirects = maxRedirects {
     if (_initialNodes.isEmpty) {
       throw ArgumentError('At least one initial node must be provided.');
     }
@@ -207,7 +207,6 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
     // v1.5.0+: Retry Loop for Redirections
     while (true) {
       try {
-
         // 1. Find the correct node for this key (node.host will be '192.168.65.254')
         final node = _slotMap!.getNodeForKey(key);
         if (node == null) {
@@ -279,11 +278,13 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
             // If targetHost is new, _getOrCreatePool will use it as is.
           }
 
-          final targetNode = ClusterNodeInfo(host: targetHost, port: targetPort);
+          final targetNode =
+              ClusterNodeInfo(host: targetHost, port: targetPort);
 
           if (isMoved) {
             // MOVED: 1. Update Slot Map, 2. Retry Loop
-            _log.fine('MOVED redirection: Slot $slot -> $targetHost:$targetPort');
+            _log.fine(
+                'MOVED redirection: Slot $slot -> $targetHost:$targetPort');
 
             // We need to update the _slotMap to point this slot to targetNode
             // Note: ClusterSlotMap is currently immutable-ish in our implementation.
@@ -556,10 +557,10 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
 
   // TESTING ONLY (test/valkey_cluster_redirection_test.dart)
   void debugCorruptSlotMap(String key, int wrongPort) {
-     final slot = getHashSlot(key);
-     // Point this slot to a wrong port (e.g., 7005 instead of 7001)
-     // We assume localhost/127.0.0.1 for simplicity in tests
-     final wrongNode = ClusterNodeInfo(host: '127.0.0.1', port: wrongPort);
-     _slotMap!.updateSlot(slot, wrongNode);
+    final slot = getHashSlot(key);
+    // Point this slot to a wrong port (e.g., 7005 instead of 7001)
+    // We assume localhost/127.0.0.1 for simplicity in tests
+    final wrongNode = ClusterNodeInfo(host: '127.0.0.1', port: wrongPort);
+    _slotMap!.updateSlot(slot, wrongNode);
   }
 }
