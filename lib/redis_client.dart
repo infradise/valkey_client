@@ -32,6 +32,6 @@
 
 import 'package:valkey_client/valkey_client.dart';
 
-
 typedef RedisClient = ValkeyClient;
 typedef RedisConnectionSettings = ValkeyConnectionSettings;
+typedef RedisClusterClient = ValkeyClusterClient;
