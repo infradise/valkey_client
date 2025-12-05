@@ -7,10 +7,10 @@ homepage: https://visualkube.com/opensource/valkey_client
 
 topics:
   - valkey
-  - cache
-  - nosql
-  - cluster
-  - in-memory
+  - redis
+  - command-routing
+  - connection-pooling
+  - auto-discovery
 
 environment:
   sdk: '>=3.0.0 <4.0.0' # 3.0+: Type alias
