@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.5.0
+
+### Added
+- **High Availability & Resilience:** Implemented transparent handling for Cluster Redirections (`-MOVED` and `-ASK`).
+  - The client now automatically retries commands on the correct node when a slot migration or failover occurs.
+  - **`-MOVED` Handling:** Automatically updates the internal `ClusterSlotMap` and redirects the request to the new master.
+  - **`-ASK` Handling:** Successfully handles temporary slot migrations by sending `ASKING` commands to the target node.
+- **Developer Experience:** Added `RedisClient` alias. You can now use `RedisClient` interchangeably with `ValkeyClient` for a familiar development experience.
+- **Configuration:** Added `maxRedirects` parameter to `ValkeyClusterClient` (default: `5`) to control the maximum number of retries before throwing an exception.
+- **Inspection Helper:** Added `getMasterFor(key)` method to retrieve the `ClusterNodeInfo` currently responsible for a specific key. This is useful for debugging topology changes.
+
+### Changed
+- **Robustness:** `ValkeyClusterClient` no longer fails immediately upon encountering topology changes but attempts to recover using the new redirection logic.
+
+
 ## 1.4.0
 
 ### Added
