@@ -31,22 +31,24 @@ It is designed primarily for server-side Dart applications (`server.dart`) requi
   * **Built-in Connection Pooling (v1.1.0+):** `ValkeyPool` for efficient connection management (used by Standalone and Cluster clients).
   * **Cluster Auto-Discovery (v1.2.0+):** Added `client.clusterSlots()` to fetch cluster topology (via the `CLUSTER SLOTS` command), laying the foundation for full cluster support.
   * **Command Timeout (v1.2.0+):** Includes a built-in command timeout (via `ValkeyConnectionSettings`) to prevent client hangs on non-responsive servers.
-  * **Broad Command Support:**
-    * Connection (`PING`, `ECHO`, `SELECT`)
-    * Cluster (`CLUSTER SLOTS`, `ASKING`)
-    * Strings (`GET`, `SET`, `MGET`)
-    * Hashes (`HSET`, `HGET`, `HGETALL`)
-    * Lists (`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`)
-    * Sets (`SADD`, `SREM`, `SMEMBERS`)
-    * Sorted Sets (`ZADD`, `ZREM`, `ZRANGE`)
-    * Key Management (`DEL`, `EXISTS`, `EXPIRE`, `TTL`)
-    * Transactions (`MULTI`, `EXEC`, `DISCARD`)
-    * Full Pub/Sub (`SUBSCRIBE`, `UNSUBSCRIBE`, `PSUBSCRIBE`, `PUNSUBSCRIBE`)
-    * Pub/Sub Introspection (`PUBSUB CHANNELS`, `NUMSUB`, `NUMPAT`)
   * **Robust Parsing:** Full RESP3 parser handling all core data types (`+`, `-`, `$`, `*`, `:`).
   * **Type-Safe Exceptions:** Clear distinction between connection errors (`ValkeyConnectionException`), server errors (`ValkeyServerException`), and client errors (`ValkeyClientException`).
   * **Pub/Sub Ready (Standalone/Sentinel):** `subscribe()` returns a `Subscription` object with a `Stream` and a `Future<void> ready` for easy and reliable message handling.
   * **Production-Ready (Standalone/Sentinel):** `v1.0.0` is stable for production use in non-clustered environments (when used with a connection pool). This lays the foundation for the full cluster support planned for v2.0.0 (see [Roadmap](https://github.com/infradise/valkey_client/wiki/Roadmap#roadmap-towards-v200-production-ready-for-cluster-)).
+
+## Command Support
+  * **Connection** (`PING`, `ECHO`, `QUIT` via `close()`)
+  * **Cluster** (`CLUSTER SLOTS`, `ASKING`)
+  * **Strings** (`GET`, `SET`, `MGET`, `INCR`, `DECR`, `INCRBY`, `DECRBY`)
+  * **Hashes** (`HSET`, `HGET`, `HGETALL`)
+  * **Lists** (`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`)
+  * **Sets** (`SADD`, `SREM`, `SMEMBERS`)
+  * **Sorted Sets** (`ZADD`, `ZREM`, `ZRANGE`)
+  * **Key Management** (`DEL`, `EXISTS`, `EXPIRE`, `TTL`)
+  * **Transactions** (`MULTI`, `EXEC`, `DISCARD`)
+  * **Full Pub/Sub** (`PUBLISH`, `SUBSCRIBE`, `UNSUBSCRIBE`, `PSUBSCRIBE`, `PUNSUBSCRIBE`)
+  * **Pub/Sub Introspection** (`PUBSUB CHANNELS`, `PUBSUB NUMSUB`, `PUBSUB NUMPAT`)
+  * **Sharded Pub/Sub** (`SPUBLISH`, `SSUBSCRIBE`, `SUNSUBSCRIBE`) for efficient cluster messaging.
 
 ## Getting Started
 
@@ -269,6 +271,17 @@ void main() async {
 }
 ```
 
+#### Atomic Counters (v1.6.0+)
+
+```dart
+// Atomic increment/decrement operations
+await client.set('score', '10');
+final newScore = await client.incr('score'); // 11
+await client.decrBy('score', 5); // 6
+```
+
+---
+
 #### 3\. Application: Pub/Sub (from [example/valkey\_client\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/valkey_client_example.dart))
 
 `ValkeyClient` supports Pub/Sub. `subscribe()` returns a `Subscription` object, and you **must** `await sub.ready` to ensure the subscription is active before publishing.
@@ -427,6 +440,34 @@ Future<void> main() async {
 ### Group 3: Cluster Mode (Advanced)
 
 This group is for connecting to a Valkey **Cluster Mode** environment.
+
+#### Sharded Pub/Sub (v1.6.0+)
+
+ValkeyClusterClient for Cluster (from [example/cluster\_sharded\_pubsub\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_sharded_pubsub_example.dart))
+
+Sharded Pub/Sub reduces network traffic in cluster environments by routing messages only to the node responsible for the channel's slot.
+
+```dart
+// 1. Subscribe to sharded channels
+// In Cluster mode, this automatically routes to the correct nodes.
+final sub = client.ssubscribe(['shard:news:{sports}', 'shard:news:{tech}']);
+await sub.ready;
+
+// 2. Handle incoming messages
+sub.messages.listen((msg) {
+  print('Received on ${msg.channel}: ${msg.message}');
+});
+
+// 3. Publish to a specific shard
+await client.spublish('shard:news:{sports}', 'Lakers won!');
+
+// 4. Unsubscribe
+await sub.unsubscribe();
+```
+
+**Note:** You can also use `ssubscribe` and `spublish` with `ValkeyClient` (Standalone) on compatible servers (Redis 7.0+ / Valkey 9.0+). See ValkeyClient for Standalone (from [example/sharded\_pubsub\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/sharded_pubsub_example.dart))
+
+
 
 #### Recommended (v1.3.0+): Automatic Routing (from [example/cluster\_client\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_client_example.dart))
 
