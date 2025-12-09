@@ -1723,4 +1723,10 @@ class ValkeyClient implements ValkeyClientBase {
     // Do not create a new completer here, let connect() handle it.
     // e.g., _isInPubSubMode = false; // Reset pubsub mode on cleanup
   }
+
+  @override
+  Future<String> echo(String message) async {
+    final response = await execute(['ECHO', message]);
+    return response as String;
+  }
 }

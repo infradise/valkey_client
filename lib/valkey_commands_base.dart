@@ -190,4 +190,7 @@ abstract class ValkeyCommandsBase {
 
   /// Unsubscribes from the given [channels] using Sharded Pub/Sub.
   Future<void> sunsubscribe([List<String> channels = const []]);
+
+  /// Echoes the given [message] back from the server.
+  Future<String> echo(String message);
 }

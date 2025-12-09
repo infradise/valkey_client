@@ -444,6 +444,27 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
     _executeOnKey(channel, (client) => client.spublish(channel, message));
 
   @override
+  Future<String> echo(String message) async {
+    if (_nodePools.isEmpty) {
+      throw ValkeyClientException('Client is not connected. Call connect() first.');
+    }
+
+    // ECHO does not depend on a key slot.
+    // We can execute it on any available node. We pick the first one.
+    final pool = _nodePools.values.first;
+
+    ValkeyClient? client;
+    try {
+      client = await pool.acquire();
+      return await client.echo(message);
+    } finally {
+      if (client != null) {
+        pool.release(client);
+      }
+    }
+  }
+
+  @override
   Subscription ssubscribe(List<String> channels) {
     if (_slotMap == null || _isClosed) {
       throw ValkeyClientException('Client is not connected.');
