@@ -43,7 +43,26 @@ It is designed primarily for server-side Dart applications (`server.dart`) requi
 
 ## Getting Started
 
-### Prerequisites: Running a Valkey Server or Redis Server
+This section describe how to install a `Valkey` or `Redis` Server on your local environment.
+
+### Kubernetes: Local Setup
+
+1. Run `Rancher-Desktop` to set up a local `Kubernetes` cluster.
+2. In **Android Studio** or a **JetBrains IDE**:  
+   - Go to **Plugin > Visualkube Jet > Cluster Manager**  
+   - Connect one or more `Kubernetes` clusters  
+   - Navigate to **Helm > Charts**  
+   - Search for `redis`, `redis-cluster`, `valkey`, or `valkey-cluster`  
+   - Install and choose a target cluster
+3. In **Android Studio** or a **JetBrains IDE**:  
+   - Go to **Plugin > Keyscope > Cluster Manager**  
+   - Add a connection and choose **Standalone**, **Cluster**, or **Sentinel** mode  
+   - Double‑click your `myRedis` or `myValkey` server  
+   - Double‑click **Database**  
+   - Double‑click a **Key type**  
+   - Click keys to view their values
+
+### Docker: Local Standalone Setup
 
 This client requires a running `Valkey` or `Redis` server to connect to. For local development and testing, we strongly recommend using Docker.
 
@@ -92,7 +111,7 @@ docker run -d --name my-redis-acl -p 6379:6379 redis:latest \
 
 ---
 
-## ⚙️ Local Cluster Setup (for v1.3.0+ Testing)
+### Docker Compose: Local Cluster Setup (for v1.3.0+ Testing)
 
 The **Usage (Group 3)** examples require a running Valkey Cluster or Redis Cluster.
 
