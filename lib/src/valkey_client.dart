@@ -963,6 +963,36 @@ class ValkeyClient implements ValkeyClientBase {
         List<String?>.filled(keys.length, null); // Match return type
   }
 
+  // --- Atomic Counters (v1.6.0) ---
+
+  @override
+  Future<int> incr(String key) async {
+    final response = await execute(['INCR', key]);
+    // Returns an Integer (:)
+    return response as int;
+  }
+
+  @override
+  Future<int> decr(String key) async {
+    final response = await execute(['DECR', key]);
+    // Returns an Integer (:)
+    return response as int;
+  }
+
+  @override
+  Future<int> incrBy(String key, int amount) async {
+    final response = await execute(['INCRBY', key, amount.toString()]);
+    // Returns an Integer (:)
+    return response as int;
+  }
+
+  @override
+  Future<int> decrBy(String key, int amount) async {
+    final response = await execute(['DECRBY', key, amount.toString()]);
+    // Returns an Integer (:)
+    return response as int;
+  }
+
   // --- HASH (v0.5.0) ---
   @override
   Future<String?> hget(String key, String field) async {

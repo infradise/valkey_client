@@ -147,4 +147,18 @@ abstract class ValkeyCommandsBase {
   /// * `-2` if the key does not exist.
   /// * A positive integer representing the remaining TTL.
   Future<int> ttl(String key);
+
+  // --- Atomic Counters ---
+
+  /// Increments the number stored at [key] by one.
+  Future<int> incr(String key);
+
+  /// Decrements the number stored at [key] by one.
+  Future<int> decr(String key);
+
+  /// Increments the number stored at [key] by [amount].
+  Future<int> incrBy(String key, int amount);
+
+  /// Decrements the number stored at [key] by [amount].
+  Future<int> decrBy(String key, int amount);
 }

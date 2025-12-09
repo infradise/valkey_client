@@ -424,6 +424,21 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   Future<int> ttl(String key) =>
       _executeOnKey(key, (client) => client.ttl(key));
 
+  // --- Atomic Counters (v1.6.0) ---
+  @override
+  Future<int> incr(String key) =>
+      _executeOnKey(key, (client) => client.incr(key));
+  @override
+  Future<int> decr(String key) =>
+      _executeOnKey(key, (client) => client.decr(key));
+  @override
+  Future<int> incrBy(String key, int amount) =>
+      _executeOnKey(key, (client) => client.incrBy(key, amount));
+  @override
+  Future<int> decrBy(String key, int amount) =>
+      _executeOnKey(key, (client) => client.decrBy(key, amount));
+
+
   // @override
   // Future<List<String?>> mget(List<String> keys) async {
   //   // MGET is complex as keys can span multiple nodes.
