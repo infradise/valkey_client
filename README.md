@@ -30,15 +30,17 @@ It is designed primarily for server-side Dart applications (`server.dart`) requi
   * **Cluster Auto-Discovery (v1.2.0+):** Added `client.clusterSlots()` to fetch cluster topology (via the `CLUSTER SLOTS` command), laying the foundation for full cluster support.
   * **Command Timeout (v1.2.0+):** Includes a built-in command timeout (via `ValkeyConnectionSettings`) to prevent client hangs on non-responsive servers.
   * **Broad Command Support:**
-      * Strings (`GET`, `SET`, `MGET`)
-      * Hashes (`HSET`, `HGET`, `HGETALL`)
-      * Lists (`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`)
-      * Sets (`SADD`, `SREM`, `SMEMBERS`)
-      * Sorted Sets (`ZADD`, `ZREM`, `ZRANGE`)
-      * Key Management (`DEL`, `EXISTS`, `EXPIRE`, `TTL`)
-      * Transactions (`MULTI`, `EXEC`, `DISCARD`)
-      * Full Pub/Sub (`SUBSCRIBE`, `UNSUBSCRIBE`, `PSUBSCRIBE`, `PUNSUBSCRIBE`)
-      * Pub/Sub Introspection (`PUBSUB CHANNELS`, `NUMSUB`, `NUMPAT`)
+    * Connection (`PING`, `ECHO`, `SELECT`)
+    * Cluster (`CLUSTER SLOTS`, `ASKING`)
+    * Strings (`GET`, `SET`, `MGET`)
+    * Hashes (`HSET`, `HGET`, `HGETALL`)
+    * Lists (`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`)
+    * Sets (`SADD`, `SREM`, `SMEMBERS`)
+    * Sorted Sets (`ZADD`, `ZREM`, `ZRANGE`)
+    * Key Management (`DEL`, `EXISTS`, `EXPIRE`, `TTL`)
+    * Transactions (`MULTI`, `EXEC`, `DISCARD`)
+    * Full Pub/Sub (`SUBSCRIBE`, `UNSUBSCRIBE`, `PSUBSCRIBE`, `PUNSUBSCRIBE`)
+    * Pub/Sub Introspection (`PUBSUB CHANNELS`, `NUMSUB`, `NUMPAT`)
   * **Robust Parsing:** Full RESP3 parser handling all core data types (`+`, `-`, `$`, `*`, `:`).
   * **Type-Safe Exceptions:** Clear distinction between connection errors (`ValkeyConnectionException`), server errors (`ValkeyServerException`), and client errors (`ValkeyClientException`).
   * **Pub/Sub Ready (Standalone/Sentinel):** `subscribe()` returns a `Subscription` object with a `Stream` and a `Future<void> ready` for easy and reliable message handling.
