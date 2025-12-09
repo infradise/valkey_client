@@ -7,6 +7,9 @@ A modern, production-ready Dart client for Valkey (9.0.0+). Fully Redis 7.x comp
 👉 To browse Redis/Valkey data, you can use [Keyscope](https://keyscope.dev),  
 a native JetBrains IDE plugin for managing and monitoring Redis/Valkey.
 
+👉 To access Redis/Valkey servers on Kubernetes, you can use [Visualkube Jet](https://jet.visualkube.com),  
+a native JetBrains IDE plugin that supports one or more `Kubernetes` clusters.
+
 ## The Goal 🎯
 
 The Dart ecosystem needs a high-performance, actively maintained client for the next generation of in-memory databases. This package aims to be the standard Dart client for **Valkey (9.0.0+)** while maintaining full compatibility with **Redis (7.x+)**.
