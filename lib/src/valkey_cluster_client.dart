@@ -440,13 +440,14 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
 
   @override
   Future<int> spublish(String channel, String message) =>
-    // Sharded Pub/Sub routes based on the channel name's hash slot.
-    _executeOnKey(channel, (client) => client.spublish(channel, message));
+      // Sharded Pub/Sub routes based on the channel name's hash slot.
+      _executeOnKey(channel, (client) => client.spublish(channel, message));
 
   @override
   Future<String> echo(String message) async {
     if (_nodePools.isEmpty) {
-      throw ValkeyClientException('Client is not connected. Call connect() first.');
+      throw ValkeyClientException(
+          'Client is not connected. Call connect() first.');
     }
 
     // ECHO does not depend on a key slot.
@@ -533,10 +534,10 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
 
   @override
   Future<void> sunsubscribe([List<String> channels = const []]) async {
-      _log.warning('Cluster sunsubscribe: Please use subscription.unsubscribe() instead.');
-      // Best effort logic could go here, but for v1.6.0 we rely on the object.
+    _log.warning(
+        'Cluster sunsubscribe: Please use subscription.unsubscribe() instead.');
+    // Best effort logic could go here, but for v1.6.0 we rely on the object.
   }
-
 
   // @override
   // Future<List<String?>> mget(List<String> keys) async {
@@ -686,7 +687,8 @@ class _ClusterSubscription implements Subscription {
   final Future<void> _allReady;
   final List<ValkeyClient> _clients; // Clients to close
 
-  _ClusterSubscription(this._shardSubs, this._controller, this._allReady, this._clients);
+  _ClusterSubscription(
+      this._shardSubs, this._controller, this._allReady, this._clients);
 
   @override
   Stream<ValkeyMessage> get messages => _controller.stream;

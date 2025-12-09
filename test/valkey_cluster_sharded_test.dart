@@ -24,16 +24,16 @@ void main() async {
     late ValkeyClusterClient client;
 
     setUp(() {
-      client = ValkeyClusterClient([
-        ValkeyConnectionSettings(host: host, port: port)
-      ]);
+      client = ValkeyClusterClient(
+          [ValkeyConnectionSettings(host: host, port: port)]);
     });
 
     tearDown(() async {
       await client.close();
     });
 
-    test('ssubscribe receives messages from multiple shards (Scatter-Gather)', () async {
+    test('ssubscribe receives messages from multiple shards (Scatter-Gather)',
+        () async {
       await client.connect();
 
       // 1. Define channels likely to map to different nodes (slots)
@@ -76,7 +76,8 @@ void main() async {
       try {
         await completer.future.timeout(Duration(seconds: 5));
       } catch (e) {
-        fail('Timeout waiting for messages. Received: ${receivedMessages.keys}');
+        fail(
+            'Timeout waiting for messages. Received: ${receivedMessages.keys}');
       }
 
       expect(receivedMessages[channel1], 'msg-a');

@@ -57,10 +57,10 @@ void main() async {
     // 6. Unsubscribe
     await sub.unsubscribe();
     print('Unsubscribed.');
-
   } on ValkeyException catch (e) {
     print('❌ Error: $e');
-    print('👉 Note: Ensure your server version supports Sharded Pub/Sub (Redis 7.0+ / Valkey 9.0+)');
+    print(
+        '👉 Note: Ensure your server version supports Sharded Pub/Sub (Redis 7.0+ / Valkey 9.0+)');
   } finally {
     await client.close();
   }

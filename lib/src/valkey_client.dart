@@ -447,8 +447,8 @@ class ValkeyClient implements ValkeyClientBase {
       final channel = messageArray[1] as String;
       final message = messageArray[2] as String?;
       if (_pubSubController != null && !_pubSubController!.isClosed) {
-        _pubSubController!.add(ValkeyMessage(
-            channel: channel, message: message ?? ''));
+        _pubSubController!
+            .add(ValkeyMessage(channel: channel, message: message ?? ''));
       }
     }
     // 2. Sharded Subscribe Confirmation (ssubscribe)
@@ -460,7 +460,8 @@ class ValkeyClient implements ValkeyClientBase {
         if (!_isInPubSubMode && count > 0) {
           _isInPubSubMode = true;
         }
-        _subscribedChannels.add(channel); // We reuse the same set for simplicity
+        _subscribedChannels
+            .add(channel); // We reuse the same set for simplicity
 
         _expectedSsubscribeConfirmations--;
 
@@ -489,22 +490,22 @@ class ValkeyClient implements ValkeyClientBase {
         currentRemainingCount = count;
         if (_sunsubscribeCompleter != null &&
             !_sunsubscribeCompleter!.isCompleted) {
-           // Basic completion logic
-           if (count == 0 || channel != null) {
-             _sunsubscribeCompleter!.complete();
-             _sunsubscribeCompleter = null;
-           }
+          // Basic completion logic
+          if (count == 0 || channel != null) {
+            _sunsubscribeCompleter!.complete();
+            _sunsubscribeCompleter = null;
+          }
         }
       }
-    }
-    else {
+    } else {
       if (type == 'message' && messageArray.length == 3) {
         final channel = messageArray[1] as String;
         final message = messageArray[2]
             as String?; // Allow null message? Redis usually sends empty string
         if (_pubSubController != null && !_pubSubController!.isClosed) {
           _pubSubController!.add(ValkeyMessage(
-              channel: channel, message: message ?? '')); // Handle potential null
+              channel: channel,
+              message: message ?? '')); // Handle potential null
         } else {
           // _log.info('StreamController is null or closed, cannot add message.');
         }
@@ -1284,7 +1285,8 @@ class ValkeyClient implements ValkeyClientBase {
   @override
   Subscription ssubscribe(List<String> channels) {
     if (_isInPubSubMode && _subscribedPatterns.isNotEmpty) {
-       throw ValkeyClientException('Mixing SSUBSCRIBE with PSUBSCRIBE is discouraged.');
+      throw ValkeyClientException(
+          'Mixing SSUBSCRIBE with PSUBSCRIBE is discouraged.');
     }
     if (channels.isEmpty) {
       throw ArgumentError('Channel list cannot be empty for SSUBSCRIBE.');
@@ -1294,13 +1296,15 @@ class ValkeyClient implements ValkeyClientBase {
       _pubSubController = StreamController<ValkeyMessage>.broadcast();
     }
 
-    if (_ssubscribeReadyCompleter == null || _ssubscribeReadyCompleter!.isCompleted) {
+    if (_ssubscribeReadyCompleter == null ||
+        _ssubscribeReadyCompleter!.isCompleted) {
       _ssubscribeReadyCompleter = Completer<void>();
     }
     _expectedSsubscribeConfirmations = channels.length;
 
     execute(['SSUBSCRIBE', ...channels]).catchError((e, s) {
-      if (_ssubscribeReadyCompleter != null && !_ssubscribeReadyCompleter!.isCompleted) {
+      if (_ssubscribeReadyCompleter != null &&
+          !_ssubscribeReadyCompleter!.isCompleted) {
         _ssubscribeReadyCompleter!.completeError(e, s);
       }
       if (_pubSubController != null && !_pubSubController!.isClosed) {
@@ -1321,8 +1325,10 @@ class ValkeyClient implements ValkeyClientBase {
   Future<void> sunsubscribe([List<String> channels = const []]) async {
     if (!_isInPubSubMode) return;
 
-    if (_sunsubscribeCompleter != null && !_sunsubscribeCompleter!.isCompleted) {
-       throw ValkeyClientException('Another sunsubscribe operation is in progress.');
+    if (_sunsubscribeCompleter != null &&
+        !_sunsubscribeCompleter!.isCompleted) {
+      throw ValkeyClientException(
+          'Another sunsubscribe operation is in progress.');
     }
     _sunsubscribeCompleter = Completer<void>();
 
@@ -1360,11 +1366,13 @@ class ValkeyClient implements ValkeyClientBase {
     _expectedPSubscribeConfirmations = 0;
 
     // Clean up completers for Shared Pub/Sub
-    if (_ssubscribeReadyCompleter != null && !_ssubscribeReadyCompleter!.isCompleted) {
-       _ssubscribeReadyCompleter!.completeError(Exception("Resetting PubSub state"));
-     }
-     _ssubscribeReadyCompleter = null;
-     _expectedSsubscribeConfirmations = 0;
+    if (_ssubscribeReadyCompleter != null &&
+        !_ssubscribeReadyCompleter!.isCompleted) {
+      _ssubscribeReadyCompleter!
+          .completeError(Exception("Resetting PubSub state"));
+    }
+    _ssubscribeReadyCompleter = null;
+    _expectedSsubscribeConfirmations = 0;
 
     // Safely close StreamController
 

@@ -33,7 +33,6 @@ void main() async {
 
     // Cleanup
     await client.del(key);
-
   } catch (e) {
     print('❌ Error: $e');
   } finally {

@@ -61,7 +61,6 @@ void main() async {
     // This cleans up connections to the shards.
     await sub.unsubscribe();
     print('Unsubscribed.');
-
   } on ValkeyException catch (e) {
     print('❌ Error: $e');
   } finally {

@@ -60,7 +60,8 @@ class Subscription {
 
   /// Creates a Subscription.
   /// [onUnsubscribe] is an optional callback invoked when unsubscribe() is called.
-  Subscription(this.messages, this.ready, {Future<void> Function()? onUnsubscribe})
+  Subscription(this.messages, this.ready,
+      {Future<void> Function()? onUnsubscribe})
       : _onUnsubscribe = onUnsubscribe;
 
   /// Unsubscribes from this subscription.

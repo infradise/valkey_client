@@ -43,7 +43,8 @@ void main() {
       // 3. Publish
       print('Publishing to $channel...');
       final receivers = await publisher.spublish(channel, messageContent);
-      expect(receivers, greaterThanOrEqualTo(1)); // Should have at least 1 subscriber
+      expect(receivers,
+          greaterThanOrEqualTo(1)); // Should have at least 1 subscriber
 
       // 4. Verify
       final receivedMsg = await completer.future.timeout(Duration(seconds: 2));

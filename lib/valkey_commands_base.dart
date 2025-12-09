@@ -11,7 +11,6 @@ import 'package:valkey_client/valkey_client_base.dart';
 // If circular reference issues occur, consider using 'dynamic' or splitting into a separate file.
 // For now, we add it here based on the current structure.)
 
-
 /// The abstract base class for all common Valkey data commands.
 ///
 /// Both the standalone client ([ValkeyClientBase]) and the cluster client
