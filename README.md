@@ -22,10 +22,12 @@ It is designed primarily for server-side Dart applications (`server.dart`) requi
 
 ## Features
 
+  * **Developer Experience (v1.5.0+):** Added `RedisClient` alias and smart redirection handling for better usability and stability.
+  * **High Availability & Resilience (v1.5.0+):**  Automatically and transparently handles cluster topology changes (`-MOVED` and `-ASK` redirections) to ensure robust failover, seamless scaling, and zero‑downtime operations.
+  * **Multi-key Support (v1.4.0+):** Supports `MGET` across multiple nodes using smart Scatter-Gather pipelining.
   * **Cluster Client (v1.3.0+):** Added `ValkeyClusterClient` for automatic command routing in cluster mode.
       * This client automatically routes commands to the correct node.
       * We recommend using `ValkeyClient` for Standalone/Sentinel and `ValkeyClusterClient` for cluster environments.
-      * **Multi-key Support (v1.4.0+):** Supports `MGET` across multiple nodes using smart Scatter-Gather pipelining.
   * **Built-in Connection Pooling (v1.1.0+):** `ValkeyPool` for efficient connection management (used by Standalone and Cluster clients).
   * **Cluster Auto-Discovery (v1.2.0+):** Added `client.clusterSlots()` to fetch cluster topology (via the `CLUSTER SLOTS` command), laying the foundation for full cluster support.
   * **Command Timeout (v1.2.0+):** Includes a built-in command timeout (via `ValkeyConnectionSettings`) to prevent client hangs on non-responsive servers.
