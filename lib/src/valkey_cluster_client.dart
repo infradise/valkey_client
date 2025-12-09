@@ -424,7 +424,7 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   Future<int> ttl(String key) =>
       _executeOnKey(key, (client) => client.ttl(key));
 
-  // --- Atomic Counters (v1.6.0) ---
+  // --- Atomic Counters ---
   @override
   Future<int> incr(String key) =>
       _executeOnKey(key, (client) => client.incr(key));
@@ -437,6 +437,84 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   @override
   Future<int> decrBy(String key, int amount) =>
       _executeOnKey(key, (client) => client.decrBy(key, amount));
+
+  @override
+  Future<int> spublish(String channel, String message) =>
+    // Sharded Pub/Sub routes based on the channel name's hash slot.
+    _executeOnKey(channel, (client) => client.spublish(channel, message));
+
+  @override
+  Subscription ssubscribe(List<String> channels) {
+    if (_slotMap == null || _isClosed) {
+      throw ValkeyClientException('Client is not connected.');
+    }
+
+    // 1. Scatter: Group channels by Node
+    final Map<String, List<String>> nodeToChannels = {};
+    for (final channel in channels) {
+      final node = _slotMap!.getNodeForKey(channel);
+      if (node == null) {
+        throw ValkeyClientException('Could not find node for channel $channel');
+      }
+      final nodeId = _getNodeId(node);
+      nodeToChannels.putIfAbsent(nodeId, () => []).add(channel);
+    }
+
+    // 2. Gather: Subscribe per node
+    final List<Subscription> shardSubs = [];
+    final StreamController<ValkeyMessage> controller = StreamController();
+    final List<Future<void>> readyFutures = [];
+    final List<ValkeyClient> acquiredClients = [];
+
+    for (final entry in nodeToChannels.entries) {
+      final nodeId = entry.key;
+      final shardChannels = entry.value;
+      final pool = _nodePools[nodeId];
+
+      if (pool == null) continue;
+
+      // Async setup
+      final setupFuture = () async {
+        try {
+          // Acquire client (Will act as dedicated connection)
+          final client = await pool.acquire();
+          acquiredClients.add(client);
+
+          // SSUBSCRIBE
+          final sub = client.ssubscribe(shardChannels);
+          shardSubs.add(sub);
+
+          // Forward Messages
+          sub.messages.listen(
+            (msg) => controller.add(msg),
+            onError: (e) => controller.addError(e),
+            // Don't close controller on single shard done
+          );
+
+          return sub.ready;
+        } catch (e) {
+          controller.addError(e);
+          rethrow;
+        }
+      }();
+
+      readyFutures.add(setupFuture.then((_) {}));
+    }
+
+    // 3. Return Composite Subscription
+    return _ClusterSubscription(
+      shardSubs,
+      controller,
+      Future.wait(readyFutures),
+      acquiredClients,
+    );
+  }
+
+  @override
+  Future<void> sunsubscribe([List<String> channels = const []]) async {
+      _log.warning('Cluster sunsubscribe: Please use subscription.unsubscribe() instead.');
+      // Best effort logic could go here, but for v1.6.0 we rely on the object.
+  }
 
 
   // @override
@@ -577,5 +655,36 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
     // We assume localhost/127.0.0.1 for simplicity in tests
     final wrongNode = ClusterNodeInfo(host: '127.0.0.1', port: wrongPort);
     _slotMap!.updateSlot(slot, wrongNode);
+  }
+}
+
+/// Helper class to manage multi-node subscriptions
+class _ClusterSubscription implements Subscription {
+  final List<Subscription> _shardSubs;
+  final StreamController<ValkeyMessage> _controller;
+  final Future<void> _allReady;
+  final List<ValkeyClient> _clients; // Clients to close
+
+  _ClusterSubscription(this._shardSubs, this._controller, this._allReady, this._clients);
+
+  @override
+  Stream<ValkeyMessage> get messages => _controller.stream;
+
+  @override
+  Future<void> get ready => _allReady;
+
+  @override
+  Future<void> unsubscribe() async {
+    // 1. Send unsubscribe commands (Delegate to children)
+    await Future.wait(_shardSubs.map((s) => s.unsubscribe()));
+
+    // 2. Close the controller
+    await _controller.close();
+
+    // 3. Hard-close clients to avoid polluting the pool (v1.6.0 workaround)
+    // In v1.7.0, we will use pool.discard() or similar.
+    for (final client in _clients) {
+      await client.close();
+    }
   }
 }

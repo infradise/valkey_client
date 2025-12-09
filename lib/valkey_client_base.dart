@@ -43,6 +43,7 @@ class Subscription {
 
   /// A [Future] that completes when the initial subscription to all requested
   /// channels/patterns is confirmed by the server.
+  /// (A Future that completes when the subscription is ready.)
   ///
   /// You MUST `await` this future *before* publishing messages to ensure
   /// the subscription is active.
@@ -54,7 +55,23 @@ class Subscription {
   /// ```
   final Future<void> ready;
 
-  Subscription(this.messages, this.ready);
+  /// Internal callback to handle unsubscription.
+  final Future<void> Function()? _onUnsubscribe;
+
+  /// Creates a Subscription.
+  /// [onUnsubscribe] is an optional callback invoked when unsubscribe() is called.
+  Subscription(this.messages, this.ready, {Future<void> Function()? onUnsubscribe})
+      : _onUnsubscribe = onUnsubscribe;
+
+  /// Unsubscribes from this subscription.
+  ///
+  /// This will call the underlying client's unsubscribe logic for the specific
+  /// channels or patterns associated with this subscription.
+  Future<void> unsubscribe() async {
+    if (_onUnsubscribe != null) {
+      await _onUnsubscribe!();
+    }
+  }
 }
 
 /// The abstract base class for a Valkey client.

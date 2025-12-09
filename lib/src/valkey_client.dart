@@ -173,6 +173,12 @@ class ValkeyClient implements ValkeyClientBase {
   /// Queue to hold commands during a MULTI...EXEC block.
   final Queue<List<String>> _transactionQueue = Queue();
 
+  // --- v1.6.0: Sharded Pub/Sub State ---
+  Completer<void>? _ssubscribeReadyCompleter;
+  int _expectedSsubscribeConfirmations = 0;
+  Completer<void>? _sunsubscribeCompleter;
+  // -------------------------------------
+
   /// Creates a new Valkey client instance.
   ///
   /// [host], [port], [username], and [password] are the default
@@ -422,7 +428,10 @@ class ValkeyClient implements ValkeyClientBase {
           type == 'unsubscribe' ||
           type == 'pmessage' ||
           type == 'psubscribe' ||
-          type == 'punsubscribe';
+          type == 'punsubscribe' ||
+          type == 'smessage' ||
+          type == 'ssubscribe' ||
+          type == 'sunsubscribe';
     }
     return false;
   }
@@ -433,157 +442,217 @@ class ValkeyClient implements ValkeyClientBase {
     int? currentRemainingCount; // Variable to store the count from ack message
     // _log.info('_handlePubSubMessage received type: $type, Data: ${messageArray.skip(1).join(', ')}');
 
-    if (type == 'message' && messageArray.length == 3) {
+    // 1. Sharded Message (smessage)
+    if (type == 'smessage' && messageArray.length == 3) {
       final channel = messageArray[1] as String;
-      final message = messageArray[2]
-          as String?; // Allow null message? Redis usually sends empty string
+      final message = messageArray[2] as String?;
       if (_pubSubController != null && !_pubSubController!.isClosed) {
         _pubSubController!.add(ValkeyMessage(
-            channel: channel, message: message ?? '')); // Handle potential null
-      } else {
-        // _log.info('StreamController is null or closed, cannot add message.');
+            channel: channel, message: message ?? ''));
       }
-    } else if (type == 'pmessage' && messageArray.length == 4) {
-      final pattern = messageArray[1] as String;
-      final channel = messageArray[2] as String;
-      final message = messageArray[3] as String?;
-      if (_pubSubController != null && !_pubSubController!.isClosed) {
-        _pubSubController!.add(ValkeyMessage(
-            pattern: pattern, channel: channel, message: message ?? ''));
-      }
-    } else if (type == 'subscribe' && messageArray.length == 3) {
-      // Handle the initial subscription confirmation
-      final channel = messageArray[1]
-          as String?; // Can be null on multi-subscribe? Check RESP spec
-      final count = messageArray[2]; // Current total *combined* count
+    }
+    // 2. Sharded Subscribe Confirmation (ssubscribe)
+    else if (type == 'ssubscribe' && messageArray.length == 3) {
+      final channel = messageArray[1] as String?;
+      final count = messageArray[2];
 
-      // _log.info('Handling subscribe confirmation for ${channel ?? 'unknown channel'}. Count: $count');
       if (channel != null && count is int) {
-        if (!_isInPubSubMode && count > 0) {
-          _isInPubSubMode = true; // Set state upon first confirmation
-        }
-        _subscribedChannels.add(channel);
-        // Completer is handled in _resolveNextCommand
-
-        // Check if all expected channels are confirmed ---
-        // Decrement expected count (or check if _subscribedChannels.length reaches expected)
-        // Complete the 'ready' future for SUBSCRIBE
-        _expectedSubscribeConfirmations--;
-        // _log.info('Subscription confirmed for $channel. Remaining confirmations needed: $_expectedSubscribeConfirmations');
-
-        // Complete the 'ready' future only when all confirmations are received
-        if (_expectedSubscribeConfirmations <=
-                0 && // Should be exactly 0 ideally
-            _subscribeReadyCompleter != null &&
-            !_subscribeReadyCompleter!.isCompleted) {
-          // _log.info('All subscribe confirmations received. Completing ready future.');
-          _subscribeReadyCompleter!.complete();
-        }
-        currentRemainingCount = count; // Store count
-        // --- DO NOT complete the command completer here ---
-        // --- DO NOT add this confirmation to _pubSubController ---
-      } else {
-        // _log.info('Invalid subscribe confirmation format: $messageArray');
-      }
-    } else if (type == 'psubscribe' && messageArray.length == 3) {
-      final pattern = messageArray[1] as String?;
-      final count = messageArray[2]; // Current total *combined* count
-
-      if (pattern != null && count is int) {
         if (!_isInPubSubMode && count > 0) {
           _isInPubSubMode = true;
         }
-        _subscribedPatterns.add(pattern);
+        _subscribedChannels.add(channel); // We reuse the same set for simplicity
 
-        // Complete the 'ready' future for PSUBSCRIBE
-        _expectedPSubscribeConfirmations--;
-        if (_expectedPSubscribeConfirmations <= 0 &&
-            _psubscribeReadyCompleter != null &&
-            !_psubscribeReadyCompleter!.isCompleted) {
-          _psubscribeReadyCompleter!.complete();
+        _expectedSsubscribeConfirmations--;
+
+        if (_expectedSsubscribeConfirmations <= 0 &&
+            _ssubscribeReadyCompleter != null &&
+            !_ssubscribeReadyCompleter!.isCompleted) {
+          _ssubscribeReadyCompleter!.complete();
         }
-        // currentRemainingCount = count;
-        currentRemainingCount = count as int?; // Store count
+        currentRemainingCount = count;
       }
     }
+    // 3. Sharded Unsubscribe Confirmation (sunsubscribe)
+    else if (type == 'sunsubscribe' && messageArray.length == 3) {
+      final channel = messageArray[1] as String?;
+      final count = messageArray[2];
 
-    // Note: Ensure subscribe/psubscribe only complete their respective READY completers,
-    // and DO NOT complete the command completer from the queue.
-
-    else if (type == 'unsubscribe' && messageArray.length == 3) {
-      final channel =
-          messageArray[1] as String?; // Can be null if unsubscribing from all
-      final count = messageArray[2]; // Remaining total *combined* count
-
-      // Update internal state
       if (channel != null && count is int) {
         _subscribedChannels.remove(channel);
-      }
-      // Unsubscribed from all requested/known channels
-      else if (channel == null && count is int) {
-        // count might not be 0 if patterns remain
-        _subscribedChannels
-            .clear(); // Assume null means all channels user knew about are gone.
+      } else if (channel == null && count is int) {
+        // If we clear all sharded subs, we might not want to clear regular subs
+        // But for simplicity in this version, we assume mixed usage is rare or managed carefully.
+        // Ideally, track sharded channels separately.
       }
 
       if (count is int) {
         currentRemainingCount = count;
-        // --- Complete the dedicated UNSUBSCRIBE completer ---
-        // Complete only if count drops to 0 OR if specific channels were requested
-        // and this is the last confirmation (logic needs refinement,
-        // but for now, complete on *any* confirmation if completer exists)
-        // A safer bet: complete *only* when count hits 0 (if unsubscribing all)
-        // or when the specific channel list is processed (needs tracking)
-        // Let's try completing when count == 0 and patterns empty
-        if (_unsubscribeCompleter != null &&
-            !_unsubscribeCompleter!.isCompleted) {
-          if (count == 0 || channel != null) {
-            // Complete on any confirmation
-            _unsubscribeCompleter!.complete();
-            _unsubscribeCompleter = null; // Reset
-          }
+        if (_sunsubscribeCompleter != null &&
+            !_sunsubscribeCompleter!.isCompleted) {
+           // Basic completion logic
+           if (count == 0 || channel != null) {
+             _sunsubscribeCompleter!.complete();
+             _sunsubscribeCompleter = null;
+           }
         }
       }
-    } else if (type == 'punsubscribe' && messageArray.length == 3) {
-      final pattern = messageArray[1] as String?; // Can be null
-      final count = messageArray[2]; // Remaining total *combined* count
+    }
+    else {
+      if (type == 'message' && messageArray.length == 3) {
+        final channel = messageArray[1] as String;
+        final message = messageArray[2]
+            as String?; // Allow null message? Redis usually sends empty string
+        if (_pubSubController != null && !_pubSubController!.isClosed) {
+          _pubSubController!.add(ValkeyMessage(
+              channel: channel, message: message ?? '')); // Handle potential null
+        } else {
+          // _log.info('StreamController is null or closed, cannot add message.');
+        }
+      } else if (type == 'pmessage' && messageArray.length == 4) {
+        final pattern = messageArray[1] as String;
+        final channel = messageArray[2] as String;
+        final message = messageArray[3] as String?;
+        if (_pubSubController != null && !_pubSubController!.isClosed) {
+          _pubSubController!.add(ValkeyMessage(
+              pattern: pattern, channel: channel, message: message ?? ''));
+        }
+      } else if (type == 'subscribe' && messageArray.length == 3) {
+        // Handle the initial subscription confirmation
+        final channel = messageArray[1]
+            as String?; // Can be null on multi-subscribe? Check RESP spec
+        final count = messageArray[2]; // Current total *combined* count
 
-      // Update internal state
-      if (pattern != null && count is int) {
-        _subscribedPatterns.remove(pattern);
-      }
-      // Unsubscribed from all requested/known patterns
-      else if (pattern == null && count is int) {
-        // count might not be 0 if channels remain
-        _subscribedPatterns.clear();
-      }
-
-      if (count is int) {
-        currentRemainingCount = count;
-        // Complete the dedicated PUNSUBSCRIBE completer
-        if (_punsubscribeCompleter != null &&
-            !_punsubscribeCompleter!.isCompleted) {
-          if (count == 0 || pattern != null) {
-            // Complete on any confirmation
-            _punsubscribeCompleter!.complete();
-            _punsubscribeCompleter = null; // Reset
+        // _log.info('Handling subscribe confirmation for ${channel ?? 'unknown channel'}. Count: $count');
+        if (channel != null && count is int) {
+          if (!_isInPubSubMode && count > 0) {
+            _isInPubSubMode = true; // Set state upon first confirmation
           }
+          _subscribedChannels.add(channel);
+          // Completer is handled in _resolveNextCommand
+
+          // Check if all expected channels are confirmed ---
+          // Decrement expected count (or check if _subscribedChannels.length reaches expected)
+          // Complete the 'ready' future for SUBSCRIBE
+          _expectedSubscribeConfirmations--;
+          // _log.info('Subscription confirmed for $channel. Remaining confirmations needed: $_expectedSubscribeConfirmations');
+
+          // Complete the 'ready' future only when all confirmations are received
+          if (_expectedSubscribeConfirmations <=
+                  0 && // Should be exactly 0 ideally
+              _subscribeReadyCompleter != null &&
+              !_subscribeReadyCompleter!.isCompleted) {
+            // _log.info('All subscribe confirmations received. Completing ready future.');
+            _subscribeReadyCompleter!.complete();
+          }
+          currentRemainingCount = count; // Store count
+          // --- DO NOT complete the command completer here ---
+          // --- DO NOT add this confirmation to _pubSubController ---
+        } else {
+          // _log.info('Invalid subscribe confirmation format: $messageArray');
+        }
+      } else if (type == 'psubscribe' && messageArray.length == 3) {
+        final pattern = messageArray[1] as String?;
+        final count = messageArray[2]; // Current total *combined* count
+
+        if (pattern != null && count is int) {
+          if (!_isInPubSubMode && count > 0) {
+            _isInPubSubMode = true;
+          }
+          _subscribedPatterns.add(pattern);
+
+          // Complete the 'ready' future for PSUBSCRIBE
+          _expectedPSubscribeConfirmations--;
+          if (_expectedPSubscribeConfirmations <= 0 &&
+              _psubscribeReadyCompleter != null &&
+              !_psubscribeReadyCompleter!.isCompleted) {
+            _psubscribeReadyCompleter!.complete();
+          }
+          // currentRemainingCount = count;
+          currentRemainingCount = count as int?; // Store count
         }
       }
-    } else {
-      _pubSubController?.addError(ValkeyClientException(
-          'Received unhandled Pub/Sub push message type: $type'));
+
+      // Note: Ensure subscribe/psubscribe only complete their respective READY completers,
+      // and DO NOT complete the command completer from the queue.
+
+      else if (type == 'unsubscribe' && messageArray.length == 3) {
+        final channel =
+            messageArray[1] as String?; // Can be null if unsubscribing from all
+        final count = messageArray[2]; // Remaining total *combined* count
+
+        // Update internal state
+        if (channel != null && count is int) {
+          _subscribedChannels.remove(channel);
+        }
+        // Unsubscribed from all requested/known channels
+        else if (channel == null && count is int) {
+          // count might not be 0 if patterns remain
+          _subscribedChannels
+              .clear(); // Assume null means all channels user knew about are gone.
+        }
+
+        if (count is int) {
+          currentRemainingCount = count;
+          // --- Complete the dedicated UNSUBSCRIBE completer ---
+          // Complete only if count drops to 0 OR if specific channels were requested
+          // and this is the last confirmation (logic needs refinement,
+          // but for now, complete on *any* confirmation if completer exists)
+          // A safer bet: complete *only* when count hits 0 (if unsubscribing all)
+          // or when the specific channel list is processed (needs tracking)
+          // Let's try completing when count == 0 and patterns empty
+          if (_unsubscribeCompleter != null &&
+              !_unsubscribeCompleter!.isCompleted) {
+            if (count == 0 || channel != null) {
+              // Complete on any confirmation
+              _unsubscribeCompleter!.complete();
+              _unsubscribeCompleter = null; // Reset
+            }
+          }
+        }
+      } else if (type == 'punsubscribe' && messageArray.length == 3) {
+        final pattern = messageArray[1] as String?; // Can be null
+        final count = messageArray[2]; // Remaining total *combined* count
+
+        // Update internal state
+        if (pattern != null && count is int) {
+          _subscribedPatterns.remove(pattern);
+        }
+        // Unsubscribed from all requested/known patterns
+        else if (pattern == null && count is int) {
+          // count might not be 0 if channels remain
+          _subscribedPatterns.clear();
+        }
+
+        if (count is int) {
+          currentRemainingCount = count;
+          // Complete the dedicated PUNSUBSCRIBE completer
+          if (_punsubscribeCompleter != null &&
+              !_punsubscribeCompleter!.isCompleted) {
+            if (count == 0 || pattern != null) {
+              // Complete on any confirmation
+              _punsubscribeCompleter!.complete();
+              _punsubscribeCompleter = null; // Reset
+            }
+          }
+        }
+      } else {
+        _pubSubController?.addError(ValkeyClientException(
+            'Received unhandled Pub/Sub push message type: $type'));
+      }
     }
 
     // Reset state based on count
     // Check overall subscription status AFTER processing the message
-    if (currentRemainingCount == 0) {
-      if (_subscribedChannels.isEmpty && _subscribedPatterns.isEmpty) {
-        _resetPubSubState();
-      } else {
-        // This might happen if server count is reliable (e.g. only channel count)
-      }
-    }
+    // TODO: Duplicated code will be removed later.
+    // if (currentRemainingCount == 0) {
+    //   if (_subscribedChannels.isEmpty && _subscribedPatterns.isEmpty) {
+    //     _resetPubSubState();
+    //   } else {
+    //     // This might happen if server count is reliable (e.g. only channel count)
+    //   }
+    // }
+
+    // Reset State Logic
     // Safer check: If count is 0, AND both lists are empty, reset.
     if (currentRemainingCount is int &&
         currentRemainingCount == 0 &&
@@ -756,6 +825,7 @@ class ValkeyClient implements ValkeyClientBase {
 
   /// Executes a raw command. (This will be our main internal method)
   /// Returns a Future that completes with the server's response.
+  /// Handle SSUBSCRIBE/SUNSUBSCRIBE futures
   @override
   Future<dynamic> execute(List<String> command) async {
     final cmdUpper = command.isNotEmpty ? command[0].toUpperCase() : '';
@@ -775,11 +845,15 @@ class ValkeyClient implements ValkeyClientBase {
     }
 
     // Identify ALL Pub/Sub management commands
+    // Add Allowlist here to avoid the message:
+    //   e.g., "ValkeyClientException: Cannot execute command SUNSUBSCRIBE while in Pub/Sub mode..."
     const pubSubManagementCommands = {
       'SUBSCRIBE',
       'UNSUBSCRIBE',
       'PSUBSCRIBE',
-      'PUNSUBSCRIBE'
+      'PUNSUBSCRIBE',
+      'SSUBSCRIBE',
+      'SUNSUBSCRIBE'
     };
     final bool isPubSubManagementCmd =
         pubSubManagementCommands.contains(cmdUpper);
@@ -894,6 +968,15 @@ class ValkeyClient implements ValkeyClientBase {
     if (cmdUpper == 'PUNSUBSCRIBE') {
       return _punsubscribeCompleter?.future ??
           Future.error('Punsubscribe completer not initialized');
+    }
+
+    if (cmdUpper == 'SSUBSCRIBE') {
+      return _ssubscribeReadyCompleter?.future ??
+          Future.error('Ssubscribe completer not initialized');
+    }
+    if (cmdUpper == 'SUNSUBSCRIBE') {
+      return _sunsubscribeCompleter?.future ??
+          Future.error('Sunsubscribe completer not initialized');
     }
 
     // If it's a regular command (completer is not null)
@@ -1190,9 +1273,60 @@ class ValkeyClient implements ValkeyClientBase {
       _resetPubSubState();
     });
 
-    // Return the Subscription object immediately
+    // Return the Subscription object (immediately) with unsubscribe callback
     return Subscription(
-        _pubSubController!.stream, _subscribeReadyCompleter!.future);
+      _pubSubController!.stream,
+      _subscribeReadyCompleter!.future,
+      onUnsubscribe: () => unsubscribe(channels), // callback added
+    );
+  }
+
+  @override
+  Subscription ssubscribe(List<String> channels) {
+    if (_isInPubSubMode && _subscribedPatterns.isNotEmpty) {
+       throw ValkeyClientException('Mixing SSUBSCRIBE with PSUBSCRIBE is discouraged.');
+    }
+    if (channels.isEmpty) {
+      throw ArgumentError('Channel list cannot be empty for SSUBSCRIBE.');
+    }
+
+    if (_pubSubController == null || _pubSubController!.isClosed) {
+      _pubSubController = StreamController<ValkeyMessage>.broadcast();
+    }
+
+    if (_ssubscribeReadyCompleter == null || _ssubscribeReadyCompleter!.isCompleted) {
+      _ssubscribeReadyCompleter = Completer<void>();
+    }
+    _expectedSsubscribeConfirmations = channels.length;
+
+    execute(['SSUBSCRIBE', ...channels]).catchError((e, s) {
+      if (_ssubscribeReadyCompleter != null && !_ssubscribeReadyCompleter!.isCompleted) {
+        _ssubscribeReadyCompleter!.completeError(e, s);
+      }
+      if (_pubSubController != null && !_pubSubController!.isClosed) {
+        _pubSubController!.addError(e, s);
+      }
+      _resetPubSubState();
+    });
+
+    // Return the Subscription object with sunsubscribe callback
+    return Subscription(
+      _pubSubController!.stream,
+      _ssubscribeReadyCompleter!.future,
+      onUnsubscribe: () => sunsubscribe(channels), // callback added
+    );
+  }
+
+  @override
+  Future<void> sunsubscribe([List<String> channels = const []]) async {
+    if (!_isInPubSubMode) return;
+
+    if (_sunsubscribeCompleter != null && !_sunsubscribeCompleter!.isCompleted) {
+       throw ValkeyClientException('Another sunsubscribe operation is in progress.');
+    }
+    _sunsubscribeCompleter = Completer<void>();
+
+    await execute(['SUNSUBSCRIBE', ...channels]);
   }
 
   /// Resets the Pub/Sub state (e.g., after unsubscribe or error).
@@ -1224,6 +1358,13 @@ class ValkeyClient implements ValkeyClientBase {
     _psubscribeReadyCompleter = null;
     _expectedSubscribeConfirmations = 0;
     _expectedPSubscribeConfirmations = 0;
+
+    // Clean up completers for Shared Pub/Sub
+    if (_ssubscribeReadyCompleter != null && !_ssubscribeReadyCompleter!.isCompleted) {
+       _ssubscribeReadyCompleter!.completeError(Exception("Resetting PubSub state"));
+     }
+     _ssubscribeReadyCompleter = null;
+     _expectedSsubscribeConfirmations = 0;
 
     // Safely close StreamController
 
@@ -1322,9 +1463,12 @@ class ValkeyClient implements ValkeyClientBase {
       _resetPubSubState();
     });
 
-    // Return the Subscription object immediately
+    // Return the Subscription object (immediately) with punsubscribe callback
     return Subscription(
-        _pubSubController!.stream, _psubscribeReadyCompleter!.future);
+      _pubSubController!.stream,
+      _psubscribeReadyCompleter!.future,
+      onUnsubscribe: () => punsubscribe(patterns), // callback added
+    );
   }
 
   @override
@@ -1423,6 +1567,12 @@ class ValkeyClient implements ValkeyClientBase {
   Future<int> pubsubNumPat() async {
     // Returns an Integer (:)
     final response = await execute(['PUBSUB', 'NUMPAT']);
+    return response as int;
+  }
+
+  @override
+  Future<int> spublish(String channel, String message) async {
+    final response = await execute(['SPUBLISH', channel, message]);
     return response as int;
   }
 
