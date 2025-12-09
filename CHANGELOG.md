@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.6.0
+
+### Added
+- **Sharded Pub/Sub Support:** Implemented `SPUBLISH`, `SSUBSCRIBE`, and `SUNSUBSCRIBE`.
+  - Enables high-performance messaging in Cluster mode by routing messages only to specific shards instead of broadcasting to all nodes.
+  - Fully compatible with Redis 7.0+ and Valkey 9.0+.
+- **Atomic Counters:** Added `INCR`, `DECR`, `INCRBY`, and `DECRBY` commands for atomic integer operations.
+- **Connection Helper:** Added `ECHO` command support.
+- **Subscription Enhancements:** The `Subscription` object now has an `.unsubscribe()` method, allowing easier lifecycle management directly from the subscription instance.
+
+### Changed
+- **Internal Parser:** Updated the RESP parser to handle `smessage`, `ssubscribe`, and `sunsubscribe` push message types.
+
+
 ## 1.5.0
 
 ### Added
