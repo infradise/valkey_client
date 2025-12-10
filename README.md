@@ -4,11 +4,13 @@
 
 A modern, production-ready Dart client for Valkey (9.0.0+). Fully Redis 7.x compatible.
 
-👉 To browse Redis/Valkey data, you can use [Keyscope](https://keyscope.dev),  
-a native JetBrains IDE plugin for managing and monitoring Redis/Valkey.
+👉 To browse Redis/Valkey data, you can use [Keyscope](https://plugins.jetbrains.com/plugin/29250-keyscope),  
+a native Redis/Valkey IDE to view key-value data in your databases.  
 
-👉 To access Redis/Valkey servers on Kubernetes, you can use [Visualkube Jet](https://jet.visualkube.com),  
-a native JetBrains IDE plugin that supports one or more `Kubernetes` clusters.
+👉 To access Redis/Valkey servers on Kubernetes, you can use [Visualkube Jet](https://plugins.jetbrains.com/plugin/29143-visualkube-jet),  
+a native Kubernetes IDE for multi‑cluster access and real-time watch.
+
+> **Keyscope** and **Visualkube Jet** are plugins for Android Studio and JetBrains IDEs.
 
 ## The Goal 🎯
 
@@ -56,7 +58,7 @@ This section describe how to install a `Valkey` or `Redis` Server on your local 
 
 ### Kubernetes: Local Setup
 
-1. Run `Rancher-Desktop` to set up a local `Kubernetes` cluster.
+1. Run [Rancher Desktop](https://rancherdesktop.io/) to set up a local `Kubernetes` cluster.
 2. In **Android Studio** or a **JetBrains IDE**:  
    - Go to **Plugin > Visualkube Jet > Cluster Manager**  
    - Connect one or more `Kubernetes` clusters  
@@ -75,7 +77,7 @@ This section describe how to install a `Valkey` or `Redis` Server on your local 
 
 This client requires a running `Valkey` or `Redis` server to connect to. For local development and testing, we strongly recommend using Docker.
 
-1.  Install a container environment like [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or [Rancher Desktop](https://rancherdesktop.io/)).
+1.  Install a container environment like [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 2.  Start a [Valkey](https://hub.docker.com/r/valkey/valkey) or [Redis](https://hub.docker.com/_/redis) server instance by running one of the following commands in your terminal:
 
 **Option 1: No Authentication (Default)**
