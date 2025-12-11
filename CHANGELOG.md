@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.0
+
+### Added
+- **Connection Pool Hardening (Smart Release):** `ValkeyPool` now automatically detects and discards "dirty" connections (e.g., inside a Transaction or Pub/Sub mode) or closed connections upon release. This prevents pool pollution and ensures that acquired connections are always clean and ready for use.
+- **Enhanced Developer Experience:** Expanded `Redis` aliases in `redis_client.dart`. Added aliases for Exceptions (`RedisException`, `RedisConnectionException`, etc.), Configuration (`RedisConnectionSettings`), and Data Models (`RedisMessage`), allowing for a seamless migration from other Redis clients.
+- **Robust Resource Management:** Implemented strict ownership tracking within `ValkeyPool` to prevent resource leaks and ensure thread safety. `release()` and `discard()` are now idempotent and safe to call multiple times.
+- **Client Introspection:** `ValkeyClient` now exposes `isStateful` and `isConnected` properties, which support the new smart pooling logic and allow for custom connection management.
+
+
 ## 1.6.0
 
 ### Added
