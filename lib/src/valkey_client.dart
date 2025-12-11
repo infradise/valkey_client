@@ -179,6 +179,30 @@ class ValkeyClient implements ValkeyClientBase {
   Completer<void>? _sunsubscribeCompleter;
   // -------------------------------------
 
+  // --- v1.7.0: Smart Connection Pool Support ---
+
+  /// Returns true if the client has an active socket connection.
+  bool get isConnected => _socket != null;
+
+  /// Returns true if the client is in a stateful mode that makes it
+  /// unsuitable for reuse without a reset (e.g., Pub/Sub, Transaction).
+  ///
+  /// Used by [ValkeyPool] to determine if a connection should be discarded
+  /// instead of reused.
+  bool get isStateful {
+    // 1. Pub/Sub Mode? (SUBSCRIBE, PSUBSCRIBE, SSUBSCRIBE)
+    if (_isInPubSubMode) return true;
+
+    // 2. Transaction Mode? (MULTI started but not EXEC/DISCARDed)
+    if (_isInTransaction) return true;
+
+    // 3. (Future) Blocking commands?
+    // If we support BLPOP in the future, check blocking state here.
+
+    return false;
+  }
+  // ---------------------------------------------
+
   /// Creates a new Valkey client instance.
   ///
   /// [host], [port], [username], and [password] are the default
