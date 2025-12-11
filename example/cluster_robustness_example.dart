@@ -73,3 +73,19 @@ void main() async {
     await cluster.close();
   }
 }
+
+/*
+EXPECTED OUTPUT
+===============
+
+✅ Connected to Cluster.
+
+--- Testing Cluster Robustness with Sharded Pub/Sub ---
+1. Subscribed to 3 sharded channels.
+2. Received all messages.
+3. Unsubscribed (Internal connections cleaned up).
+
+--- Verifying Cluster Health ---
+Cluster GET result: passed
+✅ Cluster is healthy! v1.7.0 Pool Hardening works.
+*/

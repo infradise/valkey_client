@@ -72,17 +72,21 @@ void main() async {
     await subscriber.close();
     await publisher.close();
   }
-
-  // Expected output:
-  // Connecting to standalone server...
-  // ✅ Connected (Subscriber & Publisher).
-
-  // --- Starting Sharded Pub/Sub (Standalone) ---
-  // Subscribing to [shard:updates:{user1}, shard:updates:{user2}]...
-  // ✅ Subscription active.
-  // Publishing messages via SPUBLISH...
-  // 📩 Received: [shard:updates:{user1}] User 1 logged in
-  // 📩 Received: [shard:updates:{user2}] User 2 updated profile
-  // ✅ All messages received.
-  // Unsubscribed.
 }
+
+/*
+EXPECTED OUTPUT
+===============
+
+Connecting to standalone server...
+✅ Connected (Subscriber & Publisher).
+
+--- Starting Sharded Pub/Sub (Standalone) ---
+Subscribing to [shard:updates:{user1}, shard:updates:{user2}]...
+✅ Subscription active.
+Publishing messages via SPUBLISH...
+📩 Received: [shard:updates:{user1}] User 1 logged in
+📩 Received: [shard:updates:{user2}] User 2 updated profile
+✅ All messages received.
+Unsubscribed.
+*/

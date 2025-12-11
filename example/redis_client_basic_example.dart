@@ -32,10 +32,17 @@ void main() async {
 
     await client.set('key', 'value');
 
-    print(await client.get('key'));
+    print(await client.get('key')); // value
   } catch (e) {
     print('❌ Failed: $e');
   } finally {
     await client.close();
   }
 }
+
+/*
+EXPECTED OUTPUT
+===============
+
+value
+*/

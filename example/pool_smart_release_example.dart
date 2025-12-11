@@ -1,4 +1,4 @@
-import 'dart:async';
+// import 'dart:async';
 import 'package:valkey_client/valkey_client.dart';
 
 /// Standalone & Pool Example: The essence of Smart Release
@@ -77,3 +77,23 @@ void main() async {
     print('\n✅ Example finished successfully.');
   }
 }
+
+/*
+EXPECTED OUTPUT
+===============
+
+--- Starting v1.7.0 Smart Pool Example ---
+
+1. Performing Transaction...
+   Transaction executed.
+   Client released (Smart Release handled cleanup).
+
+2. Performing Pub/Sub...
+   Subscribed to channel. Client is now dirty (Stateful).
+   Pub/Sub Client released (Automatically discarded & replaced).
+
+3. Verifying Pool Health...
+   Ping response: PONG (Pool is healthy!)
+
+✅ Example finished successfully.
+*/

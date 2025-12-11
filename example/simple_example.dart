@@ -25,3 +25,11 @@ void main() async {
     await client.close();
   }
 }
+
+/*
+EXPECTED OUTPUT
+===============
+
+Hello, Valkey!
+*/
+
