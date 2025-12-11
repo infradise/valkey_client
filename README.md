@@ -22,10 +22,13 @@ It is designed primarily for server-side Dart applications (`server.dart`) requi
 
 ---
 
-## Features
-
+## Features 
+  
+  * **Connection Pool Hardening (v1.7.0+):** Implemented **Smart Release** mechanism. The pool automatically detects and discards "dirty" connections (e.g., inside Transaction or Pub/Sub) upon release, preventing pool pollution and resource leaks.
+  * **Enhanced Developer Experience (v1.7.0+):** Expanded `Redis` aliases to include Exceptions, Configuration, and Data Models (`RedisException`, `RedisMessage`, etc.) for a seamless migration experience.
+  * **Sharded Pub/Sub & Atomic Counters (v1.6.0+):** Added support for high-performance cluster messaging (`SPUBLISH`/`SSUBSCRIBE`) and atomic integer operations (`INCR`/`DECR`).
   * **Developer Experience (v1.5.0+):** Added `RedisClient` alias and smart redirection handling for better usability and stability.
-  * **High Availability & Resilience (v1.5.0+):**  Automatically and transparently handles cluster topology changes (`-MOVED` and `-ASK` redirections) to ensure robust failover, seamless scaling, and zero‑downtime operations.
+  * **High Availability & Resilience (v1.5.0+):** Automatically and transparently handles cluster topology changes (`-MOVED` and `-ASK` redirections) to ensure robust failover, seamless scaling, and zero‑downtime operations.
   * **Multi-key Support (v1.4.0+):** Supports `MGET` across multiple nodes using smart Scatter-Gather pipelining.
   * **Cluster Client (v1.3.0+):** Added `ValkeyClusterClient` for automatic command routing in cluster mode.
       * This client automatically routes commands to the correct node.
@@ -154,6 +157,43 @@ Each provided YAML file is a Docker Compose configuration that launches a 6-node
 Your 6-node cluster is now running on `127.0.0.1:7001-7006`, and you can successfully run the **Usage (Group 3)** examples.
 
 **Note:** This configuration starts from port `7001` (instead of the common `7000`) because port 7000 is often reserved by the macOS Control Center (AirPlay Receiver) service.
+
+---
+
+## Developer Experience Improvements (v1.7.0+)
+
+To enhance DX for both Redis and Valkey developers, we provide fully compatible aliases. You can use the class names you are most comfortable with.
+
+### Clients
+
+| Role | Redis Alias | Valkey Class | Description |
+| :--- | :--- | :--- | :--- |
+| **Client** | `RedisClient` | `ValkeyClient` | Standard client for Standalone or Sentinel connections. |
+| **Cluster** | `RedisClusterClient` | `ValkeyClusterClient` | Auto-routing client for Cluster environments. |
+| **Pooling** | `RedisPool` | `ValkeyPool` | Manages connection pools for high-concurrency apps. |
+
+### Configuration
+
+| Role | Redis Alias | Valkey Class | Description |
+| :--- | :--- | :--- | :--- |
+| **Settings** | `RedisConnectionSettings` | `ValkeyConnectionSettings` | Configuration for host, port, password, and timeout. |
+| **Logging** | `RedisLogLevel` | `ValkeyLogLevel` | Logging levels (info, warning, severe, off). |
+
+### Data Models
+
+| Role | Redis Alias | Valkey Class | Description |
+| :--- | :--- | :--- | :--- |
+| **Message** | `RedisMessage` | `ValkeyMessage` | Represents a message received via Pub/Sub. |
+
+### Exceptions (Crucial for try-catch blocks)
+
+| Role | Redis Alias | Valkey Class | Description |
+| :--- | :--- | :--- | :--- |
+| **Base Error** | `RedisException` | `ValkeyException` | The base class for all package-related exceptions. |
+| **Network** | `RedisConnectionException` | `ValkeyConnectionException` | Thrown when connection fails or drops. |
+| **Server** | `RedisServerException` | `ValkeyServerException` | Thrown when the server returns an error (e.g., `-ERR`). |
+| **Usage** | `RedisClientException` | `ValkeyClientException` | Thrown on invalid client usage (e.g., misuse of API). |
+| **Parsing** | `RedisParsingException` | `ValkeyParsingException` | Thrown when the response cannot be parsed (RESP3). |
 
 ---
 
@@ -436,6 +476,16 @@ Future<void> main() async {
   await pool.close();
 }
 ```
+
+#### Smart Release (v1.7.0+)
+
+`ValkeyPool` now supports **Smart Release**. You don\'t need to manually discard connections that have changed state (e.g., inside a Transaction or Pub/Sub) when releasing it.
+
+```dart
+// Just use release()!
+// The pool automatically detects if the client is dirty (Stateful) or closed
+// and efficiently discards/replaces it if necessary.
+pool.release(client);
 
 ---
 
