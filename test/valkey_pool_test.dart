@@ -127,6 +127,55 @@ Future<void> main() async {
           throwsA(isA<ValkeyClientException>().having(
               (e) => e.message, 'message', contains('Pool is closing'))));
     });
+
+    test('release() automatically discards stateful clients (Smart Release)', () async {
+      pool = ValkeyPool(connectionSettings: settings, maxConnections: 2);
+
+      // 1. Acquire and make stateful
+      final client = await pool.acquire();
+      await client.multi(); // Enter transaction mode (Stateful)
+      expect(client.isStateful, isTrue);
+
+      // 2. Release
+      pool.release(client);
+
+      // 3. Verify
+      // The client should be gone from the pool (discarded)
+      // and replaced by a new one for the next acquire.
+      // (Internal implementation detail: _allClients count depends on replacement logic)
+
+      // Let's verify by acquiring again. We should get a CLEAN client.
+      final client2 = await pool.acquire();
+      expect(client2, isNot(client)); // Should be a new instance
+      expect(client2.isStateful, isFalse); // Should be clean
+
+      pool.release(client2);
+    });
+
+    test('release() and discard() are safe to call multiple times (Idempotency)', () async {
+      pool = ValkeyPool(connectionSettings: settings, maxConnections: 5);
+      final client = await pool.acquire();
+
+      // 1. Call release multiple times
+      pool.release(client);
+      pool.release(client); // Should do nothing
+      pool.release(client); // Should do nothing
+
+      // 2. Call discard after release
+      // Client is now idle in the pool. Discarding it should work.
+      await pool.discard(client);
+
+      // 3. Call discard multiple times
+      await pool.discard(client); // Should do nothing
+      await pool.discard(client); // Should do nothing
+
+      // Pool should be healthy and allow new acquires
+      final client2 = await pool.acquire();
+      expect(client2, isA<ValkeyClient>());
+      pool.release(client2);
+    });
+
+
   },
       skip: !isServerRunning
           ? 'Valkey server not running on $noAuthHost:$noAuthPort'
