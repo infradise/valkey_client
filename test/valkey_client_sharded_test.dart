@@ -2,11 +2,22 @@ import 'dart:async';
 import 'package:test/test.dart';
 import 'package:valkey_client/valkey_client.dart';
 
+/// Standalone Sharded Pub/Sub Test: Protocol compliance check
+///
+/// This test aims to verify that the Standalone client correctly follows
+/// the Sharded Pub/Sub protocol. Therefore, you should either use the
+/// Standalone port (6379) or specify the Cluster node (7002) that is
+/// guaranteed to own the given key.
+
 void main() {
-  // Test environment configuration (Standalone port or Cluster master node)
+  // Test environment configuration
   const host = '127.0.0.1';
-  // const port = 6379; // Standalone node port is fine
-  const port = 7006; // Cluster node port is fine too
+
+  // Use Standalone port (6379) for deterministic protocol testing.
+  const port = 6379; // Standalone node port
+
+  // Or use 7002 if you strictly want to test against a specific cluster node that owns the slot.
+  // const port = 7002; // Cluster master node port
 
   group('ValkeyClient Sharded Pub/Sub', () {
     late ValkeyClient subscriber;
@@ -55,11 +66,17 @@ void main() {
       await sub.unsubscribe();
     });
   });
-
-  // Expected output for both modes (Standalone and Cluster):
-  // 00:00 +0: ValkeyClient Sharded Pub/Sub ssubscribe receives messages published via spublish
-  // Subscribing to shard-channel:{1}...
-  // Publishing to shard-channel:{1}...
-  // Received message on shard-channel:{1}: Hello Sharding
-  // 00:00 +1: All tests passed!
 }
+
+/*
+EXPECTED OUTPUT
+===============
+for both modes (Standalone and Cluster)
+
+00:00 +0: ValkeyClient Sharded Pub/Sub ssubscribe receives messages published via spublish
+Subscribing to shard-channel:{1}...
+Publishing to shard-channel:{1}...
+Received message on shard-channel:{1}: Hello Sharding
+00:00 +1: All tests passed!
+
+*/
