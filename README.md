@@ -486,6 +486,7 @@ Future<void> main() async {
 // The pool automatically detects if the client is dirty (Stateful) or closed
 // and efficiently discards/replaces it if necessary.
 pool.release(client);
+```
 
 ---
 
