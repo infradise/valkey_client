@@ -1,12 +1,35 @@
 # Build instructions
 
-## Test
+## Testing
 
-Run the unit tests. Make sure a local Valkey server (without authentication) is running on the default port (6379).
+Run all unit tests and example validations tagged as `example`.  
+Ensure that either a local Redis (e.g., v8.2.4) or Valkey (e.g., v9.0.0) server is running:  
+- Standalone mode: default port 6379 (no authentication)  
+- Cluster mode: ports 7001–7006
+
+### Unit Tests
+Run only the unit tests, excluding the example validations tagged as `example`:
 
 ```sh
-dart test
+dart test --exclude-tags example
 ```
+
+### Examples
+Run the example validations defined in `test/example_test.dart`:  
+```sh
+dart test --tags example
+```
+
+### Excluded Example
+The file `example/cluster_redirection_example.dart` is excluded from the automated test suite.  
+Execute it separately when needed:
+
+```sh
+dart run example/cluster_redirection_example.dart
+```
+
+This example runs indefinitely to simulate cluster topology changes and validate redirection resilience.  
+Because it intentionally loops forever, it is not included in the automated test run.
 
 ## Check Dart Formatting
 
@@ -40,8 +63,8 @@ dart pub publish --dry-run
 Update the `version` field in `pubspec.yaml` to the new version number.
 
 ```yaml
-# version: 0.6.0  # Previous version
-version: 0.7.0   # New version
+# version: 1.6.0  # Previous version
+version: 1.7.0   # New version
 ```
 
 ### Commit the Version Bump
@@ -49,7 +72,7 @@ version: 0.7.0   # New version
 Commit the version change with a conventional commit message.
 
 ```
-build: bump version to 0.7.0
+build: bump version to 1.7.0
 ```
 
 ## Tag the Release Locally
@@ -57,13 +80,13 @@ build: bump version to 0.7.0
 Create a Git tag corresponding to the new version and push it to the remote repository.
 
 ```sh
-git tag v0.7.0
-git push origin v0.7.0
+git tag v1.7.0
+git push origin v1.7.0
 ```
 
 ## Create GitHub Release
 
-Create a new release on GitHub. Use the tag you just created (e.g., `v0.7.0`). Copy the relevant section from `CHANGELOG.md` into the release notes.
+Create a new release on GitHub. Use the tag you just created (e.g., `v1.7.0`). Copy the relevant section from `CHANGELOG.md` into the release notes.
 
 ## Publish to pub.dev
 
