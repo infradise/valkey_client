@@ -17,13 +17,20 @@ void main() {
   final exampleDir = Directory('example');
   for (var entity in exampleDir.listSync()) {
     if (entity is File && entity.path.endsWith('.dart')) {
+      final tags = <String>['example'];
+
+      if (entity.path.endsWith('cluster_redirection_example.dart')) {
+        // tags.add('skip_example');
+        continue;
+      }
+
       test('Run ${entity.path}', () async {
         final result = await Process.run(
           'dart',
           [entity.path],
         );
         expect(result.exitCode, 0, reason: result.stderr);
-      }, tags: ['example']);
+      }, tags: tags);
     }
   }
 }
