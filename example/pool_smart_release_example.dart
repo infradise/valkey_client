@@ -17,10 +17,7 @@ void main() async {
   );
 
   // Create a pool with a limit of 5 connections
-  final pool = ValkeyPool(
-    connectionSettings: settings,
-    maxConnections: 5
-  );
+  final pool = ValkeyPool(connectionSettings: settings, maxConnections: 5);
 
   print('--- Starting v1.7.0 Smart Pool Example ---');
 
@@ -41,7 +38,6 @@ void main() async {
     pool.release(clientTx);
     print('   Client released (Smart Release handled cleanup).');
 
-
     // [Scenario 2] Pub/Sub (Stateful Operation)
     print('\n2. Performing Pub/Sub...');
     final clientSub = await pool.acquire();
@@ -57,7 +53,6 @@ void main() async {
     pool.release(clientSub);
     print('   Pub/Sub Client released (Automatically discarded & replaced).');
 
-
     // [Scenario 3] Verification (Reuse)
     print('\n3. Verifying Pool Health...');
     // If Smart Release worked, we should get a fresh, clean client here.
@@ -69,7 +64,6 @@ void main() async {
     print('   Ping response: $response (Pool is healthy!)');
 
     pool.release(clientClean);
-
   } catch (e) {
     print('❌ Error: $e');
   } finally {

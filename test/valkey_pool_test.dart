@@ -128,7 +128,8 @@ Future<void> main() async {
               (e) => e.message, 'message', contains('Pool is closing'))));
     });
 
-    test('release() automatically discards stateful clients (Smart Release)', () async {
+    test('release() automatically discards stateful clients (Smart Release)',
+        () async {
       pool = ValkeyPool(connectionSettings: settings, maxConnections: 2);
 
       // 1. Acquire and make stateful
@@ -152,7 +153,9 @@ Future<void> main() async {
       pool.release(client2);
     });
 
-    test('release() and discard() are safe to call multiple times (Idempotency)', () async {
+    test(
+        'release() and discard() are safe to call multiple times (Idempotency)',
+        () async {
       pool = ValkeyPool(connectionSettings: settings, maxConnections: 5);
       final client = await pool.acquire();
 
@@ -174,8 +177,6 @@ Future<void> main() async {
       expect(client2, isA<ValkeyClient>());
       pool.release(client2);
     });
-
-
   },
       skip: !isServerRunning
           ? 'Valkey server not running on $noAuthHost:$noAuthPort'

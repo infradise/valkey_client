@@ -1,4 +1,3 @@
-
 // This file runs all example/*.dart files as tests.
 // Usage:
 //   dart test --tags example

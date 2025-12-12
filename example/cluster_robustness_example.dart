@@ -66,7 +66,6 @@ void main() async {
     } else {
       print('❌ Cluster check failed.');
     }
-
   } catch (e) {
     print('❌ Error: $e');
   } finally {
