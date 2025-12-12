@@ -1,32 +1,46 @@
 import 'dart:async';
-import 'dart:collection'; // Import Queue
-// import 'package:valkey_client/valkey_client_base.dart';
-import 'package:valkey_client/valkey_client.dart'; // Import the concrete implementation
-// import 'package:valkey_client/src/exceptions.dart'; // Import exceptions
+import 'dart:collection';
+import 'package:valkey_client/valkey_client.dart';
 
-// TODO: Add src/pool_manager.dart
-
-/// Manages a pool of [ValkeyClient] connections.
+/// Manages a pool of [ValkeyClient] connections with robust resource tracking.
 ///
 /// This is the recommended class for high-concurrency applications
 /// as it avoids the overhead of creating new connections for every request.
+///
+/// v1.7.0 Features:
+/// - **Smart Release:** Automatically discards stateful (dirty) connections.
+/// - **Idempotency:** Safe to call release/discard multiple times.
+/// - **Leak Prevention:** Tracks all created connections to prevent leaks.
 class ValkeyPool {
   final ValkeyConnectionSettings _connectionSettings;
   final int _maxConnections;
 
-  /// --- Pool State ---
-  /// Available clients ready for use.
-  final Queue<ValkeyClient> _availableConnections = Queue();
+  // --- Pool State (Robust Tracking) ---
 
-  /// Number of connections currently in use (acquired).
-  int _connectionsInUse = 0;
+  /// All connections managed by this pool (Leased + Idle).
+  /// Used to verify ownership and prevent leaks.
+  final Set<ValkeyClient> _allClients = {};
+
+  /// Connections currently waiting to be reused.
+  final Queue<ValkeyClient> _idleClients = Queue();
+
+  /// Connections currently leased out to users.
+  final Set<ValkeyClient> _leasedClients = {};
 
   /// Requests waiting for a connection to become available.
   final Queue<Completer<ValkeyClient>> _waitQueue = Queue();
 
   /// Flag to prevent new acquires after close() is called.
   bool _isClosing = false;
-  // --------------------
+
+  /// Returns the total number of connections managed by this pool.
+  int get totalConnectionCount => _allClients.length;
+
+  /// Returns the number of connections currently idle.
+  int get idleConnectionCount => _idleClients.length;
+
+  /// Returns the number of connections currently in use.
+  int get leasedConnectionCount => _leasedClients.length;
 
   /// Creates a new connection pool.
   ///
@@ -55,37 +69,24 @@ class ValkeyPool {
           'Pool is closing, cannot acquire new connections.');
     }
 
-    // 1. Check if a client is available in the pool
-    while (_availableConnections.isNotEmpty) {
-      final client = _availableConnections.removeFirst();
+    // 1. Try to reuse an idle connection
+    while (_idleClients.isNotEmpty) {
+      final client = _idleClients.removeFirst();
 
-      // Health check on acquire
-      try {
-        // Check if the client is still healthy
-        await client.ping().timeout(Duration(seconds: 2));
-        // Health check passed, return the client
-        _connectionsInUse++;
-        return client;
-      } catch (e) {
-        // Health check failed, client is unhealthy
-        // Destroy this client and try the next one in the queue
-        await client.close();
-        _connectionsInUse--; // Decrement count for the bad client we acquired and closed
-        // Loop continues to try the next available client
+      // [Vital Check] Double-check connectivity before handing out
+      if (!client.isConnected) {
+        // Was closed externally while idle. Discard and try next.
+        await discard(client);
+        continue;
       }
+
+      _leasedClients.add(client);
+      return client;
     }
 
-    // 2. No healthy clients available, check if we can create a new connection
-    if (_connectionsInUse < _maxConnections) {
-      _connectionsInUse++;
-      try {
-        // Create, connect, and return a new client
-        return await _createNewClient();
-      } catch (e) {
-        // If creation fails, decrement count and rethrow
-        _connectionsInUse--;
-        rethrow;
-      }
+    // 2. No idle connections, create new if allowed
+    if (_allClients.length < _maxConnections) {
+      return _createNewClientAndLease();
     }
 
     // 3. Pool is full, wait for a connection
@@ -94,29 +95,31 @@ class ValkeyPool {
     return completer.future;
   }
 
-  /// Internal helper to create and connect a new client.
-  Future<ValkeyClient> _createNewClient() async {
-    final client = ValkeyClient(
-      host: _connectionSettings.host,
-      port: _connectionSettings.port,
-      username: _connectionSettings.username,
-      password: _connectionSettings.password,
-      commandTimeout: _connectionSettings.commandTimeout,
-    );
+  /// Helper to create, track, and lease a new client.
+  Future<ValkeyClient> _createNewClientAndLease() async {
     try {
+      final client = ValkeyClient(
+        host: _connectionSettings.host,
+        port: _connectionSettings.port,
+        username: _connectionSettings.username,
+        password: _connectionSettings.password,
+        commandTimeout: _connectionSettings.commandTimeout,
+      );
       await client.connect();
+
+      _allClients.add(client);
+      _leasedClients.add(client);
       return client;
     } catch (e) {
-      // Ensure client is cleaned up if connect() fails
-      await client.close(); // close() calls _cleanup()
+      // Creation failed, no tracking needed as it wasn't added
       throw ValkeyConnectionException(
           'Failed to create new pool connection: $e', e);
     }
   }
 
-  /// Releases a [client] back into the pool, making it available for reuse.
+  /// Releases a connection back to the pool.
+  /// Automatically discards if the client is closed or stateful (Smart Release).
   ///
-  /// Call this in a `finally` block to ensure connections are always returned.
   /// ```dart
   /// final client = await pool.acquire();
   /// try {
@@ -125,78 +128,106 @@ class ValkeyPool {
   ///   pool.release(client);
   /// }
   /// ```
+  ///
+  /// - If the client is **stateful** (e.g., Pub/Sub mode), it is automatically **discarded**.
+  /// - If the client does not belong to this pool or was already released, this does nothing (Safe).
   void release(ValkeyClient client) {
-    if (_isClosing) {
-      // If pool is closing, just destroy the client
-      client.close();
+    // 1. Ownership & State Check
+    if (!_allClients.contains(client)) {
+      // Already discarded or foreign client. Ignore safely.
       return;
     }
 
-    // 1. Check if anyone is waiting in the queue
+    if (!_leasedClients.contains(client)) {
+      // Already released (idle) or inconsistent state. Ignore safely.
+      return;
+    }
+
+    // Check if connection is dead
+    if (!client.isConnected) {
+      discard(client);
+      return;
+    }
+
+    // 2. Smart Discard: Check if client is dirty
+    if (client.isStateful) {
+      // Client is in Pub/Sub or Transaction mode. Cannot reuse.
+      discard(client);
+      return;
+    }
+
+    // 3. Normal Release: Move from Leased to Idle
+    _leasedClients.remove(client);
+
+    // 4. Handover to waiter OR make idle
     if (_waitQueue.isNotEmpty) {
-      // Yes, pass this client directly to the oldest waiter
       final completer = _waitQueue.removeFirst();
-      // We don't add to _availableConnections, count remains the same
-      // We should check client health first
-      _checkHealthAndPass(client, completer);
-    } else {
-      // 2. No one is waiting, add client back to the pool
-      _connectionsInUse--;
-      _availableConnections.add(client);
-    }
-  }
-
-  /// Helper to check client health (e.g., PING) before reusing.
-  void _checkHealthAndPass(
-      ValkeyClient client, Completer<ValkeyClient> completer) async {
-    try {
-      // Simple health check. Does PING still work?
-      final response = await client.ping().timeout(Duration(seconds: 2));
-      if (response != 'PONG') {
-        throw ValkeyClientException(
-            'Health check failed (response was not PONG).');
-      }
-      // Health check passed, pass client to waiter
+      _leasedClients.add(client); // Moved back to leased for the waiter
       completer.complete(client);
-    } catch (e) {
-      // Health check failed.
-      // 1. Destroy the bad client
-      await client.close();
-      _connectionsInUse--; // Decrement count for the bad client
+    } else {
+      _idleClients.add(client);
+    }
+  }
 
-      // 2. Try to create a *new* client for the waiter
+  /// Explicitly discards a connection, removing it from the pool and closing it.
+  ///
+  /// Use this if the connection is broken or no longer needed.
+  /// Safe to call multiple times.
+  Future<void> discard(ValkeyClient client) async {
+    // 1. Ownership Check
+    if (!_allClients.contains(client)) {
+      return; // Already gone. Safe.
+    }
+
+    // 2. Remove from all trackers
+    _allClients.remove(client);
+    _leasedClients.remove(client);
+    _idleClients.remove(client);
+
+    // 3. Close the physical connection
+    // We await this to ensure resources are freed, but ignore errors.
+    try {
+      await client.close();
+    } catch (_) {
+      // Ignore errors during close
+    }
+
+    // 4. Fill the void: If there are waiters, create a NEW connection
+    // We freed up a slot in _allClients, so we can honor a waiter.
+    if (_waitQueue.isNotEmpty) {
+      final completer = _waitQueue.removeFirst();
       try {
-        final newClient = await _createNewClient();
-        _connectionsInUse++; // Increment for the new client
-        completer.complete(newClient); // Give new client to waiter
-      } catch (newError) {
-        // Failed to create replacement client
-        // Pass the *creation* error to the original waiter
-        completer.completeError(newError);
+        final newClient = await _createNewClientAndLease();
+        completer.complete(newClient);
+      } catch (e) {
+        // If creation fails, we can't satisfy the waiter now.
+        // We must error the waiter to avoid deadlock.
+        completer.completeError(e);
       }
     }
   }
 
-  /// Closes all connections in the pool and shuts down the pool.
+  /// Closes all connections and the pool itself.
   Future<void> close() async {
     _isClosing = true;
 
-    // 1. Reject any pending waiters
+    // 1. Cancel waiters
     while (_waitQueue.isNotEmpty) {
       _waitQueue.removeFirst().completeError(
           ValkeyClientException('Pool is closing, request cancelled.'));
     }
 
-    // 2. Close all available connections
-    final closeFutures = <Future<void>>[];
-    while (_availableConnections.isNotEmpty) {
-      closeFutures.add(_availableConnections.removeFirst().close());
-    }
+    // 2. Close all clients (Idle + Leased)
+    final futures = _allClients.map((c) => c.close());
+    // final futures = <Future<void>>[];
+    // for (final client in _allClients) {
+    //   futures.add(client.close());
+    // }
 
-    await Future.wait(closeFutures);
+    await Future.wait(futures);
 
-    // Note: Connections currently in use will be closed
-    // when they are returned via release()
-    _connectionsInUse = 0; // Reset count
+    _allClients.clear();
+    _idleClients.clear();
+    _leasedClients.clear();
   }
 }
