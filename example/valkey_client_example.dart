@@ -256,12 +256,13 @@ Future<void> main() async {
   final subscriber = ValkeyClient(host: host, port: port);
   final publisher = ValkeyClient(host: host, port: port);
   StreamSubscription<ValkeyMessage>? listener; // Keep track of the listener
+  final channel = 'news:updates';
 
   try {
     await Future.wait([subscriber.connect(), publisher.connect()]);
     print('✅ Subscriber and Publisher connected!');
 
-    final channel = 'news:updates';
+
     print('\nSubscribing to channel: $channel');
 
     // 1. Subscribe and get the Subscription object
@@ -303,6 +304,7 @@ Future<void> main() async {
   } finally {
     // Ensure listener is cancelled even on error
     await listener?.cancel();
+    // await subscriber.unsubscribe([channel]);
     await Future.wait([subscriber.close(), publisher.close()]);
     print('Pub/Sub clients closed.');
   }

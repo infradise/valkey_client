@@ -21,11 +21,15 @@ dart test --tags example
 ```
 
 ### Excluded Example
-The file `example/cluster_redirection_example.dart` is excluded from the automated test suite.  
+The files below are excluded from the automated test suite.  
 Execute it separately when needed:
 
 ```sh
 dart run example/cluster_redirection_example.dart
+```
+
+```sh
+dart run cluster_failover_stress_test.dart
 ```
 
 This example runs indefinitely to simulate cluster topology changes and validate redirection resilience.  
