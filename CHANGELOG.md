@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.0
+### Added
+- **Automatic Cluster Failover:** Implemented topology refresh and retry logic on connection failures. The client now automatically detects dead nodes, updates the cluster map, and redirects commands to the new master node, ensuring high availability during server outages.
+
+
 ## 1.7.0
 
 ### Added
