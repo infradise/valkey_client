@@ -1,11 +1,14 @@
 import 'cluster_info.dart' show ClusterNodeInfo, ClusterSlotRange;
 import 'cluster_hash.dart' show getHashSlot;
+import 'logging.dart';
 
 /// Manages the mapping of hash slots to cluster nodes.
 ///
 /// This class is immutable. A new instance must be created
 /// if the cluster topology changes (e.g., after a -MOVED redirection).
 class ClusterSlotMap {
+  static final _log = ValkeyLogger('ClusterSlotMap');
+
   /// A fast lookup map from a slot number (0-16383) to its master node.
   final Map<int, ClusterNodeInfo> _slotToNode;
 
@@ -33,7 +36,9 @@ class ClusterSlotMap {
   ///
   /// Returns null if the key's slot is not in the map.
   ClusterNodeInfo? getNodeForKey(String key) {
+    _log.info('key = $key');
     final slot = getHashSlot(key);
+    _log.info('slot = $slot');
     return _slotToNode[slot];
   }
 
