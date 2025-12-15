@@ -34,3 +34,10 @@ void main() async {
     await client.del(key);
   });
 }
+
+/*
+EXPECTED OUTPUT
+===============
+
+00:00 +1: All tests passed!
+*/

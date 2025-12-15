@@ -1,9 +1,6 @@
 import 'package:test/test.dart';
-// Import the data models
 import 'package:valkey_client/src/cluster_info.dart';
-// Import the top-level function to test
 import 'package:valkey_client/src/cluster_slots_parser.dart';
-// Import the exception types
 import 'package:valkey_client/src/exceptions.dart';
 
 void main() {
@@ -135,3 +132,10 @@ void main() {
     });
   });
 }
+
+/*
+EXPECTED OUTPUT
+===============
+
+00:00 +6: All tests passed!
+*/

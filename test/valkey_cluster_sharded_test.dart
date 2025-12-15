@@ -90,15 +90,19 @@ void main() async {
       await sub.unsubscribe();
     });
   }, skip: !serverUp ? 'Cluster not running on $host:$port' : false);
-
-  // Expected output:
-  // 00:00 +0: ValkeyClusterClient Sharded Pub/Sub ssubscribe receives messages from multiple shards (Scatter-Gather)
-  // Cluster: Subscribing to [shard:channel:{a}, shard:channel:{b}, shard:channel:{c}]...
-  // Cluster: Subscription READY.
-  // Cluster: Publishing messages...
-  // Cluster Received: [shard:channel:{a}] msg-a
-  // Cluster Received: [shard:channel:{b}] msg-b
-  // Cluster Received: [shard:channel:{c}] msg-c
-  // ✅ All messages received from multiple shards!
-  // 00:00 +1: All tests passed!
 }
+
+/*
+EXPECTED OUTPUT
+===============
+
+00:00 +0: ValkeyClusterClient Sharded Pub/Sub ssubscribe receives messages from multiple shards (Scatter-Gather)
+Cluster: Subscribing to [shard:channel:{a}, shard:channel:{b}, shard:channel:{c}]...
+Cluster: Subscription READY.
+Cluster: Publishing messages...
+Cluster Received: [shard:channel:{a}] msg-a
+Cluster Received: [shard:channel:{b}] msg-b
+Cluster Received: [shard:channel:{c}] msg-c
+✅ All messages received from multiple shards!
+00:00 +1: All tests passed!
+*/

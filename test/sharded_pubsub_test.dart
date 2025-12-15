@@ -22,9 +22,13 @@ void main() {
     expect(receiverCount, greaterThanOrEqualTo(0));
     print('SPUBLISH sent successfully. Receivers: $receiverCount');
   });
-
-  // Expected output:
-  // 00:00 +0: SPUBLISH should execute without error
-  // SPUBLISH sent successfully. Receivers: 0
-  // 00:00 +1: All tests passed!
 }
+
+/*
+EXPECTED OUTPUT
+===============
+
+00:00 +0: SPUBLISH should execute without error
+SPUBLISH sent successfully. Receivers: 0
+00:00 +1: All tests passed!
+*/

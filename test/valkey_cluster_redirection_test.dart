@@ -64,3 +64,10 @@ void main() async {
           ? 'Valkey cluster not running on $clusterHost:$clusterPort'
           : false);
 }
+
+/*
+EXPECTED OUTPUT
+===============
+
+00:00 +1: All tests passed!
+*/

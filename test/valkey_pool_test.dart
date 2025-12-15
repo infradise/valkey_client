@@ -182,3 +182,10 @@ Future<void> main() async {
           ? 'Valkey server not running on $noAuthHost:$noAuthPort'
           : false);
 }
+
+/*
+EXPECTED OUTPUT
+===============
+
+00:00 +6: All tests passed!
+*/

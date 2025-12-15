@@ -567,6 +567,8 @@ Future<void> main() async {
 
       // Clean up the stream listener
       await subscriptionListener.cancel();
+      
+      await subscriberClient.unsubscribe([channel]);
     },
         // Give this test a bit more time due to async nature
         timeout: Timeout(Duration(seconds: 10)));
@@ -936,15 +938,20 @@ Future<void> main() async {
       expect(counts[channel1], 1); // subClient is 1 subscriber
       expect(counts[channel2], 1);
       expect(counts['non_existent'], 0);
+
+      await subClient.unsubscribe([channel1, channel2]);
     });
 
     test('pubsubNumPat returns pattern subscription count', () async {
+      final pattern1 = 'inspect:pat:*';
+      final pattern2 = 'inspect:another:*';
+
       // 1. No patterns active
       var numPat = await client.pubsubNumPat();
       expect(numPat, 0);
 
       // 2. PSubscribe with subClient
-      final sub = subClient.psubscribe(['inspect:pat:*', 'inspect:another:*']);
+      final sub = subClient.psubscribe([pattern1, pattern2]);
       await sub.ready;
       subListener = sub.messages.listen(null);
       await Future.delayed(Duration(milliseconds: 100));
@@ -952,6 +959,8 @@ Future<void> main() async {
       // 3. Check pattern count
       numPat = await client.pubsubNumPat();
       expect(numPat, 2);
+
+      await client.punsubscribe([pattern1, pattern2]);
     });
   },
       // Skip this entire group if the server is down
@@ -959,3 +968,21 @@ Future<void> main() async {
           ? 'Valkey server not running on $noAuthHost:$noAuthPort'
           : false);
 }
+
+/*
+EXPECTED OUTPUT
+===============
+
+00:00 +41: ValkeyClient Pub/Sub should receive messages on subscribed channel
+TEST: Waiting for subscription ready...
+TEST: Subscription ready!
+TEST Publishing message 1...
+TEST received: Hello from test 1
+TEST Publishing message 2...
+TEST received: Hello from test 2
+TEST Waiting for message 1...
+TEST Received message 1 OK
+TEST Waiting for message 2...
+TEST Received message 2 OK
+00:03 +56: All tests passed!
+*/
