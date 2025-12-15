@@ -5,7 +5,7 @@
 A modern, production-ready Dart client for Valkey (9.0.0+). Fully Redis 7.x compatible.
 
 👉 To browse Redis/Valkey data, you can use [Keyscope](https://plugins.jetbrains.com/plugin/29250-keyscope),  
-a native Redis/Valkey IDE to view key-value data in your databases.  
+a native Redis/Valkey IDE to edit key-value data in your databases.  
 
 👉 To access Redis/Valkey servers on Kubernetes, you can use [Visualkube Jet](https://plugins.jetbrains.com/plugin/29143-visualkube-jet),  
 a native Kubernetes IDE for multi‑cluster access and real-time watch.
@@ -20,10 +20,9 @@ It is designed primarily for server-side Dart applications (`server.dart`) requi
 
 **We also strive to maintain zero external dependencies.** This is a core part of our design philosophy. It prevents dependency conflicts and ensures that `valkey_client` will never block your project's ability to upgrade its other packages.
 
----
 
-## Features 
-  
+## Features
+  * **Automatic Failover (v1.8.0+):** The client now survives node failures. If a master node goes down (connection refused/timeout), the client automatically refreshes the cluster topology and reroutes commands to the new master without throwing an exception.
   * **Connection Pool Hardening (v1.7.0+):** Implemented **Smart Release** mechanism. The pool automatically detects and discards "dirty" connections (e.g., inside Transaction or Pub/Sub) upon release, preventing pool pollution and resource leaks.
   * **Enhanced Developer Experience (v1.7.0+):** Expanded `Redis` aliases to include Exceptions, Configuration, and Data Models (`RedisException`, `RedisMessage`, etc.) for a seamless migration experience.
   * **Sharded Pub/Sub & Atomic Counters (v1.6.0+):** Added support for high-performance cluster messaging (`SPUBLISH`/`SSUBSCRIBE`) and atomic integer operations (`INCR`/`DECR`).
@@ -123,7 +122,6 @@ docker run -d --name my-redis-acl -p 6379:6379 redis:latest \
 
 *(Note: The '-d' flag runs the container in "detached" mode (in the background). You can remove it if you want to see the server logs directly in your terminal.)*
 
----
 
 ### Docker Compose: Local Cluster Setup (for v1.3.0+ Testing)
 
@@ -158,7 +156,6 @@ Your 6-node cluster is now running on `127.0.0.1:7001-7006`, and you can success
 
 **Note:** This configuration starts from port `7001` (instead of the common `7000`) because port 7000 is often reserved by the macOS Control Center (AirPlay Receiver) service.
 
----
 
 ## Developer Experience Improvements (v1.7.0+)
 
@@ -195,7 +192,7 @@ To enhance DX for both Redis and Valkey developers, we provide fully compatible 
 | **Usage** | `RedisClientException` | `ValkeyClientException` | Thrown on invalid client usage (e.g., misuse of API). |
 | **Parsing** | `RedisParsingException` | `ValkeyParsingException` | Thrown when the response cannot be parsed (RESP3). |
 
----
+
 
 ## Usage
 
@@ -239,7 +236,7 @@ void main() async {
 `valkey_client` supports **Standalone, Sentinel, and Cluster** environments.
 New users are encouraged to start with **Group 1**. Production applications should use **Group 2** (for Standalone/Sentinel) or **Group 3** (for Cluster).
 
----
+
 
 ### Group 1: Standalone/Sentinel (Single Connection)
 
@@ -322,7 +319,7 @@ final newScore = await client.incr('score'); // 11
 await client.decrBy('score', 5); // 6
 ```
 
----
+
 
 #### 3\. Application: Pub/Sub (from [example/valkey\_client\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/valkey_client_example.dart))
 
@@ -366,7 +363,7 @@ await client.decrBy('score', 5); // 6
   }
 ```
 
----
+
 
 ### Group 2: Production Pool (Standalone/Sentinel)
 
@@ -488,7 +485,7 @@ Future<void> main() async {
 pool.release(client);
 ```
 
----
+
 
 ### Group 3: Cluster Mode (Advanced)
 
@@ -519,7 +516,6 @@ await sub.unsubscribe();
 ```
 
 **Note:** You can also use `ssubscribe` and `spublish` with `ValkeyClient` (Standalone) on compatible servers (Redis 7.0+ / Valkey 9.0+). See ValkeyClient for Standalone (from [example/sharded\_pubsub\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/sharded_pubsub_example.dart))
-
 
 
 #### Recommended (v1.3.0+): Automatic Routing (from [example/cluster\_client\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_client_example.dart))
@@ -567,6 +563,17 @@ void main() async {
 }
 ```
 
+#### Automatic Failover (v1.8.0+)
+
+`ValkeyClusterClient` is resilient to node failures. If a master node crashes or becomes unreachable:
+
+1.  The client detects the connection failure (e.g., `SocketException`).
+2.  It automatically refreshes the cluster topology from remaining nodes.
+3.  It finds the new master node and retries the command.
+
+This happens transparently to the user. You do not need to catch connection exceptions for failovers.
+
+
 #### Multi-key Operations (v1.4.0+): Scatter-Gather with Pipelined GETs (from [example/cluster\_mget\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_mget_example.dart))
 
 `ValkeyClusterClient` supports `MGET` even if keys are distributed across different nodes. It uses a Scatter-Gather strategy with pipelining to ensure high performance and correct ordering.
@@ -611,7 +618,6 @@ void main() async {
 }
 ```
 
----
 
 ### Logging Configuration
 
@@ -626,7 +632,6 @@ ValkeyClient.setLogLevel(ValkeyLogLevel.info);
 ValkeyClient.setLogLevel(ValkeyLogLevel.off);
 ```
 
----
 
 ## Planned Features
 
@@ -638,19 +643,16 @@ ValkeyClient.setLogLevel(ValkeyLogLevel.off);
 
 More details in the [Roadmap](https://github.com/infradise/valkey_client/wiki/Roadmap).
 
----
 
 ## Contributing
 
 Your contributions are welcome\! Please check the [GitHub repository](https://github.com/infradise/valkey_client) for open issues or submit a Pull Request. For major changes, please open an issue first to discuss the approach.
 
----
 
 ## Maintained By
 
 Maintained by the developers of [Visualkube Jet](https://jet.visualkube.com) and [Keyscope](https://keyscope.dev) at [Infradise Inc](https://visualkube.com/about-us). We believe in giving back to the Dart & Flutter community.
 
----
 
 ## License
 
