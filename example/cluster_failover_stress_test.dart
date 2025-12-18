@@ -14,12 +14,16 @@ void main() async {
   int successCount = 0;
   int failCount = 0;
 
+  String nodeStr = '';
+  final delay = Duration(milliseconds: 500); // set to human friendly value
+
   try {
     await client.connect();
     print('✅ Cluster connected. Starting Stress Test...');
     print('Press Ctrl+C to stop.');
     print('----------------------------------------------------------------');
-    print('ACTION: Kill a master node (e.g., valkey-cli -p 7001 DEBUG SEGFAULT)');
+    print(
+        'ACTION: Kill a master node (e.g., valkey-cli -p 7001 DEBUG SEGFAULT)');
     print('        and watch the client recover automatically.');
     print('----------------------------------------------------------------');
 
@@ -38,8 +42,8 @@ void main() async {
         final res = await client.get(key);
 
         if (res == value) {
-          // final node = client.getMasterFor(key);
-          // final nodeStr = node != null ? '${node.host}:${node.port}' : 'Unknown';
+          final node = client.getMasterFor(key);
+          nodeStr = node != null ? '${node.host}:${node.port}' : 'Unknown';
 
           successCount++;
         } else {
@@ -60,12 +64,15 @@ void main() async {
         }
 
         // Print Dashboard (Overwriting current line for a dashboard effect)
-        stdout.write(
-            '\r[Stress Test] Success: $successCount | Failed: $failCount | Last: $status        '); // (+): nodeStr = $nodeStr
+        String output =
+            '\r[Stress Test] nodeStr = $nodeStr | Success: $successCount | Failed: $failCount | Last: $status';
+        output += '${' ' * 30} ';
+
+        stdout.write(output);
       }
 
       // Throttle slightly to allow reading the logs
-      await Future.delayed(Duration(milliseconds: 50));
+      await Future.delayed(delay);
     }
   } catch (e) {
     print('\nFatal Error: $e');
