@@ -262,7 +262,6 @@ Future<void> main() async {
     await Future.wait([subscriber.connect(), publisher.connect()]);
     print('✅ Subscriber and Publisher connected!');
 
-
     print('\nSubscribing to channel: $channel');
 
     // 1. Subscribe and get the Subscription object

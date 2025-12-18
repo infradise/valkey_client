@@ -19,8 +19,7 @@ void main() {
       final tags = <String>['example'];
 
       if (entity.path.endsWith('cluster_redirection_example.dart') ||
-          entity.path.endsWith('cluster_failover_stress_test.dart')
-      ) {
+          entity.path.endsWith('cluster_failover_stress_test.dart')) {
         // tags.add('skip_example');
         continue;
       }

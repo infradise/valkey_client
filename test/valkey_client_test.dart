@@ -567,7 +567,7 @@ Future<void> main() async {
 
       // Clean up the stream listener
       await subscriptionListener.cancel();
-      
+
       await subscriberClient.unsubscribe([channel]);
     },
         // Give this test a bit more time due to async nature

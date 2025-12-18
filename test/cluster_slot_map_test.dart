@@ -28,13 +28,14 @@ void main() {
       // Example 1. robustness_check (slot number: 16173) -- changed node2 to node1
       //
       // Verify initial state
-      expect(slotMap.getNodeForKey('robustness_check'), slotNode); // Slot 16173 -> Node 2
+      expect(slotMap.getNodeForKey('robustness_check'),
+          slotNode); // Slot 16173 -> Node 2
 
       // -MOVED redirection
       slotMap.updateSlot(16173, slotNode = node1);
 
-      expect(slotMap.getNodeForKey('robustness_check'), slotNode); // Slot 16173 -> Node 1
-
+      expect(slotMap.getNodeForKey('robustness_check'),
+          slotNode); // Slot 16173 -> Node 1
 
       // Example 2. foo (slot number: 12182) -- changed node1 to node2
       //
