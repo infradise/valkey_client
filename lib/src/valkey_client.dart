@@ -666,17 +666,6 @@ class ValkeyClient implements ValkeyClientBase {
       }
     }
 
-    // Reset state based on count
-    // Check overall subscription status AFTER processing the message
-    // TODO: Duplicated code will be removed later.
-    // if (currentRemainingCount == 0) {
-    //   if (_subscribedChannels.isEmpty && _subscribedPatterns.isEmpty) {
-    //     _resetPubSubState();
-    //   } else {
-    //     // This might happen if server count is reliable (e.g. only channel count)
-    //   }
-    // }
-
     // Reset State Logic
     // Safer check: If count is 0, AND both lists are empty, reset.
     if (currentRemainingCount is int &&

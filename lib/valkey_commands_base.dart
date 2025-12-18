@@ -1,15 +1,6 @@
 import 'dart:async';
 
 import 'package:valkey_client/valkey_client_base.dart';
-// TODO: Review required.
-// May be required for using the Subscription class
-// (Be cautious of circular references. Normally, base imports commands,
-// so here we should only specify the type or handle it dynamically.
-// However, Subscription exists in valkey_client_base.
-// Since ValkeyClientBase implements ValkeyCommandsBase,
-// an import may be necessary here to recognize the Subscription type.
-// If circular reference issues occur, consider using 'dynamic' or splitting into a separate file.
-// For now, we add it here based on the current structure.)
 
 /// The abstract base class for all common Valkey data commands.
 ///
