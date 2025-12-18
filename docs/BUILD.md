@@ -14,10 +14,20 @@ Run only the unit tests, excluding the example validations tagged as `example`:
 dart test --exclude-tags example
 ```
 
+Expected output:
+```sh
+00:03 +81: All tests passed!
+```
+
 ### Examples
 Run the example validations defined in `test/example_test.dart`:  
 ```sh
 dart test --tags example
+```
+
+Expected output:
+```sh
+00:07 +13: All tests passed!
 ```
 
 ### Excluded Example
@@ -28,8 +38,31 @@ Execute it separately when needed:
 dart run example/cluster_redirection_example.dart
 ```
 
+Expected output:
 ```sh
-dart run cluster_failover_stress_test.dart
+[SUCCESS 1] Node 192.168.65.254:7002 | resilience:key = val-1
+...
+[SUCCESS 22] Node 192.168.65.254:7002 | resilience:key = val-22
+# Power-off this node.
+[RETRY 23] Client error: ValkeyClientException: Cluster operation failed ...
+[RETRY 24] ...
+[RETRY 25] ...
+# Redirected successfuly.
+[SUCCESS 26] Node 192.168.65.254:7006 | resilience:key = val-26
+```
+
+```sh
+dart run example/cluster_failover_stress_test.dart
+```
+
+Expected output:
+```sh
+# Nodes: 7003, 7005, 7006
+[Stress Test] nodeStr = 192.168.65.254:7006 | Success: 27 | Failed: 0 | Last: OK
+# Power-off node 7006.
+❌ Operation Failed: ValkeyClientException: Cluster operation failed. 
+# Nodes: 7003, 7005, 7002. The node 7002 successfully takes over 7006.
+[Stress Test] nodeStr = 192.168.65.254:7005 | Success: 56 | Failed: 1 | Last: OK
 ```
 
 This example runs indefinitely to simulate cluster topology changes and validate redirection resilience.  
@@ -67,8 +100,8 @@ dart pub publish --dry-run
 Update the `version` field in `pubspec.yaml` to the new version number.
 
 ```yaml
-# version: 1.6.0  # Previous version
-version: 1.7.0   # New version
+# version: 1.7.0  # Previous version
+version: 1.8.0   # New version
 ```
 
 ### Commit the Version Bump
@@ -76,7 +109,7 @@ version: 1.7.0   # New version
 Commit the version change with a conventional commit message.
 
 ```
-build: bump version to 1.7.0
+build: bump version to 1.8.0
 ```
 
 ## Tag the Release Locally
@@ -84,13 +117,13 @@ build: bump version to 1.7.0
 Create a Git tag corresponding to the new version and push it to the remote repository.
 
 ```sh
-git tag v1.7.0
-git push origin v1.7.0
+git tag v1.8.0
+git push origin v1.8.0
 ```
 
 ## Create GitHub Release
 
-Create a new release on GitHub. Use the tag you just created (e.g., `v1.7.0`). Copy the relevant section from `CHANGELOG.md` into the release notes.
+Create a new release on GitHub. Use the tag you just created (e.g., `v1.8.0`). Copy the relevant section from `CHANGELOG.md` into the release notes.
 
 ## Publish to pub.dev
 
