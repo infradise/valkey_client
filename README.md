@@ -1,25 +1,15 @@
 [![pub package](https://img.shields.io/pub/v/valkey_client.svg)](https://pub.dev/packages/valkey_client)
 
-# valkey_client
+# Introduction
 
-A modern, production-ready Dart client for Valkey (9.0.0+). Fully Redis 7.x compatible.
+The `valkey_client` is a Dart client for Valkey and Redis, supporting Standalone, Sentinel, and Cluster modes with auto-failover, smart connection pooling, sharded Pub/Sub, multi-key operations, command timeouts, RESP3 parsing, type-safe exceptions, and logger.
 
-👉 To browse Redis/Valkey data, you can use [Keyscope](https://plugins.jetbrains.com/plugin/29250-keyscope),  
-a native Redis/Valkey IDE to edit key-value data in your databases.  
+## Helpers
 
-👉 To access Redis/Valkey servers on Kubernetes, you can use [Visualkube Jet](https://plugins.jetbrains.com/plugin/29143-visualkube-jet),  
-a native Kubernetes IDE for multi‑cluster access and real-time watch.
+👉 To browse Redis/Valkey data, you can use [Keyscope](https://plugins.jetbrains.com/plugin/29250-keyscope), a native Redis/Valkey IDE to edit key-value data in your databases.  
+👉 To access Redis/Valkey servers on Kubernetes, you can use [Visualkube Jet](https://plugins.jetbrains.com/plugin/29143-visualkube-jet), a native Kubernetes IDE for multi‑cluster access and real-time watch.
 
 > **Keyscope** and **Visualkube Jet** are plugins for Android Studio and JetBrains IDEs.
-
-## The Goal 🎯
-
-The Dart ecosystem needs a high-performance, actively maintained client for the next generation of in-memory databases. This package aims to be the standard Dart client for **Valkey (9.0.0+)** while maintaining full compatibility with **Redis (7.x+)**.
-
-It is designed primarily for server-side Dart applications (`server.dart`) requiring a robust and fast connection to Valkey.
-
-**We also strive to maintain zero external dependencies.** This is a core part of our design philosophy. It prevents dependency conflicts and ensures that `valkey_client` will never block your project's ability to upgrade its other packages.
-
 
 ## Features
   * **Automatic Failover (v1.8.0+):** The client now survives node failures. If a master node goes down (connection refused/timeout), the client automatically refreshes the cluster topology and reroutes commands to the new master without throwing an exception.
