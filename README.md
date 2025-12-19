@@ -12,23 +12,24 @@ The `valkey_client` is a smart client for Valkey and Redis, supporting Standalon
 > **Keyscope** and **Visualkube Jet** are plugins for Android Studio and JetBrains IDEs.
 
 ## Features
-  * **Automatic Failover (v1.8.0+):** The client now survives node failures. If a master node goes down (connection refused/timeout), the client automatically refreshes the cluster topology and reroutes commands to the new master without throwing an exception.
-  * **Connection Pool Hardening (v1.7.0+):** Implemented **Smart Release** mechanism. The pool automatically detects and discards "dirty" connections (e.g., inside Transaction or Pub/Sub) upon release, preventing pool pollution and resource leaks.
-  * **Enhanced Developer Experience (v1.7.0+):** Expanded `Redis` aliases to include Exceptions, Configuration, and Data Models (`RedisException`, `RedisMessage`, etc.) for a seamless migration experience.
-  * **Sharded Pub/Sub & Atomic Counters (v1.6.0+):** Added support for high-performance cluster messaging (`SPUBLISH`/`SSUBSCRIBE`) and atomic integer operations (`INCR`/`DECR`).
-  * **Developer Experience (v1.5.0+):** Added `RedisClient` alias and smart redirection handling for better usability and stability.
-  * **High Availability & Resilience (v1.5.0+):** Automatically and transparently handles cluster topology changes (`-MOVED` and `-ASK` redirections) to ensure robust failover, seamless scaling, and zero‑downtime operations.
-  * **Multi-key Support (v1.4.0+):** Supports `MGET` across multiple nodes using smart Scatter-Gather pipelining.
-  * **Cluster Client (v1.3.0+):** Added `ValkeyClusterClient` for automatic command routing in cluster mode.
+  * **Automatic Failover:** The client now survives node failures. If a master node goes down (connection refused/timeout), the client automatically refreshes the cluster topology and reroutes commands to the new master without throwing an exception.
+  * **Connection Pool Hardening:** Implemented **Smart Release** mechanism. The pool automatically detects and discards "dirty" connections (e.g., inside Transaction or Pub/Sub) upon release, preventing pool pollution and resource leaks.
+  * **Enhanced Developer Experience:** Expanded `Redis` aliases to include Exceptions, Configuration, and Data Models (`RedisException`, `RedisMessage`, etc.) for a seamless migration experience.
+  * **Sharded Pub/Sub & Atomic Counters:** Added support for high-performance cluster messaging (`SPUBLISH`/`SSUBSCRIBE`) and atomic integer operations (`INCR`/`DECR`).
+  * **Developer Experience:** Added `RedisClient` alias and smart redirection handling for better usability and stability.
+  * **High Availability & Resilience:** Automatically and transparently handles cluster topology changes (`-MOVED` and `-ASK` redirections) to ensure robust failover, seamless scaling, and zero‑downtime operations.
+  * **Multi-key Support:** Supports `MGET` across multiple nodes using smart Scatter-Gather pipelining.
+  * **Cluster Client:** Added `ValkeyClusterClient` for automatic command routing in cluster mode.
       * This client automatically routes commands to the correct node.
       * We recommend using `ValkeyClient` for Standalone/Sentinel and `ValkeyClusterClient` for cluster environments.
-  * **Built-in Connection Pooling (v1.1.0+):** `ValkeyPool` for efficient connection management (used by Standalone and Cluster clients).
-  * **Cluster Auto-Discovery (v1.2.0+):** Added `client.clusterSlots()` to fetch cluster topology (via the `CLUSTER SLOTS` command), laying the foundation for full cluster support.
-  * **Command Timeout (v1.2.0+):** Includes a built-in command timeout (via `ValkeyConnectionSettings`) to prevent client hangs on non-responsive servers.
+  * **Built-in Connection Pooling:** `ValkeyPool` for efficient connection management (used by Standalone and Cluster clients).
+  * **Cluster Auto-Discovery:** Added `client.clusterSlots()` to fetch cluster topology (via the `CLUSTER SLOTS` command), laying the foundation for full cluster support.
+  * **Command Timeout:** Includes a built-in command timeout (via `ValkeyConnectionSettings`) to prevent client hangs on non-responsive servers.
   * **Robust Parsing:** Full RESP3 parser handling all core data types (`+`, `-`, `$`, `*`, `:`).
   * **Type-Safe Exceptions:** Clear distinction between connection errors (`ValkeyConnectionException`), server errors (`ValkeyServerException`), and client errors (`ValkeyClientException`).
   * **Pub/Sub Ready (Standalone/Sentinel):** `subscribe()` returns a `Subscription` object with a `Stream` and a `Future<void> ready` for easy and reliable message handling.
-  * **Production-Ready (Standalone/Sentinel):** `v1.0.0` is stable for production use in non-clustered environments (when used with a connection pool). This lays the foundation for the full cluster support planned for v2.0.0 (see [Roadmap](https://github.com/infradise/valkey_client/wiki/Roadmap#roadmap-towards-v200-production-ready-for-cluster-)).
+  * **Production-Ready (Standalone/Sentinel):** stable for production use in non-clustered environments.
+  * **Production-Ready (Cluster):** stable for production use with full cluster support.
 
 ## Command Support
   * **Connection** (`PING`, `ECHO`, `QUIT` via `close()`)
@@ -113,7 +114,7 @@ docker run -d --name my-redis-acl -p 6379:6379 redis:latest \
 *(Note: The '-d' flag runs the container in "detached" mode (in the background). You can remove it if you want to see the server logs directly in your terminal.)*
 
 
-### Docker Compose: Local Cluster Setup (for v1.3.0+ Testing)
+### Docker Compose: Local Cluster Setup
 
 The **Usage (Group 3)** examples require a running Valkey Cluster or Redis Cluster.
 
@@ -147,7 +148,7 @@ Your 6-node cluster is now running on `127.0.0.1:7001-7006`, and you can success
 **Note:** This configuration starts from port `7001` (instead of the common `7000`) because port 7000 is often reserved by the macOS Control Center (AirPlay Receiver) service.
 
 
-## Developer Experience Improvements (v1.7.0+)
+## Developer Experience Improvements
 
 To enhance DX for both Redis and Valkey developers, we provide fully compatible aliases. You can use the class names you are most comfortable with.
 
@@ -196,7 +197,7 @@ Both classes and helper functions are fully compatible — choose whichever name
 ### Quick Example (RedisClient)
 
 ```dart
-// Since v1.5.0, you can import RedisClient directly — no need to switch to ValkeyClient.
+// You can import RedisClient directly — no need to switch to ValkeyClient.
 import 'package:valkey_client/redis_client.dart';
 
 void main() async {
@@ -300,7 +301,7 @@ void main() async {
 }
 ```
 
-#### Atomic Counters (v1.6.0+)
+#### Atomic Counters
 
 ```dart
 // Atomic increment/decrement operations
@@ -340,7 +341,7 @@ await client.decrBy('score', 5); // 6
     });
 
     // 4. Publish messages
-    await publisher.publish(channel, 'Valkey v1.3.0 has been released!');
+    await publisher.publish(channel, 'valkey_client v2.0.0 has been released!');
 
     await Future.delayed(Duration(seconds: 1)); // Wait to receive message
 
@@ -357,7 +358,7 @@ await client.decrBy('score', 5); // 6
 
 ### Group 2: Production Pool (Standalone/Sentinel)
 
-#### Connection Pooling (v1.1.0+)
+#### Connection Pooling
 
 For all applications — and especially for **production server environments** with high concurrency — it is **strongly recommended** to use the built-in **`ValkeyPool`** class instead of managing single `ValkeyClient` connections or connecting/closing individual clients.
 
@@ -464,7 +465,7 @@ Future<void> main() async {
 }
 ```
 
-#### Smart Release (v1.7.0+)
+#### Smart Release
 
 `ValkeyPool` now supports **Smart Release**. You don\'t need to manually discard connections that have changed state (e.g., inside a Transaction or Pub/Sub) when releasing it.
 
@@ -481,7 +482,7 @@ pool.release(client);
 
 This group is for connecting to a Valkey **Cluster Mode** environment.
 
-#### Sharded Pub/Sub (v1.6.0+)
+#### Sharded Pub/Sub
 
 ValkeyClusterClient for Cluster (from [example/cluster\_sharded\_pubsub\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_sharded_pubsub_example.dart))
 
@@ -508,7 +509,7 @@ await sub.unsubscribe();
 **Note:** You can also use `ssubscribe` and `spublish` with `ValkeyClient` (Standalone) on compatible servers (Redis 7.0+ / Valkey 9.0+). See ValkeyClient for Standalone (from [example/sharded\_pubsub\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/sharded_pubsub_example.dart))
 
 
-#### Recommended (v1.3.0+): Automatic Routing (from [example/cluster\_client\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_client_example.dart))
+#### Automatic Routing (from [example/cluster\_client\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_client_example.dart))
 
 Use `ValkeyClusterClient`. This client **auto-discovers** the cluster topology via `CLUSTER SLOTS` on `connect()` and **auto-routes** commands like `SET`/`GET` to the correct node.
 
@@ -553,7 +554,7 @@ void main() async {
 }
 ```
 
-#### Automatic Failover (v1.8.0+)
+#### Automatic Failover
 
 `ValkeyClusterClient` is resilient to node failures. If a master node crashes or becomes unreachable:
 
@@ -564,7 +565,7 @@ void main() async {
 This happens transparently to the user. You do not need to catch connection exceptions for failovers.
 
 
-#### Multi-key Operations (v1.4.0+): Scatter-Gather with Pipelined GETs (from [example/cluster\_mget\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_mget_example.dart))
+#### Multi-key Operations: Scatter-Gather with Pipelined GETs (from [example/cluster\_mget\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_mget_example.dart))
 
 `ValkeyClusterClient` supports `MGET` even if keys are distributed across different nodes. It uses a Scatter-Gather strategy with pipelining to ensure high performance and correct ordering.
 
@@ -574,7 +575,7 @@ final results = await client.mget(['key:A', 'key:B', 'key:C']);
 print(results); // ['Value-A', 'Value-B', 'Value-C']
 ```
 
-#### Low-Level (v1.2.0+): Manual Topology Fetch (from [example/cluster\_auto\_discovery\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_auto_discovery_example.dart))
+#### Manual Topology Fetch (from [example/cluster\_auto\_discovery\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_auto_discovery_example.dart))
 
 If you need to manually inspect the topology, you can use a standard `ValkeyClient` (single connection) to call `clusterSlots()` directly.
 
@@ -582,18 +583,15 @@ If you need to manually inspect the topology, you can use a standard `ValkeyClie
 import 'package:valkey_client/valkey_client.dart';
 
 void main() async {
-  // 1. Configure a standard client to connect to ONE node
   final client = ValkeyClient(host: '127.0.0.1', port: 7001);
 
   try {
     await client.connect();
     print('✅ Connected to cluster node at 127.0.0.1:7001');
 
-    // 2. Run the v1.2.0 command
     print('\nFetching cluster topology using CLUSTER SLOTS...');
     final List<ClusterSlotRange> slotRanges = await client.clusterSlots();
 
-    // 3. Print the results
     print('Cluster topology loaded. Found ${slotRanges.length} slot ranges:');
     for (final range in slotRanges) {
       print('--------------------');
@@ -622,42 +620,10 @@ ValkeyClient.setLogLevel(ValkeyLogLevel.info);
 ValkeyClient.setLogLevel(ValkeyLogLevel.off);
 ```
 
-
-## Planned Features
-
-  * **Valkey 9.0.0+ Support:** Full implementation of the latest commands and features.
-  * **RESP3 Protocol:** Built on the modern RESP3 protocol for richer data types and performance.
-  * **High-Performance Async I/O:** Non-blocking, asynchronous networking.
-  * **Connection Pooling:** Production-grade connection pooling suitable for high-concurrency backend servers.
-  * **Type-Safe & Modern API:** A clean, easy-to-use API for Dart developers.
-
-More details in the [Roadmap](https://github.com/infradise/valkey_client/wiki/Roadmap).
-
-
-## Contributing
-
-Your contributions are welcome\! Please check the [GitHub repository](https://github.com/infradise/valkey_client) for open issues or submit a Pull Request. For major changes, please open an issue first to discuss the approach.
-
-
 ## Maintained By
 
 Maintained by the developers of [Visualkube Jet](https://jet.visualkube.com) and [Keyscope](https://keyscope.dev) at [Infradise Inc](https://visualkube.com/about-us). We believe in giving back to the Dart & Flutter community.
 
-
 ## License
 
 This project is licensed under the **Apache License 2.0**.
-
-**License Change Notification (2025-10-29)**
-
-This project was initially licensed under the MIT License. As of October 29, 2025 (v0.11.0 and later), the project has been re-licensed to the **Apache License 2.0**.
-
-We chose Apache 2.0 for its robust, clear, and balanced terms, which benefit both users and contributors:
-
-  * **Contributor Protection (Patent Defense):** Includes a defensive patent termination clause. This strongly deters users from filing patent infringement lawsuits against contributors (us).
-  * **User Protection (Patent Grant):** Explicitly grants users a patent license for any contributor patents embodied in the code, similar to MIT.
-  * **Trademark Protection (Non-Endorsement):** Includes a clause (Section 6) that restricts the use of our trademarks (like `Infradise Inc.` or `Visualkube`), providing an effect similar to the "non-endorsement" clause in the BSD-3 license.
-
-**License Compatibility:** Please note that the Apache 2.0 license is **compatible with GPLv3**, but it is **not compatible with GPLv2**.
-
-All versions published prior to this change remain available under the MIT License. All future contributions and versions will be licensed under Apache License 2.0.
