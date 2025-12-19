@@ -2,7 +2,7 @@
 
 # Introduction
 
-The `valkey_client` is a Dart client for Valkey and Redis, supporting Standalone, Sentinel, and Cluster modes with auto-failover, smart connection pooling, sharded Pub/Sub, multi-key operations, command timeouts, RESP3 parsing, type-safe exceptions, and logger.
+The `valkey_client` is a smart client for Valkey and Redis, supporting Standalone, Sentinel, and Cluster modes with auto-failover, smart connection pooling, sharded Pub/Sub, multi-key operations, command timeouts, RESP3 parsing, type-safe exceptions, and logger.
 
 ## Helpers
 
