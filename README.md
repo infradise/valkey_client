@@ -49,6 +49,9 @@ The `valkey_client` is a smart client for Valkey and Redis, supporting Standalon
 
 To enhance DX for both Redis and Valkey developers, we provide fully compatible aliases. You can use the class names you are most comfortable with.
 
+- For instance, `RedisClient` is available as an alias of `ValkeyClient` to enhance developer experience (DX).
+- Both classes and helper functions are fully compatible — choose whichever name feels natural for your project.
+
 ### Clients
 
 | Role | Redis Alias | Valkey Class | Description |
@@ -83,11 +86,7 @@ To enhance DX for both Redis and Valkey developers, we provide fully compatible 
 
 ## Usage
 
-`RedisClient` is available as an alias of `ValkeyClient` to enhance developer experience (DX).
-
-Both classes and helper functions are fully compatible — choose whichever name feels natural for your project.
-
-You can use either `ValkeyClient` or `RedisClient`.  
+### 1\. Example for Standalone or Sentinel environment 
 
 <table>
 <tr>
@@ -131,6 +130,78 @@ void main() async {
       host: '127.0.0.1',
       port: 6379
     );
+    await client.set('key', 'value');
+    print(await client.get('key'));
+
+  } catch (e) {
+    print('❌ Failed: $e');
+  } finally {
+    await client.close();
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+
+### 2\. Example for Cluster environment
+
+<table>
+<tr>
+<td>
+
+**`For Redis users`**
+
+```dart
+import 'package:valkey_client/redis_client.dart';
+
+void main() async {
+
+  final nodes = [
+    RedisConnectionSettings(
+      host: '127.0.0.1',
+      port: 7001,
+    ),
+  ];
+
+  final client = RedisClusterClient(nodes);
+  try {
+    await client.connect();
+    
+    await client.set('key', 'value');
+    print(await client.get('key'));
+
+  } catch (e) {
+    print('❌ Failed: $e');
+  } finally {
+    await client.close();
+  }
+}
+```
+
+</td>
+<td>
+
+**`For Valkey users`**
+
+```dart
+import 'package:valkey_client/valkey_client.dart';
+
+void main() async {
+
+  final nodes = [
+    ValkeyConnectionSettings(
+      host: '127.0.0.1',
+      port: 7001,
+    ),
+  ];
+
+  final client = ValkeyClusterClient(nodes);
+  try {
+    await client.connect();
+
     await client.set('key', 'value');
     print(await client.get('key'));
 
