@@ -86,6 +86,8 @@ To enhance DX for both Redis and Valkey developers, we provide fully compatible 
 
 ## Usage
 
+Refer to the [Wiki](https://github.com/infradise/valkey_client/wiki) page in our GitHub repository to see more examples.
+
 ### 1\. Example for Standalone or Sentinel environment 
 
 <table>
@@ -218,4 +220,3 @@ void main() async {
 </table>
 
 
-See more examples on the [Wiki](https://github.com/infradise/valkey_client/wiki) page in our GitHub repository.
