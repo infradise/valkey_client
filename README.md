@@ -619,11 +619,3 @@ ValkeyClient.setLogLevel(ValkeyLogLevel.info);
 // Disable logging (default)
 ValkeyClient.setLogLevel(ValkeyLogLevel.off);
 ```
-
-## Maintained By
-
-Maintained by the developers of [Visualkube Jet](https://jet.visualkube.com) and [Keyscope](https://keyscope.dev) at [Infradise Inc](https://visualkube.com/about-us). We believe in giving back to the Dart & Flutter community.
-
-## License
-
-This project is licensed under the **Apache License 2.0**.
