@@ -81,20 +81,21 @@ To enhance DX for both Redis and Valkey developers, we provide fully compatible 
 | **Parsing** | `RedisParsingException` | `ValkeyParsingException` | Thrown when the response cannot be parsed (RESP3). |
 
 
-
 ## Usage
-
-### Redis
 
 `RedisClient` is available as an alias of `ValkeyClient` to enhance developer experience (DX).
 
-You can use either `ValkeyClient` or `RedisClient`.  
 Both classes and helper functions are fully compatible — choose whichever name feels natural for your project.
 
-### Quick Example (RedisClient)
+You can use either `ValkeyClient` or `RedisClient`.  
+
+<table>
+<tr>
+<td>
+
+**`For Redis users`**
 
 ```dart
-// You can import RedisClient directly — no need to switch to ValkeyClient.
 import 'package:valkey_client/redis_client.dart';
 
 void main() async {
@@ -115,404 +116,35 @@ void main() async {
 }
 ```
 
-👉 All examples below use ValkeyClient, but you can replace it with RedisClient without any changes.  
-**Note**: Not all examples are fully interchangeable yet, but we plan to make them 100% compatible.
+</td>
+<td>
 
-
-### Valkey
-
-`valkey_client` supports **Standalone, Sentinel, and Cluster** environments.
-New users are encouraged to start with **Group 1**. Production applications should use **Group 2** (for Standalone/Sentinel) or **Group 3** (for Cluster).
-
-
-
-### Group 1: Standalone/Sentinel (Single Connection)
-
-This is the most basic way to connect and run commands using the `ValkeyClient` class. It is recommended for new users, simple tests, and scripts. (See more examples in the **[Example tab](https://pub.dev/packages/valkey_client/example)**.)
-
-#### 1\. Basic: Connection Patterns (from [example/valkey\_client\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/valkey_client_example.dart))
-
-`ValkeyClient` can be configured via its constructor (`fixedClient`) or by passing settings to the `connect()` method (`flexibleClient`).
-
-```dart
-// 1. "Fixed Client": Constructor-based configuration
-// (Match your server setup from the "Getting Started" section)
-
-// Option 1: No Authentication
-final fixedClient = ValkeyClient(host: '127.0.0.1', port: 6379);
-
-// Option 2: Password Only
-// final fixedClient = ValkeyClient(host: '127.0.0.1', port: 6379, password: 'my-super-secret-password');
-
-// Option 3: Username + Password (ACL)
-// final fixedClient = ValkeyClient(host: '127.0.0.1', port: 6379, username: 'default', password: 'my-super-secret-password');
-
-try {
-  await fixedClient.connect();
-  print(await fixedClient.ping()); // Output: PONG
-} finally {
-  await fixedClient.close();
-}
-
-
-// 2. "Flexible Client": Method-based configuration
-// This pattern is useful for managing connections dynamically.
-final flexibleClient = ValkeyClient(); // No config in constructor
-try {
-  await flexibleClient.connect(
-    host: '127.0.0.1',
-    port: 6379,
-    // password: 'my-super-secret-password'
-  );
-  print(await flexibleClient.ping()); // Output: PONG
-} finally {
-  await flexibleClient.close();
-}
-```
-
-#### 2\. Standard: Basic Usage (from [example/simple\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/simple_example.dart))
-
-This is the standard `try-catch-finally` structure to handle exceptions and ensure `close()` is always called.
+**`For Valkey users`**
 
 ```dart
 import 'package:valkey_client/valkey_client.dart';
 
 void main() async {
-  final client = ValkeyClient(host: '127.0.0.1', port: 6379);
-
+  final client = ValkeyClient();
   try {
-    await client.connect();
-    
-    await client.set('greeting', 'Hello, Valkey!');
-    final value = await client.get('greeting');
-    print(value); // Output: Hello, Valkey!
-
-  } on ValkeyConnectionException catch (e) {
-    print('Connection failed: $e');
-  } on ValkeyServerException catch (e) {
-    print('Server returned an error: $e');
-  } finally {
-    // Always close the connection
-    await client.close();
-  }
-}
-```
-
-#### Atomic Counters
-
-```dart
-// Atomic increment/decrement operations
-await client.set('score', '10');
-final newScore = await client.incr('score'); // 11
-await client.decrBy('score', 5); // 6
-```
-
-
-
-#### 3\. Application: Pub/Sub (from [example/valkey\_client\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/valkey_client_example.dart))
-
-`ValkeyClient` supports Pub/Sub. `subscribe()` returns a `Subscription` object, and you **must** `await sub.ready` to ensure the subscription is active before publishing.
-
-```dart
-  // Use two clients: one to subscribe, one to publish
-  final subscriber = ValkeyClient(host: '127.0.0.1', port: 6379);
-  final publisher = ValkeyClient(host: '127.0.0.1', port: 6379);
-  StreamSubscription<ValkeyMessage>? listener;
-
-  try {
-    await Future.wait([subscriber.connect(), publisher.connect()]);
-    
-    final channel = 'news:updates';
-
-    // 1. Subscribe and get the Subscription object
-    final sub = subscriber.subscribe([channel]);
-    
-    // 2. MUST await sub.ready before publishing
-    print('Waiting for subscription confirmation...');
-    await sub.ready.timeout(Duration(seconds: 2));
-    print('Subscription confirmed!');
-
-    // 3. Listen to the message stream
-    listener = sub.messages.listen((message) {
-      print('📬 Received: ${message.message} (from channel: ${message.channel})');
-    });
-
-    // 4. Publish messages
-    await publisher.publish(channel, 'valkey_client v2.0.0 has been released!');
-
-    await Future.delayed(Duration(seconds: 1)); // Wait to receive message
+    await client.connect(
+      host: '127.0.0.1',
+      port: 6379
+    );
+    await client.set('key', 'value');
+    print(await client.get('key'));
 
   } catch (e) {
-    print('❌ Pub/Sub Example Failed: $e');
-  } finally {
-    await listener?.cancel();
-    await Future.wait([subscriber.close(), publisher.close()]);
-    print('Pub/Sub clients closed.');
-  }
-```
-
-
-
-### Group 2: Production Pool (Standalone/Sentinel)
-
-#### Connection Pooling
-
-For all applications — and especially for **production server environments** with high concurrency — it is **strongly recommended** to use the built-in **`ValkeyPool`** class instead of managing single `ValkeyClient` connections or connecting/closing individual clients.
-
-The pool manages connections efficiently, preventing performance issues and resource exhaustion.
-
-See below for both **basic** and **application** pooling examples for concurrent requests, including acquiring/releasing connections, handling wait queues, and choosing the right approach for your workload.
-
-#### 1\. Basic: Pool Usage (from [example/simple\_pool\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/simple_pool_example.dart))
-
-Acquire a connection with `pool.acquire()` and return it with `pool.release()`.
-
-```dart
-import 'package:valkey_client/valkey_client.dart';
-
-void main() async {
-  // 1. Define connection settings for the pool
-  final settings = ValkeyConnectionSettings(
-    host: '127.0.0.1',
-    port: 6379,
-    // password: 'my-super-secret-password',
-  );
-
-  // 2. Create a pool (e.g., max 10 connections)
-  final pool = ValkeyPool(connectionSettings: settings, maxConnections: 10);
-  ValkeyClient? client;
-
-  try {
-    // 3. Acquire a client from the pool
-    client = await pool.acquire();
-    
-    // 4. Run commands
-    await client.set('greeting', 'Hello from ValkeyPool!');
-    final value = await client.get('greeting');
-    print(value); // Output: Hello from ValkeyPool!
-    
-  } on ValkeyConnectionException catch (e) {
-    print('Connection or pool acquisition failed: $e');
-  } on ValkeyServerException catch (e) {
-    print('Server returned an error: $e');
-  } finally {
-    // 5. Release the client back to the pool
-    if (client != null) {
-      pool.release(client);
-    }
-    // 6. Close the pool when the application shuts down
-    await pool.close();
-  }
-}
-```
-
-#### 2\. Application: Concurrent Pool Handling (from [example/pool\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/pool_example.dart))
-
-This shows how `ValkeyPool` handles concurrent requests up to `maxConnections` and uses a wait queue when the pool is full.
-
-```dart
-import 'dart:async';
-import 'package:valkey_client/valkey_client.dart';
-
-/// Helper function to simulate a web request using the pool.
-Future<void> handleRequest(ValkeyPool pool, String userId) async {
-  ValkeyClient? client;
-  try {
-    // 1. Acquire connection (waits if pool is full)
-    print('[$userId] Acquiring connection...');
-    client = await pool.acquire().timeout(Duration(seconds: 2));
-    print('[$userId] Acquired!');
-
-    // 2. Use connection
-    await client.set('user:$userId', 'data');
-    await Future.delayed(Duration(milliseconds: 500)); // Simulate work
-
-  } on ValkeyException catch (e) {
-    print('[$userId] Valkey Error: $e');
-  } on TimeoutException {
-    print('[$userId] Timed out waiting for a connection!');
-  } finally {
-    // 3. Release connection back to pool
-    if (client != null) {
-      print('[$userId] Releasing connection...');
-      pool.release(client);
-    }
-  }
-}
-
-Future<void> main() async {
-  final settings = ValkeyConnectionSettings(host: '127.0.0.1', port: 6379);
-  
-  // Create a pool with a max of 3 connections
-  final pool = ValkeyPool(connectionSettings: settings, maxConnections: 3);
-
-  print('Simulating 5 concurrent requests with a pool size of 3...');
-
-  // 3. Simulate 5 concurrent requests
-  final futures = <Future>[
-    handleRequest(pool, 'UserA'),
-    handleRequest(pool, 'UserB'),
-    handleRequest(pool, 'UserC'), // These 3 get connections immediately
-    handleRequest(pool, 'UserD'), // This one will wait
-    handleRequest(pool, 'UserE'), // This one will wait
-  ];
-
-  await Future.wait(futures);
-  await pool.close();
-}
-```
-
-#### Smart Release
-
-`ValkeyPool` now supports **Smart Release**. You don\'t need to manually discard connections that have changed state (e.g., inside a Transaction or Pub/Sub) when releasing it.
-
-```dart
-// Just use release()!
-// The pool automatically detects if the client is dirty (Stateful) or closed
-// and efficiently discards/replaces it if necessary.
-pool.release(client);
-```
-
-
-
-### Group 3: Cluster Mode (Advanced)
-
-This group is for connecting to a Valkey **Cluster Mode** environment.
-
-#### Sharded Pub/Sub
-
-ValkeyClusterClient for Cluster (from [example/cluster\_sharded\_pubsub\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_sharded_pubsub_example.dart))
-
-Sharded Pub/Sub reduces network traffic in cluster environments by routing messages only to the node responsible for the channel's slot.
-
-```dart
-// 1. Subscribe to sharded channels
-// In Cluster mode, this automatically routes to the correct nodes.
-final sub = client.ssubscribe(['shard:news:{sports}', 'shard:news:{tech}']);
-await sub.ready;
-
-// 2. Handle incoming messages
-sub.messages.listen((msg) {
-  print('Received on ${msg.channel}: ${msg.message}');
-});
-
-// 3. Publish to a specific shard
-await client.spublish('shard:news:{sports}', 'Lakers won!');
-
-// 4. Unsubscribe
-await sub.unsubscribe();
-```
-
-**Note:** You can also use `ssubscribe` and `spublish` with `ValkeyClient` (Standalone) on compatible servers (Redis 7.0+ / Valkey 9.0+). See ValkeyClient for Standalone (from [example/sharded\_pubsub\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/sharded_pubsub_example.dart))
-
-
-#### Automatic Routing (from [example/cluster\_client\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_client_example.dart))
-
-Use `ValkeyClusterClient`. This client **auto-discovers** the cluster topology via `CLUSTER SLOTS` on `connect()` and **auto-routes** commands like `SET`/`GET` to the correct node.
-
-```dart
-import 'package:valkey_client/valkey_client.dart';
-
-void main() async {
-  // 1. Define initial seed nodes (only one is needed)
-  final initialNodes = [
-    ValkeyConnectionSettings(
-      host: '127.0.0.1',
-      port: 7001, // Connect to any node in the cluster
-    ),
-  ];
-
-  // 2. Create the cluster client
-  final client = ValkeyClusterClient(initialNodes);
-
-  try {
-    // 3. Connect (this fetches topology and builds pools)
-    print('Connecting to cluster...');
-    await client.connect();
-    print('✅ Cluster connected and slot map loaded.');
-
-    // 4. Run commands (will be auto-routed)
-    print('\nRunning SET command for "key:A"...');
-    await client.set('key:A', 'Hello from Node A');
-    
-    print('Running SET command for "key:B"...');
-    await client.set('key:B', 'Hello from Node B');
-
-    print('GET response for "key:A": ${await client.get("key:A")}');
-    print('GET response for "key:B": ${await client.get("key:B")}');
-
-  } on ValkeyException catch (e) {
-    print('\n❌ Cluster Error: $e');
-  } finally {
-    // 5. Close all pooled cluster connections
-    print('\nClosing all cluster connections...');
-    await client.close();
-  }
-}
-```
-
-#### Automatic Failover
-
-`ValkeyClusterClient` is resilient to node failures. If a master node crashes or becomes unreachable:
-
-1.  The client detects the connection failure (e.g., `SocketException`).
-2.  It automatically refreshes the cluster topology from remaining nodes.
-3.  It finds the new master node and retries the command.
-
-This happens transparently to the user. You do not need to catch connection exceptions for failovers.
-
-
-#### Multi-key Operations: Scatter-Gather with Pipelined GETs (from [example/cluster\_mget\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_mget_example.dart))
-
-`ValkeyClusterClient` supports `MGET` even if keys are distributed across different nodes. It uses a Scatter-Gather strategy with pipelining to ensure high performance and correct ordering.
-
-```dart
-// Retrieve values from multiple nodes in parallel
-final results = await client.mget(['key:A', 'key:B', 'key:C']);
-print(results); // ['Value-A', 'Value-B', 'Value-C']
-```
-
-#### Manual Topology Fetch (from [example/cluster\_auto\_discovery\_example.dart](https://github.com/infradise/valkey_client/blob/main/example/cluster_auto_discovery_example.dart))
-
-If you need to manually inspect the topology, you can use a standard `ValkeyClient` (single connection) to call `clusterSlots()` directly.
-
-```dart
-import 'package:valkey_client/valkey_client.dart';
-
-void main() async {
-  final client = ValkeyClient(host: '127.0.0.1', port: 7001);
-
-  try {
-    await client.connect();
-    print('✅ Connected to cluster node at 127.0.0.1:7001');
-
-    print('\nFetching cluster topology using CLUSTER SLOTS...');
-    final List<ClusterSlotRange> slotRanges = await client.clusterSlots();
-
-    print('Cluster topology loaded. Found ${slotRanges.length} slot ranges:');
-    for (final range in slotRanges) {
-      print('--------------------');
-      print('  Slots: ${range.startSlot} - ${range.endSlot}');
-      print('  Master: ${range.master.host}:${range.master.port}');
-    }
-  } on ValkeyException catch (e) {
-    print('\n❌ Error: $e');
+    print('❌ Failed: $e');
   } finally {
     await client.close();
   }
 }
 ```
 
+</td>
+</tr>
+</table>
 
-### Logging Configuration
 
-By default, the client logs are disabled (`ValkeyLogLevel.off`).
-You can enable logging globally to debug connection or parsing issues.
-
-```dart
-// Enable detailed logging
-ValkeyClient.setLogLevel(ValkeyLogLevel.info);
-
-// Disable logging (default)
-ValkeyClient.setLogLevel(ValkeyLogLevel.off);
-```
+See more examples on the [Wiki](https://github.com/infradise/valkey_client/wiki) page in our GitHub repository.
