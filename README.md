@@ -2,7 +2,7 @@
 
 # Introduction
 
-The `valkey_client` is a smart client for Valkey and Redis, supporting Standalone, Sentinel, and Cluster modes with auto-failover, smart connection pooling, sharded Pub/Sub, multi-key operations, command timeouts, RESP3 parsing, type-safe exceptions, and logger.
+The `valkey_client` is a smart client for Valkey and Redis, supporting Standalone, Sentinel, and Cluster modes with auto-failover, smart connection pooling, sharded Pub/Sub, multi-key operations, command timeouts, RESP3 parsing, type-safe exceptions, and built-in logger, SSL/TLS.
 
 ## Helpers
 
@@ -12,6 +12,7 @@ The `valkey_client` is a smart client for Valkey and Redis, supporting Standalon
 > **Keyscope** and **Visualkube Jet** are plugins for Android Studio and JetBrains IDEs.
 
 ## Features
+  * **Enterprise Security (v2.0.0+):** Native SSL/TLS support for secure communication. Fully compatible with major cloud providers (AWS, Azure, GCP) and supports custom security contexts (including self-signed certificates).
   * **Automatic Failover:** The client now survives node failures. If a master node goes down (connection refused/timeout), the client automatically refreshes the cluster topology and reroutes commands to the new master without throwing an exception.
   * **Connection Pool Hardening:** Implemented **Smart Release** mechanism. The pool automatically detects and discards "dirty" connections (e.g., inside Transaction or Pub/Sub) upon release, preventing pool pollution and resource leaks.
   * **Enhanced Developer Experience:** Expanded `Redis` aliases to include Exceptions, Configuration, and Data Models (`RedisException`, `RedisMessage`, etc.) for a seamless migration experience.
