@@ -1,6 +1,6 @@
 name: valkey_client
 description: Smart client for Valkey and Redis. Supports Standalone, Sentinel, and Cluster modes.
-version: 1.8.0
+version: 2.0.0
 repository: https://github.com/infradise/valkey_client
 homepage: https://keyscope.dev
 license: Apache-2.0
