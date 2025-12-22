@@ -1,6 +1,17 @@
 # Changelog
 
+
+## 2.0.0
+
+### Added
+- **Enterprise SSL/TLS Support:** Implemented full support for encrypted connections (`SecureSocket`) across Standalone, Pool, and Cluster clients.
+    - **Configuration:** Added `useSsl`, `sslContext`, and `onBadCertificate` options to `ValkeyConnectionSettings`.
+    - **Cloud Ready:** Fully compatible with managed services requiring TLS (AWS ElastiCache, Azure Cache for Redis, GCP Memorystore).
+    - **Dev Friendly:** Supports self-signed certificates via the `onBadCertificate` callback for local development.
+
+
 ## 1.8.0
+
 ### Added
 - **Automatic Cluster Failover:** Implemented topology refresh and retry logic on connection failures. The client now automatically detects dead nodes, updates the cluster map, and redirects commands to the new master node, ensuring high availability during server outages.
 
