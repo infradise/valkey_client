@@ -4,6 +4,8 @@ import 'package:valkey_client/src/cluster_info.dart';
 import 'package:valkey_client/valkey_commands_base.dart';
 export 'package:valkey_client/src/cluster_info.dart'
     show ClusterNodeInfo, ClusterSlotRange;
+export 'package:valkey_client/src/connection_settings.dart'
+    show ValkeyConnectionSettings;
 
 /// Represents a message received from a subscribed channel or pattern.
 class ValkeyMessage {
@@ -214,26 +216,4 @@ abstract class ValkeyClientBase implements ValkeyCommandsBase {
   ///
   /// Returns 'OK'.
   Future<String> discard();
-}
-
-/// Holds all configuration options for creating a new connection.
-///
-/// Used by [ValkeyPool] to create new client instances.
-class ValkeyConnectionSettings {
-  final String host;
-  final int port;
-  final String? username;
-  final String? password;
-
-  /// The maximum duration to wait for a response to any command.
-  /// Defaults to 10 seconds.
-  final Duration commandTimeout;
-
-  ValkeyConnectionSettings({
-    this.host = '127.0.0.1',
-    this.port = 6379,
-    this.username,
-    this.password,
-    this.commandTimeout = const Duration(seconds: 10),
-  });
 }
