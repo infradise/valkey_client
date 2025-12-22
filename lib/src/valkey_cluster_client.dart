@@ -109,9 +109,15 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
     final nodeSettings = ValkeyConnectionSettings(
       host: mappedHost, // Use the MAPPED host (e.g., '127.0.0.1')
       port: node.port, // Use the correct port (e.g., 7002)
-      commandTimeout: _defaultSettings.commandTimeout,
+      // commandTimeout: _defaultSettings.commandTimeout,
       username: _defaultSettings.username,
       password: _defaultSettings.password,
+      commandTimeout: _defaultSettings.commandTimeout,
+      connectTimeout: _defaultSettings.connectTimeout,
+      // [v2.0.0] Apply SSL settings to the new pool
+      useSsl: _defaultSettings.useSsl,
+      sslContext: _defaultSettings.sslContext,
+      onBadCertificate: _defaultSettings.onBadCertificate,
     );
 
     // Create a new pool.
@@ -298,8 +304,13 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
             port: int.parse(parts[1]),
             username: _defaultSettings.username,
             password: _defaultSettings.password,
-            commandTimeout: _defaultSettings.commandTimeout,
             // Recommended: 2s for fast timeout for refresh/discovery
+            commandTimeout: _defaultSettings.commandTimeout,
+            connectTimeout: _defaultSettings.connectTimeout,
+            // [v2.0.0] Inherit SSL settings for discovery candidates
+            useSsl: _defaultSettings.useSsl,
+            sslContext: _defaultSettings.sslContext,
+            onBadCertificate: _defaultSettings.onBadCertificate,
           ));
         }
       }
@@ -319,6 +330,11 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
           username: nodeConfig.username,
           password: nodeConfig.password,
           commandTimeout: nodeConfig.commandTimeout, // Recommended: 3s
+          connectTimeout: _defaultSettings.connectTimeout,
+          // [v2.0.0] Use SSL for topology discovery connection
+          useSsl: _defaultSettings.useSsl,
+          sslContext: _defaultSettings.sslContext,
+          onBadCertificate: _defaultSettings.onBadCertificate,
         );
 
         await tempClient.connect();
