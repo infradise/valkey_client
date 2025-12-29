@@ -40,10 +40,10 @@ class ValkeyConnectionSettings {
   final bool Function(X509Certificate)? onBadCertificate;
 
   ValkeyConnectionSettings({
-    required this.host, // '127.0.0.1'
-    required this.port, // 6379
-    // this.host = '127.0.0.1',
-    // this.port = 6379,
+    // required this.host, // '127.0.0.1'
+    // required this.port, // 6379
+    this.host = '127.0.0.1',
+    this.port = 6379,
 
     this.username,
     this.password,

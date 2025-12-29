@@ -104,7 +104,7 @@ class ValkeyPool {
         username: _connectionSettings.username,
         password: _connectionSettings.password,
         commandTimeout: _connectionSettings.commandTimeout,
-        connectTimeout: _connectionSettings.connectTimeout,
+        // connectTimeout: _connectionSettings.connectTimeout,
 
         // [v2.0.0] Pass SSL options from Pool settings to the Client
         useSsl: _connectionSettings.useSsl,

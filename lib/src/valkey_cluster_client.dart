@@ -330,7 +330,7 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
           username: nodeConfig.username,
           password: nodeConfig.password,
           commandTimeout: nodeConfig.commandTimeout, // Recommended: 3s
-          connectTimeout: _defaultSettings.connectTimeout,
+          // connectTimeout: _defaultSettings.connectTimeout,
           // [v2.0.0] Use SSL for topology discovery connection
           useSsl: _defaultSettings.useSsl,
           sslContext: _defaultSettings.sslContext,

@@ -123,6 +123,14 @@ class ValkeyClient implements ValkeyClientBase {
   /// The timeout duration for commands.
   final Duration _commandTimeout;
 
+  // final Duration _connectTimeout;
+  // final ValkeyConnectionSettings _config;
+
+  // [v2.0.0] SSL Configuration
+  final bool _useSsl;
+  final SecurityContext? _sslContext;
+  final bool Function(X509Certificate)? _onBadCertificate;
+
   // Command/Response Queue
   /// A queue of Completers, each waiting for a response.
   final Queue<Completer<dynamic>> _responseQueue = Queue();
@@ -216,11 +224,50 @@ class ValkeyClient implements ValkeyClientBase {
     String? username,
     String? password,
     Duration commandTimeout = const Duration(seconds: 10),
+    // Duration connectTimeout = const Duration(seconds: 10),
+    // [v2.0.0] Add SSL parameters
+    bool useSsl = false,
+    SecurityContext? sslContext,
+    bool Function(X509Certificate)? onBadCertificate,
   })  : _defaultHost = host,
         _defaultPort = port,
         _defaultUsername = username,
         _defaultPassword = password,
-        _commandTimeout = commandTimeout;
+        _commandTimeout = commandTimeout,
+        // _connectTimeout = connectTimeout,
+        // [v2.0.0] Initialize SSL settings
+        _useSsl = useSsl,
+        _sslContext = sslContext,
+        _onBadCertificate = onBadCertificate;
+
+  /// Creates a client using a [ValkeyConnectionSettings] object.
+  factory ValkeyClient.fromSettings(ValkeyConnectionSettings settings) => ValkeyClient(
+      host: settings.host,
+      port: settings.port,
+      username: settings.username,
+      password: settings.password,
+      commandTimeout: settings.commandTimeout,
+      // [v2.0.0] SSL Options mapping
+      useSsl: settings.useSsl,
+      sslContext: settings.sslContext,
+      onBadCertificate: settings.onBadCertificate,
+    );
+
+  // TODO: REVIRE REQUIRED. -> REMOVE. NEED CONSENSUS.
+  // })  : _config = ValkeyConnectionSettings(
+  //           host: host,
+  //           port: port,
+  //           username: username,
+  //           password: password,
+  //           commandTimeout: commandTimeout,
+  //           connectTimeout: connectTimeout,
+  //           // [v2.0.0] Initialize SSL settings
+  //           useSsl: useSsl,
+  //           sslContext: sslContext,
+  //           onBadCertificate: onBadCertificate
+  //       );
+  // Constructor utilizing an existing settings object
+  // ValkeyClient.fromSettings(this._config);
 
   /// A Future that completes once the connection and authentication are successful.
   @override
@@ -285,8 +332,22 @@ class ValkeyClient implements ValkeyClientBase {
         hostToConnect = InternetAddress.loopbackIPv4;
       }
 
-      // 1. Attempt to connect the socket using the corrected host.
-      _socket = await Socket.connect(hostToConnect, _lastPort);
+      // 1. Attempt to connect the socket (SSL or Plain).
+      if (_useSsl) {
+        // [v2.0.0] Secure Connection
+        _socket = await SecureSocket.connect(
+          hostToConnect,
+          _lastPort,
+          context: _sslContext,
+          onBadCertificate: _onBadCertificate,
+          // SecureSocket supports timeout, but standard Socket.connect in Dart
+          // doesn't usually expose it directly in the simple signature.
+          // We rely on the Future timeout if needed, or default OS timeout.
+        );
+      } else {
+        // [Existing] Plain Connection
+        _socket = await Socket.connect(hostToConnect, _lastPort);
+      }
       // --- END: v1.3.0 IPv6 HOTFIX ---
 
       // 2. Set up the socket stream listener.
