@@ -131,8 +131,8 @@ dart pub publish --dry-run
 Update the `version` field in `pubspec.yaml` to the new version number.
 
 ```yaml
-# version: 1.7.0  # Previous version
-version: 1.8.0   # New version
+# version: 1.8.0  # Previous version
+version: 2.0.0   # New version
 ```
 
 ### Commit the Version Bump
@@ -140,7 +140,7 @@ version: 1.8.0   # New version
 Commit the version change with a conventional commit message.
 
 ```
-build: bump version to 1.8.0
+build: bump version to 2.0.0
 ```
 
 ## Tag the Release Locally
@@ -148,13 +148,13 @@ build: bump version to 1.8.0
 Create a Git tag corresponding to the new version and push it to the remote repository.
 
 ```sh
-git tag v1.8.0
-git push origin v1.8.0
+git tag v2.0.0
+git push origin v2.0.0
 ```
 
 ## Create GitHub Release
 
-Create a new release on GitHub. Use the tag you just created (e.g., `v1.8.0`). Copy the relevant section from `CHANGELOG.md` into the release notes.
+Create a new release on GitHub. Use the tag you just created (e.g., `v2.0.0`). Copy the relevant section from `CHANGELOG.md` into the release notes.
 
 ## Publish to pub.dev
 
