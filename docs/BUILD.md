@@ -19,6 +19,30 @@ Expected output:
 00:03 +81: All tests passed!
 ```
 
+### SSL Tests
+
+#### TLS environment
+```sh
+# pwd: docs/testenv/[redis or valkey]
+dart test ../../../test/ssl_connection_test_single_tls.dart
+```
+
+Expected output:
+```sh
+00:00 +2: All tests passed!
+```
+
+#### mTLS environment
+```sh
+# pwd: docs/testenv/[redis or valkey]
+dart test ../../../test/ssl_connection_test_single_mtls.dart
+```
+
+Expected output:
+```sh
+00:00 +1: All tests passed!
+```
+
 ### Examples
 Run the example validations defined in `test/example_test.dart`:  
 ```sh

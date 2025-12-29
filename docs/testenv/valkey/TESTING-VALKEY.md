@@ -9,3 +9,39 @@ docker run --name my-valkey -p 6379:6379 valkey/valkey:latest
 ```sh
 docker compose -f valkey_macos.yaml up --force-recreate
 ```
+
+## OpenSSL
+
+```sh
+mkdir -p tests/tls
+openssl req -x509 -newkey rsa:4096 -keyout tests/tls/valkey.key -out tests/tls/valkey.crt -days 365 -nodes -subj '/CN=localhost'
+# chmod 644 tests/tls/*
+```
+
+## TLS environment
+```sh
+docker run --name valkey-ssl-tls \
+  -v $(pwd)/tests/tls:/tls \
+  -p 6380:6379 \
+  valkey/valkey:latest \
+  --tls-port 6379 \
+  --port 0 \
+  --tls-cert-file /tls/valkey.crt \
+  --tls-key-file /tls/valkey.key \
+  --tls-ca-cert-file /tls/valkey.crt \
+  --tls-auth-clients no
+```
+
+## mTLS environment
+```sh
+docker run --name valkey-ssl-mtls \
+  -v $(pwd)/tests/tls:/tls \
+  -p 6380:6379 \
+  valkey/valkey:latest \
+  --tls-port 6379 \
+  --port 0 \
+  --tls-cert-file /tls/valkey.crt \
+  --tls-key-file /tls/valkey.key \
+  --tls-ca-cert-file /tls/valkey.crt \
+  --tls-auth-clients yes
+```
