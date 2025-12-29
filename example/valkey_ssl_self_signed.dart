@@ -36,10 +36,30 @@ void main() async {
     await client.set('ssl_key', 'Hello Secure World');
     final val = await client.get('ssl_key');
     print('  📤 GET ssl_key -> 📥 $val');
-    
+
   } catch (e) {
     print('  ❌ Error: $e'); // Connection failed
   } finally {
     await client.close();
   }
 }
+
+/*
+EXPECTED OUTPUT
+===============
+
+🔒 [Dev] Connecting to Standalone SSL (Self-Signed)...
+  ✅ Connected securely!
+  Value: works
+  📤 PING -> 📥 PONG
+  📤 GET ssl_key -> 📥 Hello Secure World
+
+OR
+
+🔒 [Dev] Connecting to Standalone SSL (Self-Signed)...
+  ⚠️ Ignoring certificate error for: /CN=localhost
+  ✅ Connected securely!
+  Value: works
+  📤 PING -> 📥 PONG
+  📤 GET ssl_key -> 📥 Hello Secure World
+*/
