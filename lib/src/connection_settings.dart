@@ -44,7 +44,6 @@ class ValkeyConnectionSettings {
     // required this.port, // 6379
     this.host = '127.0.0.1',
     this.port = 6379,
-
     this.username,
     this.password,
     this.commandTimeout = const Duration(seconds: 10),
@@ -65,15 +64,16 @@ class ValkeyConnectionSettings {
     bool? useSsl,
     SecurityContext? sslContext,
     bool Function(X509Certificate)? onBadCertificate,
-  }) => ValkeyConnectionSettings(
-      host: host ?? this.host,
-      port: port ?? this.port,
-      username: username ?? this.username,
-      password: password ?? this.password,
-      commandTimeout: commandTimeout ?? this.commandTimeout,
-      connectTimeout: connectTimeout ?? this.connectTimeout,
-      useSsl: useSsl ?? this.useSsl,
-      sslContext: sslContext ?? this.sslContext,
-      onBadCertificate: onBadCertificate ?? this.onBadCertificate,
-    );
+  }) =>
+      ValkeyConnectionSettings(
+        host: host ?? this.host,
+        port: port ?? this.port,
+        username: username ?? this.username,
+        password: password ?? this.password,
+        commandTimeout: commandTimeout ?? this.commandTimeout,
+        connectTimeout: connectTimeout ?? this.connectTimeout,
+        useSsl: useSsl ?? this.useSsl,
+        sslContext: sslContext ?? this.sslContext,
+        onBadCertificate: onBadCertificate ?? this.onBadCertificate,
+      );
 }

@@ -34,7 +34,6 @@ void main() async {
     await client.set('ssl_key', 'Hello Secure World');
     final val = await client.get('ssl_key');
     print('  📤 GET ssl_key -> 📥 $val');
-
   } catch (e) {
     print('  ❌ Connection failed: $e');
   } finally {

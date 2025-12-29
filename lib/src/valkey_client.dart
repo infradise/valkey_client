@@ -241,17 +241,18 @@ class ValkeyClient implements ValkeyClientBase {
         _onBadCertificate = onBadCertificate;
 
   /// Creates a client using a [ValkeyConnectionSettings] object.
-  factory ValkeyClient.fromSettings(ValkeyConnectionSettings settings) => ValkeyClient(
-      host: settings.host,
-      port: settings.port,
-      username: settings.username,
-      password: settings.password,
-      commandTimeout: settings.commandTimeout,
-      // [v2.0.0] SSL Options mapping
-      useSsl: settings.useSsl,
-      sslContext: settings.sslContext,
-      onBadCertificate: settings.onBadCertificate,
-    );
+  factory ValkeyClient.fromSettings(ValkeyConnectionSettings settings) =>
+      ValkeyClient(
+        host: settings.host,
+        port: settings.port,
+        username: settings.username,
+        password: settings.password,
+        commandTimeout: settings.commandTimeout,
+        // [v2.0.0] SSL Options mapping
+        useSsl: settings.useSsl,
+        sslContext: settings.sslContext,
+        onBadCertificate: settings.onBadCertificate,
+      );
 
   // TODO: REVIRE REQUIRED. -> REMOVE. NEED CONSENSUS.
   // })  : _config = ValkeyConnectionSettings(

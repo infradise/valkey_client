@@ -25,8 +25,7 @@ void main() {
           entity.path.endsWith('cluster_ssl_cloud.dart') ||
           entity.path.endsWith('cluster_ssl_self_signed.dart') ||
           entity.path.endsWith('valkey_ssl_cloud.dart') ||
-          entity.path.endsWith('valkey_ssl_self_signed.dart')
-      ) {
+          entity.path.endsWith('valkey_ssl_self_signed.dart')) {
         // tags.add('skip_example');
         continue;
       }

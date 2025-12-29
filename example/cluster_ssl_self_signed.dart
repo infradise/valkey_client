@@ -25,7 +25,6 @@ void main() async {
     await cluster.set('cluster:ssl', 'secure-sharding');
     final val = await cluster.get('cluster:ssl');
     print('  Value from shard: $val');
-
   } catch (e) {
     print('  ❌ Cluster Error: $e');
   } finally {

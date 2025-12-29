@@ -67,11 +67,10 @@ void main() {
         await cluster.set('test:ssl:cluster', 'sharded-secure');
         final res = await cluster.get('test:ssl:cluster');
         expect(res, equals('sharded-secure'));
-
       } catch (e) {
         if (e is ValkeyConnectionException || e is SocketException) {
-             print('⚠️ Skipped Cluster SSL test: Server unreachable on $seedPort');
-             return;
+          print('⚠️ Skipped Cluster SSL test: Server unreachable on $seedPort');
+          return;
         }
         rethrow;
       } finally {

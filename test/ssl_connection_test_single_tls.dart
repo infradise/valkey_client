@@ -32,7 +32,6 @@ void main() {
 
         final pong = await client.ping();
         expect(pong, equals('PONG'));
-
       } catch (e) {
         // Fail gracefully if no SSL server is running (to avoid breaking CI)
         if (e is ValkeyConnectionException) {
@@ -46,8 +45,8 @@ void main() {
     });
 
     test('Should fail if useSsl is true but server is not SSL', () async {
-       // Connecting to a non-SSL port (e.g., standard 6379) with SSL enabled should fail
-       final client = ValkeyClient(
+      // Connecting to a non-SSL port (e.g., standard 6379) with SSL enabled should fail
+      final client = ValkeyClient(
         host: host,
         port: 6379, // Standard non-SSL port
         useSsl: true,
