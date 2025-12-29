@@ -12,3 +12,7 @@ docs/testenv/valkey/data
 
 # macOS Finder
 .DS_Store
+
+# OpenSSL certificates for testing
+*.crt
+*.key
