@@ -43,6 +43,13 @@ Expected output:
 00:00 +1: All tests passed!
 ```
 
+#### More tests
+```sh
+# pwd: docs/testenv/[redis or valkey]
+dart test ../../../test/ssl_connection_test_single_and_cluster.dart
+dart test ../../../test/ssl_connection_test_single_ssl_and_mtls.dart
+```
+
 ### Examples
 Run the example validations defined in `test/example_test.dart`:  
 ```sh
