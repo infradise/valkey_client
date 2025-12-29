@@ -18,12 +18,20 @@ void main() {
     if (entity is File && entity.path.endsWith('.dart')) {
       final tags = <String>['example'];
 
+      // Cluster II - Failover, Redirection
       if (entity.path.endsWith('cluster_redirection_example.dart') ||
-          entity.path.endsWith('cluster_failover_stress_test.dart')) {
+          entity.path.endsWith('cluster_failover_stress_test.dart') ||
+          // Auth: SSL/TLS
+          entity.path.endsWith('cluster_ssl_cloud.dart') ||
+          entity.path.endsWith('cluster_ssl_self_signed.dart') ||
+          entity.path.endsWith('valkey_ssl_cloud.dart') ||
+          entity.path.endsWith('valkey_ssl_self_signed.dart')
+      ) {
         // tags.add('skip_example');
         continue;
       }
 
+      // Cluster I, No-auth
       test('Run ${entity.path}', () async {
         final result = await Process.run(
           'dart',
