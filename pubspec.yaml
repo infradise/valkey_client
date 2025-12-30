@@ -1,5 +1,5 @@
 name: valkey_client
-description: Smart client for Valkey and Redis. Supports Standalone, Sentinel, and Cluster modes.
+description: A smart, cluster-aware client for Redis and Valkey, built with Dart.
 version: 2.0.0
 repository: https://github.com/infradise/valkey_client
 homepage: https://keyscope.dev
