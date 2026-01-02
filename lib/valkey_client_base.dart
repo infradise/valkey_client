@@ -6,6 +6,8 @@ export 'package:valkey_client/src/cluster_info.dart'
     show ClusterNodeInfo, ClusterSlotRange;
 export 'package:valkey_client/src/connection_settings.dart'
     show ValkeyConnectionSettings;
+export 'package:valkey_client/src/connection_settings.dart';
+export 'package:valkey_client/src/server_metadata.dart';
 
 /// Represents a message received from a subscribed channel or pattern.
 class ValkeyMessage {

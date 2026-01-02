@@ -26,6 +26,7 @@ class ValkeyConnectionSettings {
   final Duration connectTimeout;
 
   // --- v2.0.0 SSL/TLS Support ---
+  // SSL Options (v2.0.0)
 
   /// Whether to use an encrypted SSL/TLS connection.
   /// Default is `false`.
@@ -39,6 +40,10 @@ class ValkeyConnectionSettings {
   /// Returns `true` to allow the connection, `false` to abort.
   final bool Function(X509Certificate)? onBadCertificate;
 
+  // [v2.1.0] Database Selection
+  /// The database index to select after connection. Default is 0.
+  final int database;
+
   ValkeyConnectionSettings({
     // required this.host, // '127.0.0.1'
     // required this.port, // 6379
@@ -51,6 +56,7 @@ class ValkeyConnectionSettings {
     this.useSsl = false,
     this.sslContext,
     this.onBadCertificate,
+    this.database = 0, // Default to DB 0
   });
 
   /// Creates a copy of this settings object with the given fields replaced.
@@ -64,6 +70,7 @@ class ValkeyConnectionSettings {
     bool? useSsl,
     SecurityContext? sslContext,
     bool Function(X509Certificate)? onBadCertificate,
+    int? database,
   }) =>
       ValkeyConnectionSettings(
         host: host ?? this.host,
@@ -75,5 +82,6 @@ class ValkeyConnectionSettings {
         useSsl: useSsl ?? this.useSsl,
         sslContext: sslContext ?? this.sslContext,
         onBadCertificate: onBadCertificate ?? this.onBadCertificate,
+        database: database ?? this.database,
       );
 }
