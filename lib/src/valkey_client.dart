@@ -131,6 +131,13 @@ class ValkeyClient implements ValkeyClientBase {
   final SecurityContext? _sslContext;
   final bool Function(X509Certificate)? _onBadCertificate;
 
+  // [v2.1.0] Config & Metadata
+  final ValkeyConnectionSettings _config;
+  ServerMetadata? _metadata;
+
+  /// Returns the metadata of the connected server.
+  ServerMetadata? get metadata => _metadata;
+
   // Command/Response Queue
   /// A queue of Completers, each waiting for a response.
   final Queue<Completer<dynamic>> _responseQueue = Queue();
@@ -229,7 +236,21 @@ class ValkeyClient implements ValkeyClientBase {
     bool useSsl = false,
     SecurityContext? sslContext,
     bool Function(X509Certificate)? onBadCertificate,
-  })  : _defaultHost = host,
+    int database = 0,
+  })  : _config = ValkeyConnectionSettings(
+            host: host,
+            port: port,
+            username: username,
+            password: password,
+            commandTimeout: commandTimeout,
+            // connectTimeout: connectTimeout,
+            // [v2.0.0] Initialize SSL settings
+            useSsl: useSsl,
+            sslContext: sslContext,
+            onBadCertificate: onBadCertificate,
+            database: database,
+        ),
+        _defaultHost = host,
         _defaultPort = port,
         _defaultUsername = username,
         _defaultPassword = password,
@@ -239,6 +260,9 @@ class ValkeyClient implements ValkeyClientBase {
         _useSsl = useSsl,
         _sslContext = sslContext,
         _onBadCertificate = onBadCertificate;
+
+  // Constructor utilizing an existing settings object
+  // ValkeyClient.fromSettings(this._config);
 
   /// Creates a client using a [ValkeyConnectionSettings] object.
   factory ValkeyClient.fromSettings(ValkeyConnectionSettings settings) =>
@@ -252,23 +276,8 @@ class ValkeyClient implements ValkeyClientBase {
         useSsl: settings.useSsl,
         sslContext: settings.sslContext,
         onBadCertificate: settings.onBadCertificate,
+        database: settings.database,
       );
-
-  // TODO: REVIRE REQUIRED. -> REMOVE. NEED CONSENSUS.
-  // })  : _config = ValkeyConnectionSettings(
-  //           host: host,
-  //           port: port,
-  //           username: username,
-  //           password: password,
-  //           commandTimeout: commandTimeout,
-  //           connectTimeout: connectTimeout,
-  //           // [v2.0.0] Initialize SSL settings
-  //           useSsl: useSsl,
-  //           sslContext: sslContext,
-  //           onBadCertificate: onBadCertificate
-  //       );
-  // Constructor utilizing an existing settings object
-  // ValkeyClient.fromSettings(this._config);
 
   /// A Future that completes once the connection and authentication are successful.
   @override
@@ -384,7 +393,152 @@ class ValkeyClient implements ValkeyClientBase {
       }
     }
 
-    return onConnected;
+    // return onConnected;
+
+    // [v2.1.0 Logic Addition]
+    // Wait for the basic connection and auth to complete first.
+    await onConnected;
+
+    // Now initialize metadata and select DB
+    try {
+      await _initializeConnection();
+    } catch (e) {
+      // If DB selection fails (e.g. index out of range), close connection and rethrow.
+      await close();
+      throw ValkeyConnectionException(
+          'Failed to initialize connection (DB Selection): $e', e);
+    }
+
+    // Return void as the Future<void> signature requires
+  }
+
+  /// [v2.1.0] Detects server info and selects the configured database.
+  Future<void> _initializeConnection() async {
+    // 1. Get INFO SERVER
+    final infoString = await execute(['INFO', 'SERVER']) as String;
+
+    // 2. Parse Metadata (Version, Mode, Max DBs)
+    _metadata = await _parseServerMetadata(infoString);
+
+    // 3. Select Database if needed
+    if (_config.database > 0) {
+      // Check range
+      if (_config.database >= _metadata!.maxDatabases) {
+        throw ValkeyClientException(
+            'Requested database index ${_config.database} is out of range. '
+            'Server (${_metadata!.serverName}) supports 0 to ${_metadata!.maxDatabases - 1}.');
+      }
+
+      // Perform SELECT
+      await execute(['SELECT', _config.database.toString()]);
+    }
+  }
+
+  /// Parses 'INFO SERVER' and checks configs based on User Rules.
+  Future<ServerMetadata> _parseServerMetadata(String info) async {
+    final Map<String, String> infoMap = {};
+    final lines = info.split('\r\n');
+    for (var line in lines) {
+      if (line.contains(':')) {
+        final parts = line.split(':');
+        if (parts.length >= 2) {
+           infoMap[parts[0]] = parts[1];
+        }
+      }
+    }
+
+    // --- Rule 1: Determine Name & Version ---
+    String serverName = 'unknown';
+    String version = '0.0.0';
+
+    if (infoMap.containsKey('valkey_version')) {
+      serverName = 'valkey';
+      version = infoMap['valkey_version']!;
+    } else if (infoMap.containsKey('redis_version')) {
+      serverName = 'redis';
+      version = infoMap['redis_version']!;
+    }
+
+    // --- Detect Mode ---
+    final serverMode = infoMap['server_mode'] ?? 'unknown';
+    RunningMode mode = switch(serverMode) {
+      'cluster' => RunningMode.cluster,
+      'sentinel' => RunningMode.sentinel,
+      'standalone' => RunningMode.standalone,
+      _ => RunningMode.unknown,
+    };
+
+    // --- Rule 2: Determine Max Databases ---
+    int maxDatabases = 16; // Default fallback
+
+    // Logic:
+    // If Valkey >= 9.0.0 -> Check 'cluster-databases'
+    // Else (Valkey < 9.0 OR Redis) -> Check 'databases'
+
+    bool isValkey9OrAbove = false;
+    if (serverName == 'valkey') {
+      isValkey9OrAbove = _compareVersions(version, '9.0.0') >= 0;
+    }
+
+    String configKeyToCheck = 'databases'; // Default for Redis & Old Valkey
+    if (isValkey9OrAbove) {
+      configKeyToCheck = 'cluster-databases';
+    }
+
+    // Fetch the specific config
+    try {
+      final configVal = await _getConfigValue(configKeyToCheck);
+      if (configVal != null) {
+        maxDatabases = int.tryParse(configVal) ?? 16;
+      } else {
+        // If config fetch returns null
+        if (mode == RunningMode.cluster && !isValkey9OrAbove) {
+           // Redis Cluster / Old Valkey Cluster usually supports only DB 0.
+           maxDatabases = 1;
+        }
+      }
+    } catch (_) {
+      // If CONFIG GET fails (permission error, etc.)
+      if (mode == RunningMode.cluster && !isValkey9OrAbove) {
+        maxDatabases = 1;
+      }
+    }
+
+    return ServerMetadata(
+      version: version,
+      serverName: serverName,
+      mode: mode,
+      maxDatabases: maxDatabases,
+    );
+  }
+
+  /// Helper to get a single config value. Returns null if not found/error.
+  Future<String?> _getConfigValue(String parameter) async {
+    try {
+      // CONFIG GET returns ['parameter', 'value']
+      final result = await execute(['CONFIG', 'GET', parameter]);
+      if (result is List && result.length >= 2) {
+        return result[1] as String;
+      }
+    } catch (e) {
+      return null;
+    }
+    return null;
+  }
+
+  /// Helper to compare semantic versions.
+  /// Returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal.
+  int _compareVersions(String v1, String v2) {
+    var v1Parts = v1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    var v2Parts = v2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+
+    for (var i = 0; i < 3; i++) { // Compare major, minor, patch
+      int p1 = (i < v1Parts.length) ? v1Parts[i] : 0;
+      int p2 = (i < v2Parts.length) ? v2Parts[i] : 0;
+      if (p1 > p2) return 1;
+      if (p1 < p2) return -1;
+    }
+    return 0;
   }
 
   // --- Core Data Handler & Parser ---
