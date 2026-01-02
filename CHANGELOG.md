@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.1.0
+
+### Added
+- **Database Selection Support:** Added `database` parameter to `ValkeyConnectionSettings` and `ValkeyClient` constructors to automatically `SELECT` a database upon connection.
+- **Server Metadata API:** Introduced `client.metadata` property and `ServerMetadata` class to expose server information:
+    - `serverName`: Detects 'valkey' or 'redis'.
+    - `version`: Server version string.
+    - `mode`: Running mode (standalone, cluster, sentinel).
+    - `maxDatabases`: The maximum number of available databases.
+- **Valkey 9.0+ Compatibility:** Implemented logic to detect `cluster-databases` config, enabling support for **Numbered Clusters** (multiple databases in cluster mode) specific to Valkey 9.0+.
+
 
 ## 2.0.0
 
