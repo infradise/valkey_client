@@ -48,6 +48,7 @@ Expected output:
 # pwd: docs/testenv/[redis or valkey]
 dart test ../../../test/ssl_connection_test_single_and_cluster.dart
 dart test ../../../test/ssl_connection_test_single_ssl_and_mtls.dart
+dart test database_selection_test.dart
 ```
 
 ### Examples
@@ -99,6 +100,35 @@ Expected output:
 This example runs indefinitely to simulate cluster topology changes and validate redirection resilience.  
 Because it intentionally loops forever, it is not included in the automated test run.
 
+```sh
+dart run example/database_selection.dart
+```
+
+Expected output:
+```sh
+🗄️ Starting Database Selection Example...
+
+🔍 Server Metadata Discovered:
+   - Software: valkey
+   - Version:  9.0.0
+   - Mode:     standalone
+   - Max DBs:  16
+
+✅ Data in DB 1: app:config:mode = production
+```
+OR
+```sh
+🗄️ Starting Database Selection Example...
+
+🔍 Server Metadata Discovered:
+   - Software: valkey
+   - Version:  9.0.0
+   - Mode:     cluster
+   - Max DBs:  1
+
+✅ Data in DB 1: app:config:mode = production
+```
+
 ## Check Dart Formatting
 
 Ensure the code adheres to Dart formatting guidelines.
@@ -131,8 +161,8 @@ dart pub publish --dry-run
 Update the `version` field in `pubspec.yaml` to the new version number.
 
 ```yaml
-# version: 1.8.0  # Previous version
-version: 2.0.0   # New version
+# version: 2.0.0  # Previous version
+version: 2.1.0   # New version
 ```
 
 ### Commit the Version Bump
@@ -140,7 +170,7 @@ version: 2.0.0   # New version
 Commit the version change with a conventional commit message.
 
 ```
-build: bump version to 2.0.0
+build: bump version to 2.1.0
 ```
 
 ## Tag the Release Locally
@@ -148,13 +178,13 @@ build: bump version to 2.0.0
 Create a Git tag corresponding to the new version and push it to the remote repository.
 
 ```sh
-git tag v2.0.0
-git push origin v2.0.0
+git tag v2.1.0
+git push origin v2.1.0
 ```
 
 ## Create GitHub Release
 
-Create a new release on GitHub. Use the tag you just created (e.g., `v2.0.0`). Copy the relevant section from `CHANGELOG.md` into the release notes.
+Create a new release on GitHub. Use the tag you just created (e.g., `v2.1.0`). Copy the relevant section from `CHANGELOG.md` into the release notes.
 
 ## Publish to pub.dev
 
