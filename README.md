@@ -23,6 +23,9 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
 > **Keyscope** and **Visualkube Jet** are plugins for Android Studio and JetBrains IDEs.
 
 ## Features
+  * **Scalable Replica Reads (v2.2.0+):** Boost read performance by offloading read-only commands (e.g., `GET`, `EXISTS`) to replica nodes. Supports `ReadPreference` settings (`master`, `preferReplica`, `replicaOnly`) to control traffic flow.
+  * **Smart Load Balancing (v2.2.0+):** Built-in load balancing strategies (`Round-Robin`, `Random`) to efficiently distribute read traffic across available replicas.
+  * **Automatic Replica Discovery (v2.2.0+):** Automatically detects and connects to replica nodes via `INFO REPLICATION` (Standalone/Sentinel) to maintain an up-to-date pool of connections.
   * **Smart Database Selection (v2.1.0+):** First-class support for selecting databases (0-15+) on connection. Automatically detects **Valkey 9.0+ Numbered Clusters** to enable multi-database support in cluster mode, while maintaining backward compatibility with Redis Clusters (DB 0 only).
   * **Server Metadata Discovery (v2.1.0+):** Access server details via `client.metadata` (Version, Mode, Server Name, Max Databases) to write adaptive logic for Valkey vs. Redis.
   * **Enterprise Security (v2.0.0+):** Native SSL/TLS support for secure communication. Fully compatible with major cloud providers (AWS, Azure, GCP) and supports custom security contexts (including self-signed certificates).
