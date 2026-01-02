@@ -33,14 +33,12 @@ void main() async {
 
     // 3. Verify Isolation (Conceptual):
     // Data written here won't be visible in DB 0.
-
   } catch (e) {
     print('❌ Error: $e');
   } finally {
     await client.close();
   }
 }
-
 
 /*
 EXPECTED OUTPUT

@@ -238,17 +238,17 @@ class ValkeyClient implements ValkeyClientBase {
     bool Function(X509Certificate)? onBadCertificate,
     int database = 0,
   })  : _config = ValkeyConnectionSettings(
-            host: host,
-            port: port,
-            username: username,
-            password: password,
-            commandTimeout: commandTimeout,
-            // connectTimeout: connectTimeout,
-            // [v2.0.0] Initialize SSL settings
-            useSsl: useSsl,
-            sslContext: sslContext,
-            onBadCertificate: onBadCertificate,
-            database: database,
+          host: host,
+          port: port,
+          username: username,
+          password: password,
+          commandTimeout: commandTimeout,
+          // connectTimeout: connectTimeout,
+          // [v2.0.0] Initialize SSL settings
+          useSsl: useSsl,
+          sslContext: sslContext,
+          onBadCertificate: onBadCertificate,
+          database: database,
         ),
         _defaultHost = host,
         _defaultPort = port,
@@ -442,7 +442,7 @@ class ValkeyClient implements ValkeyClientBase {
       if (line.contains(':')) {
         final parts = line.split(':');
         if (parts.length >= 2) {
-           infoMap[parts[0]] = parts[1];
+          infoMap[parts[0]] = parts[1];
         }
       }
     }
@@ -461,7 +461,7 @@ class ValkeyClient implements ValkeyClientBase {
 
     // --- Detect Mode ---
     final serverMode = infoMap['server_mode'] ?? 'unknown';
-    RunningMode mode = switch(serverMode) {
+    RunningMode mode = switch (serverMode) {
       'cluster' => RunningMode.cluster,
       'sentinel' => RunningMode.sentinel,
       'standalone' => RunningMode.standalone,
@@ -480,8 +480,10 @@ class ValkeyClient implements ValkeyClientBase {
       isValkey9OrAbove = _compareVersions(version, '9.0.0') >= 0;
     }
 
-    String configKeyToCheck = switch(serverMode) {
-      'cluster' => isValkey9OrAbove ? 'cluster-databases' : 'databases', // Default for Valkey 9.0+ or below
+    String configKeyToCheck = switch (serverMode) {
+      'cluster' => isValkey9OrAbove
+          ? 'cluster-databases' // Default for Valkey 9.0+
+          : 'databases', // Default for Old Valkey (9.0-)
       _ => 'databases', // Default for Redis
     };
 
@@ -493,8 +495,8 @@ class ValkeyClient implements ValkeyClientBase {
       } else {
         // If config fetch returns null
         if (mode == RunningMode.cluster && !isValkey9OrAbove) {
-           // Redis Cluster / Old Valkey Cluster usually supports only DB 0.
-           maxDatabases = 1;
+          // Redis Cluster / Old Valkey Cluster usually supports only DB 0.
+          maxDatabases = 1;
         }
       }
     } catch (_) {
@@ -532,7 +534,8 @@ class ValkeyClient implements ValkeyClientBase {
     var v1Parts = v1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
     var v2Parts = v2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
 
-    for (var i = 0; i < 3; i++) { // Compare major, minor, patch
+    for (var i = 0; i < 3; i++) {
+      // Compare major, minor, patch
       int p1 = (i < v1Parts.length) ? v1Parts[i] : 0;
       int p2 = (i < v2Parts.length) ? v2Parts[i] : 0;
       if (p1 > p2) return 1;

@@ -29,7 +29,8 @@ void main() {
 
       // Verify Metadata is populated
       expect(clientDb2.metadata, isNotNull);
-      expect(clientDb2.metadata!.maxDatabases, greaterThan(2)); // Standard is 16
+      expect(
+          clientDb2.metadata!.maxDatabases, greaterThan(2)); // Standard is 16
 
       await clientDb2.set('test_isolation_key', 'value_in_db2');
       final valInDb2 = await clientDb2.get('test_isolation_key');
