@@ -480,10 +480,10 @@ class ValkeyClient implements ValkeyClientBase {
       isValkey9OrAbove = _compareVersions(version, '9.0.0') >= 0;
     }
 
-    String configKeyToCheck = 'databases'; // Default for Redis & Old Valkey
-    if (isValkey9OrAbove) {
-      configKeyToCheck = 'cluster-databases';
-    }
+    String configKeyToCheck = switch(serverMode) {
+      'cluster' => isValkey9OrAbove ? 'cluster-databases' : 'databases', // Default for Valkey 9.0+ or below
+      _ => 'databases', // Default for Redis
+    };
 
     // Fetch the specific config
     try {
