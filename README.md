@@ -1,8 +1,19 @@
 [![pub package](https://img.shields.io/pub/v/valkey_client.svg)](https://pub.dev/packages/valkey_client)
 
-# Introduction
+# valkey_client ⚡
 
-The `valkey_client` is a smart client for Valkey and Redis, supporting Standalone, Sentinel, and Cluster modes with auto-failover, smart connection pooling, sharded Pub/Sub, multi-key operations, command timeouts, RESP3 parsing, type-safe exceptions, and built-in logger, SSL/TLS.
+The `valkey_client` is a high-performance, cluster-aware Dart client for Redis and Valkey.
+
+## Overview
+- Deployment modes: Standalone; Sentinel; Cluster
+- Reliability: Automatic failover; smart connection pooling
+- Messaging: Sharded Pub/Sub for scalable messaging
+- Operations: Multi-key operations; configurable command timeouts
+- Protocol: RESP3 parsing with type-safe exceptions
+- Observability: Built-in logging
+- Security: SSL/TLS support
+- Valkey 9.0+ Support
+  - Numbered clusters: Intelligent database selection for seamless cluster management
 
 ## Helpers
 
@@ -12,6 +23,8 @@ The `valkey_client` is a smart client for Valkey and Redis, supporting Standalon
 > **Keyscope** and **Visualkube Jet** are plugins for Android Studio and JetBrains IDEs.
 
 ## Features
+  * **Smart Database Selection (v2.1.0+):** First-class support for selecting databases (0-15+) on connection. Automatically detects **Valkey 9.0+ Numbered Clusters** to enable multi-database support in cluster mode, while maintaining backward compatibility with Redis Clusters (DB 0 only).
+  * **Server Metadata Discovery (v2.1.0+):** Access server details via `client.metadata` (Version, Mode, Server Name, Max Databases) to write adaptive logic for Valkey vs. Redis.
   * **Enterprise Security (v2.0.0+):** Native SSL/TLS support for secure communication. Fully compatible with major cloud providers (AWS, Azure, GCP) and supports custom security contexts (including self-signed certificates).
   * **Automatic Failover:** The client now survives node failures. If a master node goes down (connection refused/timeout), the client automatically refreshes the cluster topology and reroutes commands to the new master without throwing an exception.
   * **Connection Pool Hardening:** Implemented **Smart Release** mechanism. The pool automatically detects and discards "dirty" connections (e.g., inside Transaction or Pub/Sub) upon release, preventing pool pollution and resource leaks.
