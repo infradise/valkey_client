@@ -157,6 +157,13 @@ class ValkeyClient implements ValkeyClientBase {
   int _roundRobinIndex = 0;
   final Random _random = Random();
 
+  // [v2.2.0 Debug Feature] Track the last client used for execution
+  ValkeyClient? _lastUsedClient;
+
+  /// Returns the configuration of the connection used for the last command.
+  /// Useful for debugging load balancing strategies.
+  ValkeyConnectionSettings? get lastUsedConnectionConfig => _lastUsedClient?._config;
+
   // Command/Response Queue
   /// A queue of Completers, each waiting for a response.
   final Queue<Completer<dynamic>> _responseQueue = Queue();
@@ -430,61 +437,90 @@ class ValkeyClient implements ValkeyClientBase {
 
     // Return void as the Future<void> signature requires
 
-    // 3. [v2.2.0] Discover & Connect to Replicas
+    // 3. [v2.2.0] Replica Discovery: Discover & Connect to Replicas
     // Only if the user requested a preference other than 'master'
     if (_config.readPreference != ReadPreference.master) {
       // Avoid recursion: If this instance is already a replica (or auxiliary client), skip.
-      // We can check this by ensuring we don't pass 'readPreference' to children,
-      // OR simply by checking if we are the main client context.
-      // For now, _discoverAndConnectReplicas handles recursion by creating clients with ReadPreference.master.
+      // \ We can check this by ensuring we don't pass 'readPreference' to children,
+      // \ OR simply by checking if we are the main client context.
+      // \ For now, _discoverAndConnectReplicas handles recursion by creating clients with ReadPreference.master.
       await _discoverAndConnectReplicas();
     }
   }
 
-  /// [v2.2.0] Discovers replicas via INFO REPLICATION (Standalone) or CLUSTER SLOTS (Cluster).
+  /// [v2.2.0] Discovers replicas via Explicit Config AND Auto-Discovery.
+  /// Auto-Discovery: INFO REPLICATION (Standalone) or CLUSTER SLOTS (Cluster).
   Future<void> _discoverAndConnectReplicas() async {
     _replicas.clear(); // Clear existing if reconnecting
 
-    // 1. Cluster Mode Discovery
+    // 1. Connect to Explicit Replicas (if any)
+    // These are prioritized as the user manually defined them.
+    if (_config.explicitReplicas != null) {
+      for (final replicaConfig in _config.explicitReplicas!) {
+        await _addReplicaFromConfig(replicaConfig);
+      }
+    }
+
+    // 2. Auto Discovery (Cluster or Standalone)
+    // Always run auto-discovery to find dynamic nodes.
+
+    // 2-1. Cluster Mode Discovery
     if (_metadata?.mode == RunningMode.cluster) {
       try {
-        // [Correct] Use existing clusterSlots() method
         final slots = await clusterSlots();
 
         // Iterate through slots to find replica nodes
         for (final slot in slots) {
           for (final replicaNode in slot.replicas) {
-             await _addReplica(replicaNode.host, replicaNode.port);
+            // Create config inheriting from Master but overriding Host/Port
+            final discoveredConfig = _config.copyWith(
+              host: replicaNode.host,
+              port: replicaNode.port,
+              readPreference: ReadPreference.master, // Prevent recursion
+              explicitReplicas: [], // Clear explicit list for child
+            );
+            // await _addReplica(replicaNode.host, replicaNode.port);
+            await _addReplicaFromConfig(discoveredConfig);
           }
         }
       } catch (e) {
         _log.warning('Failed to discover replicas via CLUSTER SLOTS: $e');
       }
     }
-    // 2. Standalone / Sentinel Mode Discovery
+    // 2-2. Standalone / Sentinel Mode Discovery
     else {
       try {
         final info = await execute(['INFO', 'REPLICATION']);
-        if (info is! String) return;
+        // if (info is! String) return;
 
-        final lines = info.split('\r\n');
-        for (var line in lines) {
-          // Parse slave lines: "slave0:ip=127.0.0.1,port=6380,state=online,..."
-          if (line.startsWith('slave')) {
-            final parts = line.split(',');
-            String? ip;
-            int? port;
-            String state = 'offline';
+        if (info is String) {
+          final lines = info.split('\r\n');
+          for (var line in lines) {
+            // Parse slave lines: "slave0:ip=127.0.0.1,port=6380,state=online,..."
+            if (line.startsWith('slave')) {
+              final parts = line.split(',');
+              String? ip;
+              int? port;
+              String state = 'offline';
 
-            for (var part in parts) {
-              if (part.contains('ip=')) ip = part.split('=')[1];
-              if (part.contains('port=')) port = int.tryParse(part.split('=')[1]);
-              if (part.contains('state=')) state = part.split('=')[1];
-            }
+              for (var part in parts) {
+                if (part.contains('ip=')) ip = part.split('=')[1];
+                if (part.contains('port=')) port = int.tryParse(part.split('=')[1]);
+                if (part.contains('state=')) state = part.split('=')[1];
+              }
 
-            if (ip != null && port != null && state == 'online') {
-              // NOTE: Avoid connecting to self if something is wrong, but usually IP:Port differs.
-              await _addReplica(ip, port);
+              if (ip != null && port != null && state == 'online') {
+                // Auto-discovered nodes inherit Master's Auth/SSL settings
+                final discoveredConfig = _config.copyWith(
+                    host: ip,
+                    port: port,
+                    readPreference: ReadPreference.master,
+                    explicitReplicas: [],
+                );
+                // NOTE: Avoid connecting to self if something is wrong, but usually IP:Port differs.
+                // await _addReplica(ip, port);
+                await _addReplicaFromConfig(discoveredConfig);
+              }
             }
           }
         }
@@ -501,47 +537,92 @@ class ValkeyClient implements ValkeyClientBase {
     }
   }
 
-  Future<void> _addReplica(String host, int port) async {
-    // 1. Implement deduplication logic to prevent redundant connections.
-    // If a client with the same IP and Port is already in the list, skip it.
-    // \ NOTE: Check to prevent connecting to the same replica multiple times.
-    // \ NOTE: Avoid adding duplicates if multiple slots share the same replica
+  /// Helper to connect and add a replica using a full settings object.
+  Future<void> _addReplicaFromConfig(ValkeyConnectionSettings settings) async {
+    // 1. Deduplication
+    //    \ Implement deduplication logic to prevent redundant connections.
+    //    \ If a client with the same IP and Port is already in the list, skip it.
+    //    \ NOTE: Check to prevent connecting to the same replica multiple times.
+    //    \ NOTE: Avoid adding duplicates if multiple slots share the same replica
     for (final r in _replicas) {
-       // Accessing private member '_config' is allowed since we are in the same class.
-       if (r._config.host == host && r._config.port == port) {
-        _log.info('Replica $host:$port is already connected. Skipping.');
+      // Accessing private member '_config' is allowed since we are in the same class.
+      if (r._config.host == settings.host && r._config.port == settings.port) {
+        _log.info('Replica ${settings.host}:${settings.port} is already connected. Skipping.');
         return;
       }
     }
 
     try {
-      // 2. Create settings (a new client) for the replica.
-      // Force ReadPreference.master to prevent infinite recursion
-      // \ NOTE: A replica client should not try to discover its own replicas.
-      final replicaSettings = _config.copyWith(
-        host: host,
-        port: port,
+      // 2. Ensure recursion safety
+      //    \ Create settings (a new client) for the replica.
+      //    \ Force ReadPreference.master to prevent infinite recursion
+      //    \ NOTE: A replica client should not try to discover its own replicas.
+      final safeSettings = settings.copyWith(
         readPreference: ReadPreference.master, // Stop recursion
+        explicitReplicas: [],
       );
 
       // 3. Connect to the replica
-      final replicaClient = ValkeyClient.fromSettings(replicaSettings);
+      final replicaClient = ValkeyClient.fromSettings(safeSettings);
       await replicaClient.connect();
 
       // 4. [Cluster Mode] If metadata indicates cluster, we MUST send READONLY
       // to enable reading from a replica node.
       if (_metadata?.mode == RunningMode.cluster) {
-        await replicaClient.execute(['READONLY']);
+         await replicaClient.execute(['READONLY']);
       }
 
       // 5. Add to the list and log success
       _replicas.add(replicaClient);
-      _log.info('Added replica connection: $host:$port');
+      _log.info('Added replica connection: ${settings.host}:${settings.port}');
     } catch (e) {
       // Log connection failure
-      _log.warning('Failed to connect to replica at $host:$port : $e');
+      _log.warning('Failed to connect to replica at ${settings.host}:${settings.port} : $e');
     }
   }
+
+  // TODO: REVIEW REQUIRED => REMOVE. NEED CONSENSUS.
+  // Future<void> _addReplica(String host, int port) async {
+  //   // 1. Implement deduplication logic to prevent redundant connections.
+  //   // If a client with the same IP and Port is already in the list, skip it.
+  //   // \ NOTE: Check to prevent connecting to the same replica multiple times.
+  //   // \ NOTE: Avoid adding duplicates if multiple slots share the same replica
+  //   for (final r in _replicas) {
+  //      // Accessing private member '_config' is allowed since we are in the same class.
+  //      if (r._config.host == host && r._config.port == port) {
+  //       _log.info('Replica $host:$port is already connected. Skipping.');
+  //       return;
+  //     }
+  //   }
+
+  //   try {
+  //     // 2. Create settings (a new client) for the replica.
+  //     // Force ReadPreference.master to prevent infinite recursion
+  //     // \ NOTE: A replica client should not try to discover its own replicas.
+  //     final replicaSettings = _config.copyWith(
+  //       host: host,
+  //       port: port,
+  //       readPreference: ReadPreference.master, // Stop recursion
+  //     );
+
+  //     // 3. Connect to the replica
+  //     final replicaClient = ValkeyClient.fromSettings(replicaSettings);
+  //     await replicaClient.connect();
+
+  //     // 4. [Cluster Mode] If metadata indicates cluster, we MUST send READONLY
+  //     // to enable reading from a replica node.
+  //     if (_metadata?.mode == RunningMode.cluster) {
+  //       await replicaClient.execute(['READONLY']);
+  //     }
+
+  //     // 5. Add to the list and log success
+  //     _replicas.add(replicaClient);
+  //     _log.info('Added replica connection: $host:$port');
+  //   } catch (e) {
+  //     // Log connection failure
+  //     _log.warning('Failed to connect to replica at $host:$port : $e');
+  //   }
+  // }
 
   /// [v2.1.0] Detects server info and selects the configured database.
   Future<void> _initializeConnection() async {
@@ -1210,6 +1291,8 @@ class ValkeyClient implements ValkeyClientBase {
       // If preferReplica and no replicas, we naturally stay with 'this' (Master)
     }
 
+    _lastUsedClient = targetClient; // Most recently selected client record (for debugging)
+
     // 3. Execute
     if (targetClient == this) {
       return _executeInternal(command); // Execute on this socket
@@ -1374,7 +1457,6 @@ class ValkeyClient implements ValkeyClientBase {
           Future.error(
               ValkeyClientException('PSubscribe completer not initialized'));
     }
-
     // if (isPubSubManagementCmd) {
     //    // UNSUBSCRIBE/PUNSUBSCRIBE: Return a new Future tied to the queue
     //    completer = Completer<dynamic>();
@@ -1398,9 +1480,11 @@ class ValkeyClient implements ValkeyClientBase {
       return _sunsubscribeCompleter?.future ??
           Future.error('Sunsubscribe completer not initialized');
     }
-
     // If it's a regular command (completer is not null)
     if (completer != null) {
+
+      // FIXME: REVIEW REQUIRED. NEED TO FIX FOR REPLICA READS.
+
       return completer.future.timeout(
         _commandTimeout,
         onTimeout: () {

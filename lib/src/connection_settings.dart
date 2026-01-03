@@ -69,6 +69,9 @@ class ValkeyConnectionSettings {
   final ReadPreference readPreference;
   final LoadBalancingStrategy loadBalancingStrategy;
 
+  // [v2.2.0] Manual Replica Configuration
+  final List<ValkeyConnectionSettings>? explicitReplicas;
+
   ValkeyConnectionSettings({
     // required this.host, // '127.0.0.1'
     // required this.port, // 6379
@@ -82,8 +85,9 @@ class ValkeyConnectionSettings {
     this.sslContext,
     this.onBadCertificate,
     this.database = 0, // Default to DB 0
-    this.readPreference = ReadPreference.master,
+    this.readPreference = ReadPreference.master, // FIXME: TEST REQUIRED (preferReplica, replicaOnly)
     this.loadBalancingStrategy = LoadBalancingStrategy.roundRobin,
+    this.explicitReplicas,
   });
 
   /// Creates a copy of this settings object with the given fields replaced.
@@ -100,6 +104,7 @@ class ValkeyConnectionSettings {
     int? database,
     ReadPreference? readPreference,
     LoadBalancingStrategy? loadBalancingStrategy,
+    List<ValkeyConnectionSettings>? explicitReplicas,
   }) =>
       ValkeyConnectionSettings(
         host: host ?? this.host,
@@ -114,5 +119,6 @@ class ValkeyConnectionSettings {
         database: database ?? this.database,
         readPreference: readPreference ?? this.readPreference,
         loadBalancingStrategy: loadBalancingStrategy ?? this.loadBalancingStrategy,
+        explicitReplicas: explicitReplicas ?? this.explicitReplicas,
       );
 }
