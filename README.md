@@ -6,13 +6,14 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
 
 ## Overview
 - Deployment modes: Standalone; Sentinel; Cluster
+- Scalability: Scalable replica reads offloading; smart load balancing
 - Reliability: Automatic failover; smart connection pooling
 - Messaging: Sharded Pub/Sub for scalable messaging
 - Operations: Multi-key operations; configurable command timeouts
 - Protocol: RESP3 parsing with type-safe exceptions
 - Observability: Built-in logging
 - Security: SSL/TLS support
-- Valkey 9.0+ Support
+- Valkey 9.0+ Features Support
   - Numbered clusters: Intelligent database selection for seamless cluster management
 
 ## Helpers
