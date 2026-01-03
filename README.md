@@ -63,6 +63,17 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
   * **Pub/Sub Introspection** (`PUBSUB CHANNELS`, `PUBSUB NUMSUB`, `PUBSUB NUMPAT`)
   * **Sharded Pub/Sub** (`SPUBLISH`, `SSUBSCRIBE`, `SUNSUBSCRIBE`) for efficient cluster messaging.
 
+## Read-only Commands for Replica Reads
+
+  * `GET`, `EXISTS`, `TTL`, `PTTL`, `GETRANGE`, `MGET`, `STRLEN`
+  * `HGET`, `HGETALL`, `HMGET`, `HEXISTS`, `HLEN`, `HSTRLEN`
+  * `LINDEX`, `LLEN`, `LRANGE`
+  * `SCARD`, `SISMEMBER`, `SMEMBERS`, `SRANDMEMBER`
+  * `ZCARD`, `ZCOUNT`, `ZRANGE`, `ZOO`, `ZSCORE`, `ZRANK`, `ZREVRANK`, `ZLEXCOUNT`, `ZRANGEBYLEX`, `ZRANGEBYSCORE`
+  * `PFCOUNT`, `GEOHASH`, `GEOPOS`, `GEODIST`, `GEORADIUS_RO`, `GEORADIUSBYMEMBER_RO`
+  * `BITCOUNT`, `BITPOS`, `GETBIT`
+  * `TYPE`, `SCAN`, `HSCAN`, `SSCAN`, `ZSCAN`
+
 ## Developer Experience Improvements
 
 To enhance DX for both Redis and Valkey developers, we provide fully compatible aliases. You can use the class names you are most comfortable with.
