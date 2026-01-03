@@ -2,7 +2,7 @@ name: valkey_client
 description: A high-performance, cluster-aware Dart client for Redis and Valkey.
 version: 2.2.0
 repository: https://github.com/infradise/valkey_client
-homepage: https://keyscope.dev
+homepage: https://k8spodo.dev
 license: Apache-2.0
 environment:
   sdk: '>=3.0.0 <4.0.0'
