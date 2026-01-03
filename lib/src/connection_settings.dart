@@ -1,5 +1,26 @@
 import 'dart:io';
 
+/// Defines which node to select for read operations.
+enum ReadPreference {
+  /// Always read from the master node. (Default)
+  master,
+
+  /// Prefer reading from replicas. If no replica is available, fall back to master.
+  preferReplica,
+
+  /// Only read from replicas. Throw exception if no replica is available.
+  replicaOnly,
+}
+
+/// Defines how to distribute read traffic among available replicas.
+enum LoadBalancingStrategy {
+  /// Distribute requests sequentially among replicas.
+  roundRobin,
+
+  /// Select a replica randomly for each request.
+  random,
+}
+
 /// Configuration for a Valkey connection.
 /// Holds all configuration options for creating a new connection.
 ///
@@ -44,6 +65,10 @@ class ValkeyConnectionSettings {
   /// The database index to select after connection. Default is 0.
   final int database;
 
+  // [v2.2.0] Replica Read & Load Balancing
+  final ReadPreference readPreference;
+  final LoadBalancingStrategy loadBalancingStrategy;
+
   ValkeyConnectionSettings({
     // required this.host, // '127.0.0.1'
     // required this.port, // 6379
@@ -57,6 +82,8 @@ class ValkeyConnectionSettings {
     this.sslContext,
     this.onBadCertificate,
     this.database = 0, // Default to DB 0
+    this.readPreference = ReadPreference.master,
+    this.loadBalancingStrategy = LoadBalancingStrategy.roundRobin,
   });
 
   /// Creates a copy of this settings object with the given fields replaced.
@@ -71,6 +98,8 @@ class ValkeyConnectionSettings {
     SecurityContext? sslContext,
     bool Function(X509Certificate)? onBadCertificate,
     int? database,
+    ReadPreference? readPreference,
+    LoadBalancingStrategy? loadBalancingStrategy,
   }) =>
       ValkeyConnectionSettings(
         host: host ?? this.host,
@@ -83,5 +112,7 @@ class ValkeyConnectionSettings {
         sslContext: sslContext ?? this.sslContext,
         onBadCertificate: onBadCertificate ?? this.onBadCertificate,
         database: database ?? this.database,
+        readPreference: readPreference ?? this.readPreference,
+        loadBalancingStrategy: loadBalancingStrategy ?? this.loadBalancingStrategy,
       );
 }
