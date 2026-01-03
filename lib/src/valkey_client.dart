@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:convert'; // For UTF8 encoding
 import 'dart:collection'; // A Queue to manage pending commands
+import 'dart:math'; // [v2.2.0] For Random LoadBalancing
 
 // Import the base class and the ValkeyMessage / Subscription
 import 'package:valkey_client/valkey_client_base.dart';
@@ -137,6 +138,24 @@ class ValkeyClient implements ValkeyClientBase {
 
   /// Returns the metadata of the connected server.
   ServerMetadata? get metadata => _metadata;
+
+  // [v2.2.0] Read-only commands whitelist
+  // This is a comprehensive list of commands that are safe to send to replicas.
+  static const Set<String> _readOnlyCommands = {
+    'GET', 'EXISTS', 'TTL', 'PTTL', 'GETRANGE', 'MGET', 'STRLEN',
+    'HGET', 'HGETALL', 'HMGET', 'HEXISTS', 'HLEN', 'HSTRLEN',
+    'LINDEX', 'LLEN', 'LRANGE',
+    'SCARD', 'SISMEMBER', 'SMEMBERS', 'SRANDMEMBER',
+    'ZCARD', 'ZCOUNT', 'ZRANGE', 'ZOO', 'ZSCORE', 'ZRANK', 'ZREVRANK', 'ZLEXCOUNT', 'ZRANGEBYLEX', 'ZRANGEBYSCORE',
+    'PFCOUNT', 'GEOHASH', 'GEOPOS', 'GEODIST', 'GEORADIUS_RO', 'GEORADIUSBYMEMBER_RO',
+    'BITCOUNT', 'BITPOS', 'GETBIT',
+    'TYPE', 'SCAN', 'HSCAN', 'SSCAN', 'ZSCAN'
+  };
+
+  // [v2.2.0] Replica Management
+  final List<ValkeyClient> _replicas = [];
+  int _roundRobinIndex = 0;
+  final Random _random = Random();
 
   // Command/Response Queue
   /// A queue of Completers, each waiting for a response.
@@ -399,7 +418,7 @@ class ValkeyClient implements ValkeyClientBase {
     // Wait for the basic connection and auth to complete first.
     await onConnected;
 
-    // Now initialize metadata and select DB
+    // Initialize Metadata & DB Selection (v2.1.0)
     try {
       await _initializeConnection();
     } catch (e) {
@@ -410,6 +429,118 @@ class ValkeyClient implements ValkeyClientBase {
     }
 
     // Return void as the Future<void> signature requires
+
+    // 3. [v2.2.0] Discover & Connect to Replicas
+    // Only if the user requested a preference other than 'master'
+    if (_config.readPreference != ReadPreference.master) {
+      // Avoid recursion: If this instance is already a replica (or auxiliary client), skip.
+      // We can check this by ensuring we don't pass 'readPreference' to children,
+      // OR simply by checking if we are the main client context.
+      // For now, _discoverAndConnectReplicas handles recursion by creating clients with ReadPreference.master.
+      await _discoverAndConnectReplicas();
+    }
+  }
+
+  /// [v2.2.0] Discovers replicas via INFO REPLICATION (Standalone) or CLUSTER SLOTS (Cluster).
+  Future<void> _discoverAndConnectReplicas() async {
+    _replicas.clear(); // Clear existing if reconnecting
+
+    // 1. Cluster Mode Discovery
+    if (_metadata?.mode == RunningMode.cluster) {
+      try {
+        // [Correct] Use existing clusterSlots() method
+        final slots = await clusterSlots();
+
+        // Iterate through slots to find replica nodes
+        for (final slot in slots) {
+          for (final replicaNode in slot.replicas) {
+             await _addReplica(replicaNode.host, replicaNode.port);
+          }
+        }
+      } catch (e) {
+        _log.warning('Failed to discover replicas via CLUSTER SLOTS: $e');
+      }
+    }
+    // 2. Standalone / Sentinel Mode Discovery
+    else {
+      try {
+        final info = await execute(['INFO', 'REPLICATION']);
+        if (info is! String) return;
+
+        final lines = info.split('\r\n');
+        for (var line in lines) {
+          // Parse slave lines: "slave0:ip=127.0.0.1,port=6380,state=online,..."
+          if (line.startsWith('slave')) {
+            final parts = line.split(',');
+            String? ip;
+            int? port;
+            String state = 'offline';
+
+            for (var part in parts) {
+              if (part.contains('ip=')) ip = part.split('=')[1];
+              if (part.contains('port=')) port = int.tryParse(part.split('=')[1]);
+              if (part.contains('state=')) state = part.split('=')[1];
+            }
+
+            if (ip != null && port != null && state == 'online') {
+              // NOTE: Avoid connecting to self if something is wrong, but usually IP:Port differs.
+              await _addReplica(ip, port);
+            }
+          }
+        }
+      } catch (e) {
+        _log.warning('Failed to discover replicas via INFO REPLICATION: $e');
+        // Do not fail the master connection just because replica discovery failed.
+      }
+    }
+
+    // Check constraint: If replicaOnly is set but no replicas found
+    if (_config.readPreference == ReadPreference.replicaOnly && _replicas.isEmpty) {
+      throw ValkeyConnectionException(
+          'ReadPreference is replicaOnly but no online replicas were found.');
+    }
+  }
+
+  Future<void> _addReplica(String host, int port) async {
+    // 1. Implement deduplication logic to prevent redundant connections.
+    // If a client with the same IP and Port is already in the list, skip it.
+    // \ NOTE: Check to prevent connecting to the same replica multiple times.
+    // \ NOTE: Avoid adding duplicates if multiple slots share the same replica
+    for (final r in _replicas) {
+       // Accessing private member '_config' is allowed since we are in the same class.
+       if (r._config.host == host && r._config.port == port) {
+        _log.info('Replica $host:$port is already connected. Skipping.');
+        return;
+      }
+    }
+
+    try {
+      // 2. Create settings (a new client) for the replica.
+      // Force ReadPreference.master to prevent infinite recursion
+      // \ NOTE: A replica client should not try to discover its own replicas.
+      final replicaSettings = _config.copyWith(
+        host: host,
+        port: port,
+        readPreference: ReadPreference.master, // Stop recursion
+      );
+
+      // 3. Connect to the replica
+      final replicaClient = ValkeyClient.fromSettings(replicaSettings);
+      await replicaClient.connect();
+
+      // 4. [Cluster Mode] If metadata indicates cluster, we MUST send READONLY
+      // to enable reading from a replica node.
+      if (_metadata?.mode == RunningMode.cluster) {
+        await replicaClient.execute(['READONLY']);
+      }
+
+      // 5. Add to the list and log success
+      _replicas.add(replicaClient);
+      _log.info('Added replica connection: $host:$port');
+    } catch (e) {
+      // Log connection failure
+      _log.warning('Failed to connect to replica at $host:$port : $e');
+    }
   }
 
   /// [v2.1.0] Detects server info and selects the configured database.
@@ -1054,13 +1185,69 @@ class ValkeyClient implements ValkeyClientBase {
     }
   }
 
-  // --- Public Command Methods ---
+   // --- Public Command Methods ---
+
+  /// [v2.2.0] Routing Logic
+  @override
+  Future<dynamic> execute(List<String> command) async {
+    final cmdName = command.isNotEmpty ? command[0].toUpperCase() : '';
+
+    // 1. Determine if this is a Read-Only command
+    final isReadOnly = _readOnlyCommands.contains(cmdName);
+
+    // 2. Decide Target Client
+    ValkeyClient targetClient = this; // Default to Master (this instance)
+
+    if (isReadOnly && _config.readPreference != ReadPreference.master) {
+      if (_replicas.isNotEmpty) {
+        // We have replicas, use one according to strategy
+        targetClient = _selectReplica();
+      } else if (_config.readPreference == ReadPreference.replicaOnly) {
+        // No replicas, but strict requirement
+         throw ValkeyClientException(
+             'ReadPreference is replicaOnly but no replicas are available.');
+      }
+      // If preferReplica and no replicas, we naturally stay with 'this' (Master)
+    }
+
+    // 3. Execute
+    if (targetClient == this) {
+      return _executeInternal(command); // Execute on this socket
+    } else {
+      // Forward to replica
+      // Note: We should handle if replica fails (e.g., retry on master if preferReplica)
+      try {
+        return await targetClient.execute(command);
+      } catch (e) {
+        // Failover logic for 'preferReplica'
+        if (_config.readPreference == ReadPreference.preferReplica) {
+          _log.warning('Replica failed, falling back to master: $e');
+          return _executeInternal(command);
+        }
+        rethrow;
+      }
+    }
+  }
+
+  /// Selects a replica based on LoadBalancingStrategy
+  ValkeyClient _selectReplica() {
+    if (_replicas.isEmpty) return this; // Should not happen given checks
+
+    if (_config.loadBalancingStrategy == LoadBalancingStrategy.random) {
+      return _replicas[_random.nextInt(_replicas.length)];
+    } else {
+      // Round Robin
+      final replica = _replicas[_roundRobinIndex % _replicas.length];
+      _roundRobinIndex = (_roundRobinIndex + 1) % _replicas.length;
+      return replica;
+    }
+  }
 
   /// Executes a raw command. (This will be our main internal method)
   /// Returns a Future that completes with the server's response.
   /// Handle SSUBSCRIBE/SUNSUBSCRIBE futures
-  @override
-  Future<dynamic> execute(List<String> command) async {
+  // Removed @override -> Renamed original 'execute' logic to '_executeInternal'
+  Future<dynamic> _executeInternal(List<String> command) async {
     final cmdUpper = command.isNotEmpty ? command[0].toUpperCase() : '';
 
     if (_isInTransaction &&
@@ -1937,11 +2124,26 @@ class ValkeyClient implements ValkeyClientBase {
 
   @override
   Future<void> close() async {
+    // [v2.2.0] 1. Close all replicas first
+    // We iterate backwards or just loop to close them.
+    for (final replica in _replicas) {
+      try {
+        await replica.close();
+      } catch (_) {
+        // Ignore errors during replica closure
+      }
+    }
+    _replicas.clear();
+
+    // 2. Close Master connection and cleanup
     // await sub?.cancel().catchError((_) { /* Ignore errors on cancel */ });
     await _subscription?.cancel(); // Cancel listening
+
     // await sock?.close().catchError((_) { /* Ignore errors on close */ });
     await _socket?.close(); // Graceful close socket if possible
+
     _cleanup(); // Then cleanup resources. Ensure resources are released
+
     // Reset pub/sub state immediately
     _resetPubSubState(); // Reset pubsub state
   }
