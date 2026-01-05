@@ -21,6 +21,9 @@ enum LoadBalancingStrategy {
   random,
 }
 
+// [v2.2.0] IP/Port Mapping for NAT/Docker
+typedef AddressMapper = ({String host, int port}) Function(String host, int port);
+
 /// Configuration for a Valkey connection.
 /// Holds all configuration options for creating a new connection.
 ///
@@ -72,6 +75,10 @@ class ValkeyConnectionSettings {
   // [v2.2.0] Manual Replica Configuration
   final List<ValkeyConnectionSettings>? explicitReplicas;
 
+  // [v2.2.0] Address Mapper for NAT/Docker
+  // Discovered IP (e.g. 172.xxx) -> External IP (e.g. 127.0.0.1)
+  final AddressMapper? addressMapper;
+
   ValkeyConnectionSettings({
     // required this.host, // '127.0.0.1'
     // required this.port, // 6379
@@ -85,9 +92,10 @@ class ValkeyConnectionSettings {
     this.sslContext,
     this.onBadCertificate,
     this.database = 0, // Default to DB 0
-    this.readPreference = ReadPreference.master, // FIXME: TEST REQUIRED (preferReplica, replicaOnly)
+    this.readPreference = ReadPreference.master, // master, preferReplica, replicaOnly
     this.loadBalancingStrategy = LoadBalancingStrategy.roundRobin,
     this.explicitReplicas,
+    this.addressMapper,
   });
 
   /// Creates a copy of this settings object with the given fields replaced.
@@ -105,6 +113,7 @@ class ValkeyConnectionSettings {
     ReadPreference? readPreference,
     LoadBalancingStrategy? loadBalancingStrategy,
     List<ValkeyConnectionSettings>? explicitReplicas,
+    AddressMapper? addressMapper,
   }) =>
       ValkeyConnectionSettings(
         host: host ?? this.host,
@@ -120,5 +129,6 @@ class ValkeyConnectionSettings {
         readPreference: readPreference ?? this.readPreference,
         loadBalancingStrategy: loadBalancingStrategy ?? this.loadBalancingStrategy,
         explicitReplicas: explicitReplicas ?? this.explicitReplicas,
+        addressMapper: addressMapper ?? this.addressMapper,
       );
 }
