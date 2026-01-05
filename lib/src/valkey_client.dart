@@ -376,13 +376,11 @@ class ValkeyClient implements ValkeyClientBase {
           _lastPort,
           context: _sslContext,
           onBadCertificate: _onBadCertificate,
-          // SecureSocket supports timeout, but standard Socket.connect in Dart
-          // doesn't usually expose it directly in the simple signature.
-          // We rely on the Future timeout if needed, or default OS timeout.
+          timeout: _config.connectTimeout,
         );
       } else {
-        // [Existing] Plain Connection
-        _socket = await Socket.connect(hostToConnect, _lastPort);
+        // Plain Connection
+        _socket = await Socket.connect(hostToConnect, _lastPort, timeout: _config.connectTimeout,);
       }
       // --- END: v1.3.0 IPv6 HOTFIX ---
 
