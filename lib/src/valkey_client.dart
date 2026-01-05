@@ -257,24 +257,32 @@ class ValkeyClient implements ValkeyClientBase {
     String? username,
     String? password,
     Duration commandTimeout = const Duration(seconds: 10),
-    // Duration connectTimeout = const Duration(seconds: 10),
+    Duration connectTimeout = const Duration(seconds: 10),
     // [v2.0.0] Add SSL parameters
     bool useSsl = false,
     SecurityContext? sslContext,
     bool Function(X509Certificate)? onBadCertificate,
     int database = 0,
+    ReadPreference readPreference = ReadPreference.master,
+    LoadBalancingStrategy loadBalancingStrategy = LoadBalancingStrategy.roundRobin,
+    List<ValkeyConnectionSettings>? explicitReplicas,
+    AddressMapper? addressMapper,
   })  : _config = ValkeyConnectionSettings(
           host: host,
           port: port,
           username: username,
           password: password,
           commandTimeout: commandTimeout,
-          // connectTimeout: connectTimeout,
+          connectTimeout: connectTimeout,
           // [v2.0.0] Initialize SSL settings
           useSsl: useSsl,
           sslContext: sslContext,
           onBadCertificate: onBadCertificate,
           database: database,
+          readPreference: readPreference,
+          loadBalancingStrategy: loadBalancingStrategy,
+          explicitReplicas: explicitReplicas ?? [],
+          addressMapper: addressMapper,
         ),
         _defaultHost = host,
         _defaultPort = port,
@@ -303,6 +311,10 @@ class ValkeyClient implements ValkeyClientBase {
         sslContext: settings.sslContext,
         onBadCertificate: settings.onBadCertificate,
         database: settings.database,
+        readPreference: settings.readPreference,
+        loadBalancingStrategy: settings.loadBalancingStrategy,
+        explicitReplicas: settings.explicitReplicas,
+        addressMapper: settings.addressMapper,
       );
 
   /// A Future that completes once the connection and authentication are successful.
@@ -459,7 +471,7 @@ class ValkeyClient implements ValkeyClientBase {
       }
     }
 
-    // 2. Auto Discovery (Cluster or Standalone)
+    // 2. Auto Discovery (Cluster or Standalone) + AutoNAT
     // Always run auto-discovery to find dynamic nodes.
 
     // 2-1. Cluster Mode Discovery
@@ -470,10 +482,22 @@ class ValkeyClient implements ValkeyClientBase {
         // Iterate through slots to find replica nodes
         for (final slot in slots) {
           for (final replicaNode in slot.replicas) {
+            // [AutoNAT] Apply Mapping
+            var targetHost = replicaNode.host;
+            var targetPort = replicaNode.port;
+
+            if (_config.addressMapper != null) {
+              final mapped = _config.addressMapper!(targetHost, targetPort);
+              targetHost = mapped.host;
+              targetPort = mapped.port;
+            }
+
             // Create config inheriting from Master but overriding Host/Port
             final discoveredConfig = _config.copyWith(
-              host: replicaNode.host,
-              port: replicaNode.port,
+              // host: replicaNode.host,
+              // port: replicaNode.port,
+              host: targetHost,
+              port: targetPort,
               readPreference: ReadPreference.master, // Prevent recursion
               explicitReplicas: [], // Clear explicit list for child
             );
@@ -489,12 +513,15 @@ class ValkeyClient implements ValkeyClientBase {
     else {
       try {
         final info = await execute(['INFO', 'REPLICATION']);
+        // final info = await _executeInternal(['INFO', 'REPLICATION']);
+        _log.info(info);
         // if (info is! String) return;
 
         if (info is String) {
           final lines = info.split('\r\n');
           for (var line in lines) {
             // Parse slave lines: "slave0:ip=127.0.0.1,port=6380,state=online,..."
+            // Parse slave lines: "slave0:ip=172.x.x.x,port=6380,state=online,..."
             if (line.startsWith('slave')) {
               final parts = line.split(',');
               String? ip;
@@ -508,10 +535,23 @@ class ValkeyClient implements ValkeyClientBase {
               }
 
               if (ip != null && port != null && state == 'online') {
+                // [AutoNAT] Apply Mapping
+                // \ Convert Internal IP(172.x) to External IP(127.0.0.1)
+                var targetHost = ip;
+                var targetPort = port;
+
+                if (_config.addressMapper != null) {
+                  final mapped = _config.addressMapper!(targetHost, targetPort);
+                  targetHost = mapped.host;
+                  targetPort = mapped.port;
+                }
+
                 // Auto-discovered nodes inherit Master's Auth/SSL settings
                 final discoveredConfig = _config.copyWith(
-                    host: ip,
-                    port: port,
+                    // host: ip,
+                    // port: port,
+                    host: targetHost,
+                    port: targetPort,
                     readPreference: ReadPreference.master,
                     explicitReplicas: [],
                 );
@@ -523,6 +563,7 @@ class ValkeyClient implements ValkeyClientBase {
           }
         }
       } catch (e) {
+        // _log.warning('Auto-discovery failed: $e');
         _log.warning('Failed to discover replicas via INFO REPLICATION: $e');
         // Do not fail the master connection just because replica discovery failed.
       }
@@ -562,12 +603,30 @@ class ValkeyClient implements ValkeyClientBase {
 
       // 3. Connect to the replica
       final replicaClient = ValkeyClient.fromSettings(safeSettings);
+
+      // TODO: REVIEW REQUIRED => REMOVE. NEED CONSENSUS.
+      // final replicaClient = ValkeyClient(
+      //   host: settings.host,
+      //   port: settings.port,
+      //   username: settings.username,
+      //   password: settings.password,
+      //   commandTimeout: settings.commandTimeout,
+      //   useSsl: settings.useSsl,
+      //   sslContext: settings.sslContext,
+      //   onBadCertificate: settings.onBadCertificate,
+      //   database: settings.database,
+      //   readPreference: ReadPreference.master,
+      //   explicitReplicas: settings.explicitReplicas,
+      //   loadBalancingStrategy: settings.loadBalancingStrategy,
+      // );
+      
       await replicaClient.connect();
 
       // 4. [Cluster Mode] If metadata indicates cluster, we MUST send READONLY
       // to enable reading from a replica node.
       if (_metadata?.mode == RunningMode.cluster) {
          await replicaClient.execute(['READONLY']);
+        //  await replicaClient._executeInternal(['READONLY']);
       }
 
       // 5. Add to the list and log success
@@ -626,6 +685,8 @@ class ValkeyClient implements ValkeyClientBase {
   Future<void> _initializeConnection() async {
     // 1. Get INFO SERVER
     final infoString = await execute(['INFO', 'SERVER']) as String;
+    // Use _executeInternal to bypass routing during initialization
+    // final infoString = await _executeInternal(['INFO', 'SERVER']) as String;
 
     // 2. Parse Metadata (Version, Mode, Max DBs)
     _metadata = await _parseServerMetadata(infoString);
@@ -641,6 +702,8 @@ class ValkeyClient implements ValkeyClientBase {
 
       // Perform SELECT
       await execute(['SELECT', _config.database.toString()]);
+      // Use _executeInternal to bypass routing during initialization
+      // await _executeInternal(['SELECT', _config.database.toString()]);
     }
   }
 
@@ -1282,11 +1345,12 @@ class ValkeyClient implements ValkeyClientBase {
         // We have replicas, use one according to strategy
         targetClient = _selectReplica();
       } else if (_config.readPreference == ReadPreference.replicaOnly) {
-        // No replicas, but strict requirement
-         throw ValkeyClientException(
+        // Strict mode: Fail if no replicas
+        throw ValkeyClientException(
              'ReadPreference is replicaOnly but no replicas are available.');
       }
       // If preferReplica and no replicas, we naturally stay with 'this' (Master)
+      _log.fine('PreferReplica set but no replicas connected. Using Master.');
     }
 
     _lastUsedClient = targetClient; // Most recently selected client record (for debugging)
@@ -1299,10 +1363,13 @@ class ValkeyClient implements ValkeyClientBase {
       // Note: We should handle if replica fails (e.g., retry on master if preferReplica)
       try {
         return await targetClient.execute(command);
+        // return await targetClient._executeInternal(command);
+
       } catch (e) {
         // Failover logic for 'preferReplica'
         if (_config.readPreference == ReadPreference.preferReplica) {
           _log.warning('Replica failed, falling back to master: $e');
+          _lastUsedClient = this;
           return _executeInternal(command);
         }
         rethrow;
@@ -2219,10 +2286,14 @@ class ValkeyClient implements ValkeyClientBase {
 
     // 2. Close Master connection and cleanup
     // await sub?.cancel().catchError((_) { /* Ignore errors on cancel */ });
+    // try {
     await _subscription?.cancel(); // Cancel listening
+    // } catch (_) {}
 
+    // try {
     // await sock?.close().catchError((_) { /* Ignore errors on close */ });
     await _socket?.close(); // Graceful close socket if possible
+    // } catch (_) {}
 
     _cleanup(); // Then cleanup resources. Ensure resources are released
 
@@ -2233,11 +2304,16 @@ class ValkeyClient implements ValkeyClientBase {
   /// Internal helper to clean up socket and subscription resources.
   /// Cleans up resources like socket and subscription. MUST be safe to call multiple times.
   void _cleanup() {
+    // try {
     _subscription
         ?.cancel()
         .catchError((_) {}); // Errors are likely if already closed/cancelled
+    // } catch (_) {}
 
+    // try {
     _socket?.destroy(); // Force close // Ensure the socket is fully destroyed.
+    // } catch (_) {}
+
     _socket = null; // Prevent further write attempts
     _subscription = null; // Prevent further listen events
     _buffer.clear();
