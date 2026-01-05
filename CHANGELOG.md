@@ -3,15 +3,16 @@
 ## 2.2.0
 
 ### Added
-- **Replica Read Support:** Implemented `ReadPreference` to scale out read operations.
+- **Replica Read & Load Balancing:** Introduced `ReadPreference` (Master, PreferReplica, ReplicaOnly) to intelligently scale out read operations to replica nodes.
     - `master`: Always read from master (default).
     - `preferReplica`: Read from replicas if available, otherwise fall back to master.
     - `replicaOnly`: Enforce reading only from replicas.
-- **Load Balancing Strategies:** Added `LoadBalancingStrategy` to distribute read traffic.
+- **Load Balancing Strategies:** Added `LoadBalancingStrategy` (RoundRobin, Random) for distributing read traffic among replicas.
     - `roundRobin`: Distribute requests sequentially.
     - `random`: Select a replica randomly.
 - **Replica Discovery:** Added automatic discovery of replica nodes using `INFO REPLICATION` command in Standalone/Sentinel modes.
 - **Config Updates:** Updated `ValkeyConnectionSettings` to include `readPreference` and `loadBalancingStrategy` parameters.
+- **Explicit Replica Configuration**: Added `explicitReplicas` to `ValkeyConnectionSettings` to manually define replica nodes, solving connectivity issues in some environments (e.g., Docker/NAT) where auto-discovery fails.
 
 
 ## 2.1.0
