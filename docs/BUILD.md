@@ -49,6 +49,7 @@ Expected output:
 dart test ../../../test/ssl_connection_test_single_and_cluster.dart
 dart test ../../../test/ssl_connection_test_single_ssl_and_mtls.dart
 dart test database_selection_test.dart
+dart test replica_read_test.dart
 ```
 
 ### Examples
@@ -127,6 +128,26 @@ OR
    - Max DBs:  1
 
 ✅ Data in DB 1: app:config:mode = production
+```
+
+```sh
+dart run example/replica_read_example.dart
+```
+Expected output:
+```sh
+🚀 Starting Replica Read & Load Balancing Example...
+✅ Connected to Master and Discovered Replicas.
+
+✍️  Writing data (Routed to Master)...
+
+📖 Reading data (Routed to Replicas via Round-Robin)...
+   [GET user:0] -> Result: value_0 -- from Replica (6381)
+   [GET user:1] -> Result: value_1 -- from Replica (6380)
+   [GET user:2] -> Result: value_2 -- from Replica (6381)
+   [GET user:3] -> Result: value_3 -- from Replica (6380)
+   [GET user:4] -> Result: value_4 -- from Replica (6381)
+
+👋 Connection closed.
 ```
 
 ## Check Dart Formatting
