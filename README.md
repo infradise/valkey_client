@@ -18,8 +18,8 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
 
 ## Helpers
 
-👉 To browse Redis/Valkey data, you can use [Keyscope](https://plugins.jetbrains.com/plugin/29250-keyscope), a native Redis/Valkey IDE to edit key-value data in your databases.  
-👉 To access Redis/Valkey servers on Kubernetes, you can use [Visualkube Jet](https://plugins.jetbrains.com/plugin/29143-visualkube-jet), a native Kubernetes IDE for multi‑cluster access and real-time watch.
+👉 To browse Redis/Valkey data, you can use [Keyscope](https://keyscope.dev), a native Redis/Valkey IDE to edit key-value data in your databases.  
+👉 To access Redis/Valkey servers on Kubernetes, you can use [Visualkube Jet](https://jet.visualkube.com), a native Kubernetes IDE for multi‑cluster access and real-time watch.
 
 > **Keyscope** and **Visualkube Jet** are plugins for Android Studio and JetBrains IDEs.
 
