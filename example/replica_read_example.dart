@@ -1,18 +1,32 @@
 import 'package:valkey_client/valkey_client.dart';
 
 void main() async {
+  // Enable detailed logging
+  // ValkeyClient.setLogLevel(ValkeyLogLevel.info);
+
   print('🚀 Starting Replica Read & Load Balancing Example...');
 
   final portMaster = 6379; // Master Port (e.g., 1 Master and 2 Replicas)
-  final portReplica1 = 6380;
-  final portReplica2 = 6381;
+  // final portReplica1 = 6380;
+  // final portReplica2 = 6381;
 
   // Base settings for Master
   final masterSettings = ValkeyConnectionSettings(
     host: '127.0.0.1',
     port: portMaster,
+
+    // addressMapper: (host, port) {
+    //   print('Current host:port = $host:$port');
+    //   if (host.startsWith('127')) {
+    //     host = '128.0.0.1';
+    //     print('Changed host:port = $host:$port');
+    //     return (host: host, port: port);
+    //   }
+    //   return (host: host, port: port);
+    // },
+
     // [v2.2.0] Prefer reading from replicas
-    readPreference: ReadPreference.preferReplica, // (or testing for ReadPreference.master)
+    readPreference: ReadPreference.preferReplica, // master, preferReplica, replicaOnly
     // [v2.2.0] Use Round-Robin to distribute load among replicas
     loadBalancingStrategy: LoadBalancingStrategy.roundRobin,
     commandTimeout: Duration(seconds: 2),
@@ -23,15 +37,16 @@ void main() async {
   // We connect to the Master (6379), but request to read from Replicas.
 
   // Define full settings for this connection, including explicit replicas
-  final settings = masterSettings.copyWith(
-    explicitReplicas: [
-      // Inherit master settings (Auth, SSL, etc.) and just change Port
-      masterSettings.copyWith(port: portReplica1),
-      masterSettings.copyWith(port: portReplica2),
-    ],
-  );
+  // final settings = masterSettings.copyWith(
+  //   explicitReplicas: [
+  //     // Inherit master settings (Auth, SSL, etc.) and just change Port
+  //     masterSettings.copyWith(port: portReplica1),
+  //     masterSettings.copyWith(port: portReplica2),
+  //   ],
+  // );
+  // final client = ValkeyClient.fromSettings(settings);
 
-  final client = ValkeyClient.fromSettings(settings);
+  final client = ValkeyClient.fromSettings(masterSettings);
 
   try {
     // 2. Connect
@@ -90,7 +105,7 @@ void main() async {
 EXPECTED OUTPUT
 ===============
 
-1 Master only
+1 Master and 2 Replicas => ReadPreference.master
 
 🚀 Starting Replica Read & Load Balancing Example...
 ✅ Connected to Master and Discovered Replicas.
@@ -108,7 +123,7 @@ EXPECTED OUTPUT
 
 ---
 
-1 Master and 2 Replicas
+1 Master and 2 Replicas => ReadPreference.preferReplica
 
 🚀 Starting Replica Read & Load Balancing Example...
 ✅ Connected to Master and Discovered Replicas.
@@ -116,18 +131,30 @@ EXPECTED OUTPUT
 ✍️  Writing data (Routed to Master)...
 
 📖 Reading data (Routed to Replicas via Round-Robin)...
-   [GET user:0] -> Result: value_0 -- from Replica
-   [GET user:1] -> Result: value_1 -- from Replica
-   [GET user:2] -> Result: value_2 -- from Replica
-   [GET user:3] -> Result: value_3 -- from Replica
-   [GET user:4] -> Result: value_4 -- from Replica
+   [GET user:0] -> Result: value_0 -- from Replica (6381)
+   [GET user:1] -> Result: value_1 -- from Replica (6380)
+   [GET user:2] -> Result: value_2 -- from Replica (6381)
+   [GET user:3] -> Result: value_3 -- from Replica (6380)
+   [GET user:4] -> Result: value_4 -- from Replica (6381)
 
 👋 Connection closed.
 
 ---
 
-3 Master and 3 Replicas
+1 Master and 2 Replicas => ReadPreference.replicaOnly
 
-Add here.
+🚀 Starting Replica Read & Load Balancing Example...
+✅ Connected to Master and Discovered Replicas.
+
+✍️  Writing data (Routed to Master)...
+
+📖 Reading data (Routed to Replicas via Round-Robin)...
+   [GET user:0] -> Result: value_0 -- from Replica (6381)
+   [GET user:1] -> Result: value_1 -- from Replica (6380)
+   [GET user:2] -> Result: value_2 -- from Replica (6381)
+   [GET user:3] -> Result: value_3 -- from Replica (6380)
+   [GET user:4] -> Result: value_4 -- from Replica (6381)
+
+👋 Connection closed.
 
 */
