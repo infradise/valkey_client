@@ -26,7 +26,8 @@ void main() async {
     // },
 
     // [v2.2.0] Prefer reading from replicas
-    readPreference: ReadPreference.preferReplica, // master, preferReplica, replicaOnly
+    readPreference:
+        ReadPreference.preferReplica, // master, preferReplica, replicaOnly
     // [v2.2.0] Use Round-Robin to distribute load among replicas
     loadBalancingStrategy: LoadBalancingStrategy.roundRobin,
     commandTimeout: Duration(seconds: 2),
@@ -63,7 +64,8 @@ void main() async {
     }
 
     // Wait briefly for replication to happen (usually near-instant)
-    await Future.delayed(Duration(milliseconds: 100)); // 100 or 200: Replication wait
+    await Future.delayed(
+        Duration(milliseconds: 100)); // 100 or 200: Replication wait
 
     // --- Read & Verify Load Balancing ---
     // 4. Read Operations (Routed to Replicas)
@@ -92,7 +94,6 @@ void main() async {
       // Req 2 -> Replica 2 (6381)
       // Req 3 -> Replica 1 (6380) ...
     }
-
   } catch (e) {
     print('❌ Error: $e');
   } finally {

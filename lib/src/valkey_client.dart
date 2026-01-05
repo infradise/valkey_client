@@ -142,14 +142,50 @@ class ValkeyClient implements ValkeyClientBase {
   // [v2.2.0] Read-only commands whitelist
   // This is a comprehensive list of commands that are safe to send to replicas.
   static const Set<String> _readOnlyCommands = {
-    'GET', 'EXISTS', 'TTL', 'PTTL', 'GETRANGE', 'MGET', 'STRLEN',
-    'HGET', 'HGETALL', 'HMGET', 'HEXISTS', 'HLEN', 'HSTRLEN',
-    'LINDEX', 'LLEN', 'LRANGE',
-    'SCARD', 'SISMEMBER', 'SMEMBERS', 'SRANDMEMBER',
-    'ZCARD', 'ZCOUNT', 'ZRANGE', 'ZOO', 'ZSCORE', 'ZRANK', 'ZREVRANK', 'ZLEXCOUNT', 'ZRANGEBYLEX', 'ZRANGEBYSCORE',
-    'PFCOUNT', 'GEOHASH', 'GEOPOS', 'GEODIST', 'GEORADIUS_RO', 'GEORADIUSBYMEMBER_RO',
-    'BITCOUNT', 'BITPOS', 'GETBIT',
-    'TYPE', 'SCAN', 'HSCAN', 'SSCAN', 'ZSCAN'
+    'GET',
+    'EXISTS',
+    'TTL',
+    'PTTL',
+    'GETRANGE',
+    'MGET',
+    'STRLEN',
+    'HGET',
+    'HGETALL',
+    'HMGET',
+    'HEXISTS',
+    'HLEN',
+    'HSTRLEN',
+    'LINDEX',
+    'LLEN',
+    'LRANGE',
+    'SCARD',
+    'SISMEMBER',
+    'SMEMBERS',
+    'SRANDMEMBER',
+    'ZCARD',
+    'ZCOUNT',
+    'ZRANGE',
+    'ZOO',
+    'ZSCORE',
+    'ZRANK',
+    'ZREVRANK',
+    'ZLEXCOUNT',
+    'ZRANGEBYLEX',
+    'ZRANGEBYSCORE',
+    'PFCOUNT',
+    'GEOHASH',
+    'GEOPOS',
+    'GEODIST',
+    'GEORADIUS_RO',
+    'GEORADIUSBYMEMBER_RO',
+    'BITCOUNT',
+    'BITPOS',
+    'GETBIT',
+    'TYPE',
+    'SCAN',
+    'HSCAN',
+    'SSCAN',
+    'ZSCAN'
   };
 
   // [v2.2.0] Replica Management
@@ -162,7 +198,8 @@ class ValkeyClient implements ValkeyClientBase {
 
   /// Returns the configuration of the connection used for the last command.
   /// Useful for debugging load balancing strategies.
-  ValkeyConnectionSettings? get lastUsedConnectionConfig => _lastUsedClient?._config;
+  ValkeyConnectionSettings? get lastUsedConnectionConfig =>
+      _lastUsedClient?._config;
 
   // Command/Response Queue
   /// A queue of Completers, each waiting for a response.
@@ -264,7 +301,8 @@ class ValkeyClient implements ValkeyClientBase {
     bool Function(X509Certificate)? onBadCertificate,
     int database = 0,
     ReadPreference readPreference = ReadPreference.master,
-    LoadBalancingStrategy loadBalancingStrategy = LoadBalancingStrategy.roundRobin,
+    LoadBalancingStrategy loadBalancingStrategy =
+        LoadBalancingStrategy.roundRobin,
     List<ValkeyConnectionSettings>? explicitReplicas,
     AddressMapper? addressMapper,
   })  : _config = ValkeyConnectionSettings(
@@ -392,7 +430,11 @@ class ValkeyClient implements ValkeyClientBase {
         );
       } else {
         // Plain Connection
-        _socket = await Socket.connect(hostToConnect, _lastPort, timeout: _config.connectTimeout,);
+        _socket = await Socket.connect(
+          hostToConnect,
+          _lastPort,
+          timeout: _config.connectTimeout,
+        );
       }
       // --- END: v1.3.0 IPv6 HOTFIX ---
 
@@ -530,7 +572,9 @@ class ValkeyClient implements ValkeyClientBase {
 
               for (var part in parts) {
                 if (part.contains('ip=')) ip = part.split('=')[1];
-                if (part.contains('port=')) port = int.tryParse(part.split('=')[1]);
+                if (part.contains('port=')) {
+                  port = int.tryParse(part.split('=')[1]);
+                }
                 if (part.contains('state=')) state = part.split('=')[1];
               }
 
@@ -548,12 +592,12 @@ class ValkeyClient implements ValkeyClientBase {
 
                 // Auto-discovered nodes inherit Master's Auth/SSL settings
                 final discoveredConfig = _config.copyWith(
-                    // host: ip,
-                    // port: port,
-                    host: targetHost,
-                    port: targetPort,
-                    readPreference: ReadPreference.master,
-                    explicitReplicas: [],
+                  // host: ip,
+                  // port: port,
+                  host: targetHost,
+                  port: targetPort,
+                  readPreference: ReadPreference.master,
+                  explicitReplicas: [],
                 );
                 // NOTE: Avoid connecting to self if something is wrong, but usually IP:Port differs.
                 // await _addReplica(ip, port);
@@ -570,7 +614,8 @@ class ValkeyClient implements ValkeyClientBase {
     }
 
     // Check constraint: If replicaOnly is set but no replicas found
-    if (_config.readPreference == ReadPreference.replicaOnly && _replicas.isEmpty) {
+    if (_config.readPreference == ReadPreference.replicaOnly &&
+        _replicas.isEmpty) {
       throw ValkeyConnectionException(
           'ReadPreference is replicaOnly but no online replicas were found.');
     }
@@ -586,7 +631,8 @@ class ValkeyClient implements ValkeyClientBase {
     for (final r in _replicas) {
       // Accessing private member '_config' is allowed since we are in the same class.
       if (r._config.host == settings.host && r._config.port == settings.port) {
-        _log.info('Replica ${settings.host}:${settings.port} is already connected. Skipping.');
+        _log.info(
+            'Replica ${settings.host}:${settings.port} is already connected. Skipping.');
         return;
       }
     }
@@ -619,13 +665,13 @@ class ValkeyClient implements ValkeyClientBase {
       //   explicitReplicas: settings.explicitReplicas,
       //   loadBalancingStrategy: settings.loadBalancingStrategy,
       // );
-      
+
       await replicaClient.connect();
 
       // 4. [Cluster Mode] If metadata indicates cluster, we MUST send READONLY
       // to enable reading from a replica node.
       if (_metadata?.mode == RunningMode.cluster) {
-         await replicaClient.execute(['READONLY']);
+        await replicaClient.execute(['READONLY']);
         //  await replicaClient._executeInternal(['READONLY']);
       }
 
@@ -634,7 +680,8 @@ class ValkeyClient implements ValkeyClientBase {
       _log.info('Added replica connection: ${settings.host}:${settings.port}');
     } catch (e) {
       // Log connection failure
-      _log.warning('Failed to connect to replica at ${settings.host}:${settings.port} : $e');
+      _log.warning(
+          'Failed to connect to replica at ${settings.host}:${settings.port} : $e');
     }
   }
 
@@ -1327,7 +1374,7 @@ class ValkeyClient implements ValkeyClientBase {
     }
   }
 
-   // --- Public Command Methods ---
+  // --- Public Command Methods ---
 
   /// [v2.2.0] Routing Logic
   @override
@@ -1347,13 +1394,14 @@ class ValkeyClient implements ValkeyClientBase {
       } else if (_config.readPreference == ReadPreference.replicaOnly) {
         // Strict mode: Fail if no replicas
         throw ValkeyClientException(
-             'ReadPreference is replicaOnly but no replicas are available.');
+            'ReadPreference is replicaOnly but no replicas are available.');
       }
       // If preferReplica and no replicas, we naturally stay with 'this' (Master)
       _log.fine('PreferReplica set but no replicas connected. Using Master.');
     }
 
-    _lastUsedClient = targetClient; // Most recently selected client record (for debugging)
+    _lastUsedClient =
+        targetClient; // Most recently selected client record (for debugging)
 
     // 3. Execute
     if (targetClient == this) {
@@ -1364,7 +1412,6 @@ class ValkeyClient implements ValkeyClientBase {
       try {
         return await targetClient.execute(command);
         // return await targetClient._executeInternal(command);
-
       } catch (e) {
         // Failover logic for 'preferReplica'
         if (_config.readPreference == ReadPreference.preferReplica) {
@@ -1547,9 +1594,6 @@ class ValkeyClient implements ValkeyClientBase {
     }
     // If it's a regular command (completer is not null)
     if (completer != null) {
-
-      // FIXME: REVIEW REQUIRED. NEED TO FIX FOR REPLICA READS.
-
       return completer.future.timeout(
         _commandTimeout,
         onTimeout: () {

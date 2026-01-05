@@ -12,7 +12,6 @@ void main() {
   const masterPort = 6379;
 
   group('v2.2.0 Replica Read & Load Balancing', () {
-
     test('Should discover replicas and read data from them', () async {
       // Setup: Prefer Replicas with Round-Robin
       final settings = ValkeyConnectionSettings(
@@ -39,13 +38,14 @@ void main() {
           final val = await client.get('test:replica:key');
           expect(val, equals('hello_replica'));
         }
-
       } finally {
         await client.close();
       }
     });
 
-    test('Should fall back to Master if ReadPreference is preferReplica but no replicas exist', () async {
+    test(
+        'Should fall back to Master if ReadPreference is preferReplica but no replicas exist',
+        () async {
       // Setup: Point to a standalone node (or Master) but pretend it has no replicas
       // (Testing logic depends on environment, here we verify functionality holds).
       // If the environment HAS replicas, this tests that 'preferReplica' works generally.
@@ -66,7 +66,9 @@ void main() {
       await client.close();
     });
 
-    test('Should throw exception if ReadPreference is replicaOnly but no replicas available', () async {
+    test(
+        'Should throw exception if ReadPreference is replicaOnly but no replicas available',
+        () async {
       // To test this, we need a Master with NO replicas.
       // This test should be failed if replicas exist.
       // Ideally: Point to a port where a standalone Redis/Valkey sits without slaves.
