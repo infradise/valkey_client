@@ -9,7 +9,7 @@ void main() async {
     await client.connect();
     print('✅ Connected to Valkey/Redis.');
 
-    final key = 'page:view:count';
+    const key = 'page:view:count';
 
     // Reset key for this example
     await client.set(key, '0');

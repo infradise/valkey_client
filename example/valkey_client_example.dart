@@ -166,10 +166,10 @@ Future<void> main() async {
   // Choose ONE of the following client configurations
   // to match your server setup from the README.
 
-  final host = '127.0.0.1';
-  final port = 6379;
-  final username = 'default';
-  final password = 'my-super-secret-password';
+  const host = '127.0.0.1';
+  const port = 6379;
+  const username = 'default';
+  const password = 'my-super-secret-password';
 
   // ====================================================================
   // Configuration for README Option 1: No Authentication
@@ -218,7 +218,7 @@ Future<void> main() async {
   final flexibleClient = ValkeyClient(); // No config in constructor
 
   // Create a reusable connection object (e.g., from a config file)
-  final config = (
+  const config = (
     host: host,
     port: port,
     username: username,
@@ -256,7 +256,7 @@ Future<void> main() async {
   final subscriber = ValkeyClient(host: host, port: port);
   final publisher = ValkeyClient(host: host, port: port);
   StreamSubscription<ValkeyMessage>? listener; // Keep track of the listener
-  final channel = 'news:updates';
+  const channel = 'news:updates';
 
   try {
     await Future.wait([subscriber.connect(), publisher.connect()]);
@@ -352,9 +352,9 @@ Future<void> runPatternSubscriptionExample({
     await Future.wait([subscriber.connect(), publisher.connect()]);
     print('✅ Subscriber and Publisher connected!');
 
-    final pattern = 'log:*'; // Subscribe to all channels starting with 'log:'
-    final channelInfo = 'log:info';
-    final channelError = 'log:error';
+    const pattern = 'log:*'; // Subscribe to all channels starting with 'log:'
+    const channelInfo = 'log:info';
+    const channelError = 'log:error';
 
     print('\nPSubscribing to pattern: $pattern');
 
@@ -449,7 +449,7 @@ Future<void> runPubSubIntrospectionExample({
 
     // Subscribe to a channel and a pattern
     // Create a subscription on subClient
-    final channelName = 'inspect'; // or admin
+    const channelName = 'inspect'; // or admin
     final sub = subClient.subscribe(['channel:$channelName']);
     final psub = subClient.psubscribe(['log:*']);
     await Future.wait([sub.ready, psub.ready]);

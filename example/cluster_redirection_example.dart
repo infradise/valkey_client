@@ -33,7 +33,7 @@ void main() async {
         '   3. Watch this client recover automatically! (MOVED/ASK handling)\n');
 
     int count = 0;
-    final key = 'resilience:key';
+    const key = 'resilience:key';
 
     // Infinite loop to demonstrate resilience
     while (true) {

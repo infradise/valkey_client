@@ -65,8 +65,8 @@ Future<void> main() async {
 
       // These keys are known (from cluster_hash_test) to be on
       // different slots. The client must route them correctly.
-      final keyA = 'key:A'; // Slot 9366
-      final keyB = 'key:B'; // Slot 5365
+      const keyA = 'key:A'; // Slot 9366
+      const keyB = 'key:B'; // Slot 5365
 
       // Act
       final setARes = await client.set(keyA, 'Value A');
@@ -125,9 +125,9 @@ Future<void> main() async {
       // Keys known to be on different nodes (from previous tests)
       // key:A -> Slot 9366 (Node 7002)
       // key:B -> Slot 5365 (Node 7001)
-      final keyA = 'key:A';
-      final keyB = 'key:B';
-      final keyC =
+      const keyA = 'key:A';
+      const keyB = 'key:B';
+      const keyC =
           'key:C'; // Let's assume this goes somewhere (Slot 7365 -> Node 7002)
 
       // 1. Setup data

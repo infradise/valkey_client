@@ -8,8 +8,8 @@ import 'package:valkey_client/valkey_client.dart';
 void main() {
   group('SSL/TLS Connection Tests', () {
     // Note: To run this test, you need a Valkey/Redis instance running with TLS.
-    final host = '127.0.0.1';
-    final sslPort = 6380;
+    const host = '127.0.0.1';
+    const sslPort = 6380;
 
     test('Should connect using SSL with onBadCertificate callback', () async {
       final client = ValkeyClient(

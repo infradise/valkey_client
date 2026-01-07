@@ -14,7 +14,7 @@ void main() {
   });
 
   test('SPUBLISH should execute without error', () async {
-    final channel = 'shard-chan:{123}'; // Hashtag used to fix slot if needed
+    const channel = 'shard-chan:{123}'; // Hashtag used to fix slot if needed
 
     // Since there are no subscribers, it should return 0 (success as long as no error occurs)
     final receiverCount = await client.spublish(channel, 'Hello Sharding!');

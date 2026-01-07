@@ -55,7 +55,7 @@ Future<void> main() async {
     });
 
     test('pool respects maxConnections limit', () async {
-      final max = 3;
+      const max = 3;
       pool = ValkeyPool(connectionSettings: settings, maxConnections: max);
 
       final clients = <ValkeyClient>[];

@@ -37,7 +37,7 @@ void main() async {
     test('should transparently handle MOVED redirection', () async {
       // 1. Setup a key
       // key:A (Slot 9366) -> Usually Node 7002
-      final key = 'key:A';
+      const key = 'key:A';
       await client.set(key, 'Value-A');
 
       // 2. Corrupt the client's map intentionally

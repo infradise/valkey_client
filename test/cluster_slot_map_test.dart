@@ -40,7 +40,7 @@ void main() {
       // Example 2. foo (slot number: 12182) -- changed node1 to node2
       //
       // "foo" hashes to slot 12182 and it initially points to node1.
-      final slotForFoo = 12182;
+      const slotForFoo = 12182;
       final rangeFoo =
           ClusterSlotRange(startSlot: 0, endSlot: 16383, master: node1);
       final mapFoo = ClusterSlotMap.fromRanges([rangeFoo]);

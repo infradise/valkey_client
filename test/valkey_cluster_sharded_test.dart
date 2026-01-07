@@ -38,9 +38,9 @@ void main() async {
 
       // 1. Define channels likely to map to different nodes (slots)
       // (High probability of distribution if the cluster has 3+ masters)
-      final channel1 = 'shard:channel:{a}';
-      final channel2 = 'shard:channel:{b}';
-      final channel3 = 'shard:channel:{c}';
+      const channel1 = 'shard:channel:{a}';
+      const channel2 = 'shard:channel:{b}';
+      const channel3 = 'shard:channel:{c}';
       final channels = [channel1, channel2, channel3];
 
       // 2. Unified Subscription (SSUBSCRIBE)

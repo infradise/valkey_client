@@ -378,7 +378,7 @@ class ValkeyClient implements ValkeyClientBase {
         _connectionCompleter != null &&
         _connectionCompleter!.isCompleted) {
       // Check if the completed future was successful
-      bool wasSuccessful =
+      final bool wasSuccessful =
           await onConnected.then((_) => true, onError: (_) => false);
       if (wasSuccessful) return onConnected;
       // If the future completed with an error, allow reconnect attempt
@@ -781,7 +781,7 @@ class ValkeyClient implements ValkeyClientBase {
 
     // --- Detect Mode ---
     final serverMode = infoMap['server_mode'] ?? 'unknown';
-    RunningMode mode = switch (serverMode) {
+    final RunningMode mode = switch (serverMode) {
       'cluster' => RunningMode.cluster,
       'sentinel' => RunningMode.sentinel,
       'standalone' => RunningMode.standalone,
@@ -800,7 +800,7 @@ class ValkeyClient implements ValkeyClientBase {
       isValkey9OrAbove = _compareVersions(version, '9.0.0') >= 0;
     }
 
-    String configKeyToCheck = switch (serverMode) {
+    final String configKeyToCheck = switch (serverMode) {
       'cluster' => isValkey9OrAbove
           ? 'cluster-databases' // Default for Valkey 9.0+
           : 'databases', // Default for Old Valkey (9.0-)
@@ -851,13 +851,13 @@ class ValkeyClient implements ValkeyClientBase {
   /// Helper to compare semantic versions.
   /// Returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal.
   int _compareVersions(String v1, String v2) {
-    var v1Parts = v1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-    var v2Parts = v2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    final v1Parts = v1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    final v2Parts = v2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
 
     for (var i = 0; i < 3; i++) {
       // Compare major, minor, patch
-      int p1 = (i < v1Parts.length) ? v1Parts[i] : 0;
-      int p2 = (i < v2Parts.length) ? v2Parts[i] : 0;
+      final int p1 = (i < v1Parts.length) ? v1Parts[i] : 0;
+      final int p2 = (i < v2Parts.length) ? v2Parts[i] : 0;
       if (p1 > p2) return 1;
       if (p1 < p2) return -1;
     }

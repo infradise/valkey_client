@@ -177,7 +177,7 @@ Future<void> main() async {
     });
 
     test('GET should retrieve the correct value after SET', () async {
-      final key = 'test:key:get';
+      const key = 'test:key:get';
       await client.set(key, 'Hello World');
 
       final response = await client.get(key);
@@ -237,7 +237,7 @@ Future<void> main() async {
     });
 
     test('HGETALL should return a Map of all fields and values', () async {
-      final key = 'test:hash:all';
+      const key = 'test:hash:all';
       await client.hset(key, 'name', 'Valkyrie');
       await client.hset(key, 'project', 'valkey_client');
 
@@ -272,7 +272,7 @@ Future<void> main() async {
     });
 
     test('LPOP should remove and return the first item', () async {
-      final key = 'test:list:pop';
+      const key = 'test:list:pop';
       await client.rpush(key, 'itemA'); // List: [itemA]
       await client.rpush(key, 'itemB'); // List: [itemA, itemB]
 
@@ -284,7 +284,7 @@ Future<void> main() async {
     });
 
     test('RPOP should remove and return the last item', () async {
-      final key = 'test:list:rpop';
+      const key = 'test:list:rpop';
       await client.rpush(key, 'itemA'); // List: [itemA]
       await client.rpush(key, 'itemB'); // List: [itemA, itemB]
 
@@ -301,7 +301,7 @@ Future<void> main() async {
     });
 
     test('LRANGE should return the correct range', () async {
-      final key = 'test:list:range';
+      const key = 'test:list:range';
       await client.rpush(key, 'one');
       await client.rpush(key, 'two');
       await client.rpush(key, 'three');
@@ -340,7 +340,7 @@ Future<void> main() async {
     });
 
     test('SMEMBERS should return all members of the set', () async {
-      final key = 'test:set:members';
+      const key = 'test:set:members';
       await client.sadd(key, 'apple');
       await client.sadd(key, 'banana');
 
@@ -372,7 +372,7 @@ Future<void> main() async {
     });
 
     test('ZRANGE should return members in score order', () async {
-      final key = 'test:zset:range';
+      const key = 'test:zset:range';
       await client.zadd(key, 100, 'player_c');
       await client.zadd(key, 50, 'player_a');
       await client.zadd(key, 75, 'player_b');
@@ -416,7 +416,7 @@ Future<void> main() async {
     });
 
     test('TTL should return remaining time or specific values', () async {
-      final key = 'test:ttl:key';
+      const key = 'test:ttl:key';
       // Test 1: Key exists, no expire
       await client.set(key, 'value');
       final ttl1 = await client.ttl(key);
@@ -435,7 +435,7 @@ Future<void> main() async {
 
     test('should throw ValkeyServerException on WRONGTYPE operation', () async {
       // 1. Set a normal string key
-      final key = 'test:wrongtype:key';
+      const key = 'test:wrongtype:key';
       await client.set(key, 'i am a string');
 
       // 2. Try to use a Hash command (HSET) on the String key
@@ -487,9 +487,9 @@ Future<void> main() async {
     });
 
     test('should receive messages on subscribed channel', () async {
-      final channel = 'test:pubsub:channel1';
-      final message1 = 'Hello from test 1';
-      final message2 = 'Hello from test 2';
+      const channel = 'test:pubsub:channel1';
+      const message1 = 'Hello from test 1';
+      const message2 = 'Hello from test 2';
 
       // 1. Subscribe and get the Subscription object
       final sub = subscriberClient
@@ -583,9 +583,9 @@ Future<void> main() async {
     // --- TESTS FOR v0.10.0 (Advanced Pub/Sub) ---
 
     test('unsubscribe should stop receiving messages', () async {
-      final channel = 'test:pubsub:unsub';
-      final message1 = 'message before unsub';
-      final message2 = 'message after unsub';
+      const channel = 'test:pubsub:unsub';
+      const message1 = 'message before unsub';
+      const message2 = 'message after unsub';
       Completer<ValkeyMessage> msgCompleter = Completer();
 
       // 1. Subscribe
@@ -625,13 +625,13 @@ Future<void> main() async {
     });
 
     test('psubscribe should receive messages matching pattern', () async {
-      final pattern = 'test:psub:*';
-      final channel1 = 'test:psub:channelA';
-      final channel2 = 'test:psub:channelB';
-      final message1 = 'Msg A';
-      final message2 = 'Msg B';
-      Completer<ValkeyMessage> msg1Completer = Completer();
-      Completer<ValkeyMessage> msg2Completer = Completer();
+      const pattern = 'test:psub:*';
+      const channel1 = 'test:psub:channelA';
+      const channel2 = 'test:psub:channelB';
+      const message1 = 'Msg A';
+      const message2 = 'Msg B';
+      final Completer<ValkeyMessage> msg1Completer = Completer();
+      final Completer<ValkeyMessage> msg2Completer = Completer();
       int receivedCount = 0;
 
       // 1. PSubscribe
@@ -676,10 +676,10 @@ Future<void> main() async {
     });
 
     test('punsubscribe should stop receiving pattern messages', () async {
-      final pattern = 'test:punsub:*';
-      final channel = 'test:punsub:channel';
-      final message1 = 'Msg before punsub';
-      final message2 = 'Msg after punsub';
+      const pattern = 'test:punsub:*';
+      const channel = 'test:punsub:channel';
+      const message1 = 'Msg before punsub';
+      const message2 = 'Msg after punsub';
       Completer<ValkeyMessage> msgCompleter = Completer();
 
       // 1. PSubscribe
@@ -899,8 +899,8 @@ Future<void> main() async {
     });
 
     test('pubsubChannels lists active channels', () async {
-      final channel1 = 'inspect:channel:1';
-      final channel2 = 'inspect:channel:2';
+      const channel1 = 'inspect:channel:1';
+      const channel2 = 'inspect:channel:2';
 
       // 1. No channels active
       var channels = await client.pubsubChannels();
@@ -921,8 +921,8 @@ Future<void> main() async {
     });
 
     test('pubsubNumSub returns subscriber counts', () async {
-      final channel1 = 'inspect:numsub:1';
-      final channel2 = 'inspect:numsub:2';
+      const channel1 = 'inspect:numsub:1';
+      const channel2 = 'inspect:numsub:2';
 
       // 1. Subscribe with subClient
       final sub = subClient.subscribe([channel1, channel2]);
@@ -943,8 +943,8 @@ Future<void> main() async {
     });
 
     test('pubsubNumPat returns pattern subscription count', () async {
-      final pattern1 = 'inspect:pat:*';
-      final pattern2 = 'inspect:another:*';
+      const pattern1 = 'inspect:pat:*';
+      const pattern2 = 'inspect:another:*';
 
       // 1. No patterns active
       var numPat = await client.pubsubNumPat();

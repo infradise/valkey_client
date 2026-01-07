@@ -14,7 +14,7 @@ void main() async {
   });
 
   test('Atomic Counters should work correctly', () async {
-    final key = 'counter:test';
+    const key = 'counter:test';
     await client.del(key); // Init
 
     // 1. INCR

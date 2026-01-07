@@ -9,13 +9,13 @@ void usage() {
 Future<void> printOutput(int port, String status, String output) async {
   print('Checking port $port... $status');
   if (output.isNotEmpty) {
-    var pidResult = await Process.run(
+    final pidResult = await Process.run(
       'bash',
       ['-c', "lsof -nP | grep ':$port' | awk '{print \$2}' | sort -u"],
     );
-    var pid = pidResult.stdout.toString().trim();
+    final pid = pidResult.stdout.toString().trim();
     if (pid.isNotEmpty) {
-      var procResult = await Process.run('ps', ['-p', pid, '-o', 'comm=']);
+      final procResult = await Process.run('ps', ['-p', pid, '-o', 'comm=']);
       print(procResult.stdout.toString().trim());
     }
     print('');
@@ -29,15 +29,15 @@ Future<void> checkPorts(int start, int end) async {
   }
 
   for (var port = start; port <= end; port++) {
-    var result = await Process.run('lsof', ['-i', ':$port']);
-    var output = result.stdout.toString().trim();
-    var status = output.isNotEmpty ? 'in use' : 'available';
+    final result = await Process.run('lsof', ['-i', ':$port']);
+    final output = result.stdout.toString().trim();
+    final status = output.isNotEmpty ? 'in use' : 'available';
     await printOutput(port, status, output);
   }
 }
 
 void detectOS() {
-  var os = Platform.operatingSystem;
+  final os = Platform.operatingSystem;
   String osType;
   switch (os) {
     case 'linux':
@@ -74,8 +74,8 @@ Future<void> main(List<String> args) async {
 
   detectOS();
 
-  var start = int.tryParse(args[0]);
-  var end = int.tryParse(args[1]);
+  final start = int.tryParse(args[0]);
+  final end = int.tryParse(args[1]);
 
   if (start == null || end == null) {
     print('Error: Ports must be numeric.');

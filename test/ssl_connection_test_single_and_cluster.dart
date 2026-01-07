@@ -14,8 +14,8 @@ void main() {
   // -------------------------------------------------------------------------
 
   group('ValkeyClient (Standalone) SSL', () {
-    final host = '127.0.0.1';
-    final sslPort = 6380;
+    const host = '127.0.0.1';
+    const sslPort = 6380;
 
     test('connects using SSL with self-signed cert', () async {
       final client = ValkeyClient(
@@ -46,8 +46,8 @@ void main() {
 
   group('ValkeyClusterClient SSL', () {
     // Assuming a local cluster with TLS is running on 7001
-    final seedHost = '127.0.0.1';
-    final seedPort = 7001;
+    const seedHost = '127.0.0.1';
+    const seedPort = 7001;
 
     test('connects to cluster using SSL with self-signed cert', () async {
       final node = ValkeyConnectionSettings(

@@ -36,8 +36,8 @@ void main() {
     });
 
     test('ssubscribe receives messages published via spublish', () async {
-      final channel = 'shard-channel:{1}'; // Hashtag used to be explicit
-      final messageContent = 'Hello Sharding';
+      const channel = 'shard-channel:{1}'; // Hashtag used to be explicit
+      const messageContent = 'Hello Sharding';
 
       // 1. Subscribe
       print('Subscribing to $channel...');

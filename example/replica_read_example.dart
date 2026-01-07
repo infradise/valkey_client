@@ -6,7 +6,7 @@ void main() async {
 
   print('🚀 Starting Replica Read & Load Balancing Example...');
 
-  final portMaster = 6379; // Master Port (e.g., 1 Master and 2 Replicas)
+  const portMaster = 6379; // Master Port (e.g., 1 Master and 2 Replicas)
   // final portReplica1 = 6380;
   // final portReplica2 = 6381;
 
