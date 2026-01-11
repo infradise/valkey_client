@@ -4,7 +4,7 @@
 
 The `valkey_client` is a high-performance, cluster-aware Dart client for Redis and Valkey.
 
-## 🧭 Overview
+## Overview
 - Deployment modes: Standalone; Sentinel; Cluster
 - Scalability: Scalable replica reads offloading; smart load balancing
 - Reliability: Automatic failover; smart connection pooling
@@ -16,7 +16,7 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
 - Valkey 9.0+ Features Support
   - Numbered clusters: Intelligent database selection for seamless cluster management
 
-## 💡 Need help?
+## Need help? 
 
 1. Still using Redis instead of Valkey? Check out [Developer Experience Improvements](https://github.com/infradise/valkey_client/wiki/Developer-Experience-Improvements).
 
@@ -24,7 +24,12 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
 
 3. Need real‑time watch for Redis/Valkey pods and services across multiple K8s clusters? Try [Visualkube Jet](https://jet.visualkube.com).
 
-## ⚙️ Features
+## Features
+
+All features are supported in the latest release.
+
+### New in v2.0.0 and later
+
   * **Scalable Replica Reads (v2.2.0+):** Boost read performance by offloading read-only commands (e.g., `GET`, `EXISTS`) to replica nodes. Supports `ReadPreference` settings (`master`, `preferReplica`, `replicaOnly`) to control traffic flow.
   * **Smart Load Balancing (v2.2.0+):** Built-in load balancing strategies (`Round-Robin`, `Random`) to efficiently distribute read traffic across available replicas.
   * **Automatic Replica Discovery (v2.2.0+):** Automatically detects and connects to replica nodes via `INFO REPLICATION` (Standalone/Sentinel) to maintain an up-to-date pool of connections.
@@ -32,6 +37,9 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
   * **Smart Database Selection (v2.1.0+):** First-class support for selecting databases (0-15+) on connection. Automatically detects **Valkey 9.0+ Numbered Clusters** to enable multi-database support in cluster mode, while maintaining backward compatibility with Redis Clusters (DB 0 only).
   * **Server Metadata Discovery (v2.1.0+):** Access server details via `client.metadata` (Version, Mode, Server Name, Max Databases) to write adaptive logic for Valkey vs. Redis.
   * **Enterprise Security (v2.0.0+):** Native SSL/TLS support for secure communication. Fully compatible with major cloud providers (AWS, Azure, GCP) and supports custom security contexts (including self-signed certificates).
+
+### Features introduced prior to v2.0.0
+
   * **Automatic Failover:** The client now survives node failures. If a master node goes down (connection refused/timeout), the client automatically refreshes the cluster topology and reroutes commands to the new master without throwing an exception.
   * **Connection Pool Hardening:** Implemented **Smart Release** mechanism. The pool automatically detects and discards "dirty" connections (e.g., inside Transaction or Pub/Sub) upon release, preventing pool pollution and resource leaks.
   * **Enhanced Developer Experience:** Expanded `Redis` aliases to include Exceptions, Configuration, and Data Models (`RedisException`, `RedisMessage`, etc.) for a seamless migration experience.
@@ -51,7 +59,7 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
   * **Production-Ready (Standalone/Sentinel):** stable for production use in non-clustered environments.
   * **Production-Ready (Cluster):** stable for production use with full cluster support.
 
-## 📚 Usage
+## Usage
 
 Refer to the [Wiki](https://github.com/infradise/valkey_client/wiki) page in our GitHub repository to see more examples.
 
