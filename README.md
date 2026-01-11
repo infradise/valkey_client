@@ -50,31 +50,6 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
   * **Production-Ready (Standalone/Sentinel):** stable for production use in non-clustered environments.
   * **Production-Ready (Cluster):** stable for production use with full cluster support.
 
-## Command Support
-  * **Connection** (`PING`, `ECHO`, `QUIT` via `close()`)
-  * **Cluster** (`CLUSTER SLOTS`, `ASKING`)
-  * **Strings** (`GET`, `SET`, `MGET`, `INCR`, `DECR`, `INCRBY`, `DECRBY`)
-  * **Hashes** (`HSET`, `HGET`, `HGETALL`)
-  * **Lists** (`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`)
-  * **Sets** (`SADD`, `SREM`, `SMEMBERS`)
-  * **Sorted Sets** (`ZADD`, `ZREM`, `ZRANGE`)
-  * **Key Management** (`DEL`, `EXISTS`, `EXPIRE`, `TTL`)
-  * **Transactions** (`MULTI`, `EXEC`, `DISCARD`)
-  * **Full Pub/Sub** (`PUBLISH`, `SUBSCRIBE`, `UNSUBSCRIBE`, `PSUBSCRIBE`, `PUNSUBSCRIBE`)
-  * **Pub/Sub Introspection** (`PUBSUB CHANNELS`, `PUBSUB NUMSUB`, `PUBSUB NUMPAT`)
-  * **Sharded Pub/Sub** (`SPUBLISH`, `SSUBSCRIBE`, `SUNSUBSCRIBE`) for efficient cluster messaging.
-
-## Read-only Commands for Replica Reads
-
-  * `GET`, `EXISTS`, `TTL`, `PTTL`, `GETRANGE`, `MGET`, `STRLEN`
-  * `HGET`, `HGETALL`, `HMGET`, `HEXISTS`, `HLEN`, `HSTRLEN`
-  * `LINDEX`, `LLEN`, `LRANGE`
-  * `SCARD`, `SISMEMBER`, `SMEMBERS`, `SRANDMEMBER`
-  * `ZCARD`, `ZCOUNT`, `ZRANGE`, `ZOO`, `ZSCORE`, `ZRANK`, `ZREVRANK`, `ZLEXCOUNT`, `ZRANGEBYLEX`, `ZRANGEBYSCORE`
-  * `PFCOUNT`, `GEOHASH`, `GEOPOS`, `GEODIST`, `GEORADIUS_RO`, `GEORADIUSBYMEMBER_RO`
-  * `BITCOUNT`, `BITPOS`, `GETBIT`
-  * `TYPE`, `SCAN`, `HSCAN`, `SSCAN`, `ZSCAN`
-
 ## Developer Experience Improvements
 
 To enhance DX for both Redis and Valkey developers, we provide fully compatible aliases. You can use the class names you are most comfortable with.
