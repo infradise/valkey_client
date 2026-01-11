@@ -50,45 +50,6 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
   * **Production-Ready (Standalone/Sentinel):** stable for production use in non-clustered environments.
   * **Production-Ready (Cluster):** stable for production use with full cluster support.
 
-## Developer Experience Improvements
-
-To enhance DX for both Redis and Valkey developers, we provide fully compatible aliases. You can use the class names you are most comfortable with.
-
-- For instance, `RedisClient` is available as an alias of `ValkeyClient` to enhance developer experience (DX).
-- Both classes and helper functions are fully compatible — choose whichever name feels natural for your project.
-
-### Clients
-
-| Role | Redis Alias | Valkey Class | Description |
-| :--- | :--- | :--- | :--- |
-| **Client** | `RedisClient` | `ValkeyClient` | Standard client for Standalone or Sentinel connections. |
-| **Cluster** | `RedisClusterClient` | `ValkeyClusterClient` | Auto-routing client for Cluster environments. |
-| **Pooling** | `RedisPool` | `ValkeyPool` | Manages connection pools for high-concurrency apps. |
-
-### Configuration
-
-| Role | Redis Alias | Valkey Class | Description |
-| :--- | :--- | :--- | :--- |
-| **Settings** | `RedisConnectionSettings` | `ValkeyConnectionSettings` | Configuration for host, port, password, and timeout. |
-| **Logging** | `RedisLogLevel` | `ValkeyLogLevel` | Logging levels (info, warning, severe, off). |
-
-### Data Models
-
-| Role | Redis Alias | Valkey Class | Description |
-| :--- | :--- | :--- | :--- |
-| **Message** | `RedisMessage` | `ValkeyMessage` | Represents a message received via Pub/Sub. |
-
-### Exceptions (Crucial for try-catch blocks)
-
-| Role | Redis Alias | Valkey Class | Description |
-| :--- | :--- | :--- | :--- |
-| **Base Error** | `RedisException` | `ValkeyException` | The base class for all package-related exceptions. |
-| **Network** | `RedisConnectionException` | `ValkeyConnectionException` | Thrown when connection fails or drops. |
-| **Server** | `RedisServerException` | `ValkeyServerException` | Thrown when the server returns an error (e.g., `-ERR`). |
-| **Usage** | `RedisClientException` | `ValkeyClientException` | Thrown on invalid client usage (e.g., misuse of API). |
-| **Parsing** | `RedisParsingException` | `ValkeyParsingException` | Thrown when the response cannot be parsed (RESP3). |
-
-
 ## Usage
 
 Refer to the [Wiki](https://github.com/infradise/valkey_client/wiki) page in our GitHub repository to see more examples.
