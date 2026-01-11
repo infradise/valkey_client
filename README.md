@@ -4,7 +4,7 @@
 
 The `valkey_client` is a high-performance, cluster-aware Dart client for Redis and Valkey.
 
-## Overview
+## 🧭 Overview
 - Deployment modes: Standalone; Sentinel; Cluster
 - Scalability: Scalable replica reads offloading; smart load balancing
 - Reliability: Automatic failover; smart connection pooling
@@ -16,14 +16,15 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
 - Valkey 9.0+ Features Support
   - Numbered clusters: Intelligent database selection for seamless cluster management
 
-## Helpers
+## 💡 Need help?
 
-👉 To browse Redis/Valkey data, you can use [Keyscope](https://keyscope.dev), a native Redis/Valkey IDE to edit key-value data in your databases.  
-👉 To access Redis/Valkey servers on Kubernetes, you can use [Visualkube Jet](https://jet.visualkube.com), a native Kubernetes IDE for multi‑cluster access and real-time watch.
+1. Still using Redis instead of Valkey? Check out [Developer Experience Improvements](https://github.com/infradise/valkey_client/wiki/Developer-Experience-Improvements).
 
-> **Keyscope** and **Visualkube Jet** are plugins for Android Studio and JetBrains IDEs.
+2. No GUI for Redis/Valkey? Try [Keyscope](https://keyscope.dev).
 
-## Features
+3. Need real‑time watch for Redis/Valkey pods and services across multiple K8s clusters? Try [Visualkube Jet](https://jet.visualkube.com).
+
+## ⚙️ Features
   * **Scalable Replica Reads (v2.2.0+):** Boost read performance by offloading read-only commands (e.g., `GET`, `EXISTS`) to replica nodes. Supports `ReadPreference` settings (`master`, `preferReplica`, `replicaOnly`) to control traffic flow.
   * **Smart Load Balancing (v2.2.0+):** Built-in load balancing strategies (`Round-Robin`, `Random`) to efficiently distribute read traffic across available replicas.
   * **Automatic Replica Discovery (v2.2.0+):** Automatically detects and connects to replica nodes via `INFO REPLICATION` (Standalone/Sentinel) to maintain an up-to-date pool of connections.
@@ -50,7 +51,7 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
   * **Production-Ready (Standalone/Sentinel):** stable for production use in non-clustered environments.
   * **Production-Ready (Cluster):** stable for production use with full cluster support.
 
-## Usage
+## 📚 Usage
 
 Refer to the [Wiki](https://github.com/infradise/valkey_client/wiki) page in our GitHub repository to see more examples.
 
