@@ -166,6 +166,13 @@ Check for static errors, warnings, and lints to ensure code quality and adherenc
 dart analyze
 ```
 
+Apply the linter rules
+
+```
+dart fix --dry-run
+dart fix --apply
+```
+
 ## Pre-Publish Check
 
 Verify that the package is ready for publishing without actually uploading it.

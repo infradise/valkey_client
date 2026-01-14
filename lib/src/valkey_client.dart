@@ -1243,7 +1243,7 @@ class ValkeyClient implements ValkeyClientBase {
             // Double check completion
             if (isError) {
               completer.completeError(
-                  result ?? ValkeyException("Unknown error"), stackTrace);
+                  result ?? ValkeyException('Unknown error'), stackTrace);
             } else {
               // Completing command successfully via microtask with result
               completer.complete(result);
@@ -1981,12 +1981,12 @@ class ValkeyClient implements ValkeyClientBase {
     if (_subscribeReadyCompleter != null &&
         !_subscribeReadyCompleter!.isCompleted) {
       _subscribeReadyCompleter!.completeError(
-          Exception("Subscription cancelled or failed before ready."));
+          Exception('Subscription cancelled or failed before ready.'));
     }
     if (_psubscribeReadyCompleter != null &&
         !_psubscribeReadyCompleter!.isCompleted) {
       _psubscribeReadyCompleter!.completeError(
-          Exception("Subscription cancelled or failed before ready."));
+          Exception('Subscription cancelled or failed before ready.'));
     }
     _subscribeReadyCompleter = null;
     _psubscribeReadyCompleter = null;
@@ -1997,7 +1997,7 @@ class ValkeyClient implements ValkeyClientBase {
     if (_ssubscribeReadyCompleter != null &&
         !_ssubscribeReadyCompleter!.isCompleted) {
       _ssubscribeReadyCompleter!
-          .completeError(Exception("Resetting PubSub state"));
+          .completeError(Exception('Resetting PubSub state'));
     }
     _ssubscribeReadyCompleter = null;
     _expectedSsubscribeConfirmations = 0;

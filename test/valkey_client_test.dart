@@ -781,7 +781,7 @@ Future<void> main() async {
           // (e) => e.toString(),
           (e) => e.message,
           'message',
-          contains("wrong number of arguments"),
+          contains('wrong number of arguments'),
         )),
       );
 

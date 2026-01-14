@@ -32,131 +32,131 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
     print('✅ Connection successful!');
 
     // --- PING (v0.2.0) ---
-    print("\n--- PING ---");
+    print('\n--- PING ---');
     print("Sending: PING 'Hello'");
     final pingResponse = await client.ping('Hello');
-    print("Received: $pingResponse");
+    print('Received: $pingResponse');
 
     // --- SET/GET (v0.3.0) ---
-    print("\n--- SET/GET ---");
+    print('\n--- SET/GET ---');
     print("Sending: SET greeting 'Hello, Valkey!'");
     final setResponse = await client.set('greeting', 'Hello, Valkey!');
-    print("Received: $setResponse");
+    print('Received: $setResponse');
 
-    print("Sending: GET greeting");
+    print('Sending: GET greeting');
     final getResponse = await client.get('greeting');
-    print("Received: $getResponse");
+    print('Received: $getResponse');
 
     // --- MGET (v0.4.0) ---
-    print("\n--- MGET (Array Parsing) ---");
-    print("Sending: MGET greeting non_existent_key");
+    print('\n--- MGET (Array Parsing) ---');
+    print('Sending: MGET greeting non_existent_key');
     final mgetResponse = await client.mget(['greeting', 'non_existent_key']);
-    print("Received: $mgetResponse"); // Should be "[Hello, Valkey!, null]"
+    print('Received: $mgetResponse'); // Should be "[Hello, Valkey!, null]"
 
     // --- HASH (v0.5.0) ---
-    print("\n--- HASH (Map/Object) ---");
+    print('\n--- HASH (Map/Object) ---');
     print("Sending: HSET user:1 name 'Valkyrie'");
     final hsetResponse = await client.hset('user:1', 'name', 'Valkyrie');
-    print("Received (1=new, 0=update): $hsetResponse");
+    print('Received (1=new, 0=update): $hsetResponse');
 
     print("Sending: HSET user:1 project 'valkey_client'");
     await client.hset('user:1', 'project', 'valkey_client');
 
-    print("Sending: HGET user:1 name");
+    print('Sending: HGET user:1 name');
     final hgetResponse = await client.hget('user:1', 'name');
-    print("Received: $hgetResponse"); // Should be "Valkyrie"
+    print('Received: $hgetResponse'); // Should be "Valkyrie"
 
-    print("Sending: HGETALL user:1");
+    print('Sending: HGETALL user:1');
     final hgetAllResponse = await client.hgetall('user:1');
     print(
-        "Received Map: $hgetAllResponse"); // Should be {name: Valkyrie, project: valkey_client}
+        'Received Map: $hgetAllResponse'); // Should be {name: Valkyrie, project: valkey_client}
 
     // --- LIST (v0.6.0) ---
-    print("\n--- LIST (Queue/Stack) ---");
+    print('\n--- LIST (Queue/Stack) ---');
     print("Sending: LPUSH mylist 'item1'");
     await client.lpush('mylist', 'item1');
     print("Sending: LPUSH mylist 'item2'");
     final length = await client.lpush('mylist', 'item2');
-    print("Received list length: $length"); // Should be 2
+    print('Received list length: $length'); // Should be 2
 
-    print("Sending: LRANGE mylist 0 -1");
+    print('Sending: LRANGE mylist 0 -1');
     final listResponse = await client.lrange('mylist', 0, -1);
     print(
-        "Received list: $listResponse"); // Should be [item2, item1] (LPUSH prepends)
+        'Received list: $listResponse'); // Should be [item2, item1] (LPUSH prepends)
 
-    print("Sending: RPOP mylist");
+    print('Sending: RPOP mylist');
     final poppedItem = await client.rpop('mylist');
     print(
-        "Received popped item: $poppedItem"); // Should be "item1" (RPOP removes from the end)
+        'Received popped item: $poppedItem'); // Should be "item1" (RPOP removes from the end)
 
     // --- SET / SORTED SET (v0.7.0) ---
-    print("\n--- SET (Unique Tags) / SORTED SET (Leaderboard) ---");
+    print('\n--- SET (Unique Tags) / SORTED SET (Leaderboard) ---');
     print("Sending: SADD users:1:tags 'dart'");
     await client.sadd('users:1:tags', 'dart');
     print("Sending: SADD users:1:tags 'valkey'");
     await client.sadd('users:1:tags', 'valkey');
 
-    print("Sending: SMEMBERS users:1:tags");
+    print('Sending: SMEMBERS users:1:tags');
     final tags = await client.smembers('users:1:tags');
-    print("Received tags (unordered): $tags"); // Should contain [dart, valkey]
+    print('Received tags (unordered): $tags'); // Should contain [dart, valkey]
 
     print("Sending: ZADD leaderboard 100 'PlayerOne'");
     await client.zadd('leaderboard', 100, 'PlayerOne');
     print("Sending: ZADD leaderboard 150 'PlayerTwo'");
     await client.zadd('leaderboard', 150, 'PlayerTwo');
 
-    print("Sending: ZRANGE leaderboard 0 -1"); // Get all players by score
+    print('Sending: ZRANGE leaderboard 0 -1'); // Get all players by score
     final leaderboard = await client.zrange('leaderboard', 0, -1);
     print(
-        "Received leaderboard (score low to high): $leaderboard"); // Should be [PlayerOne, PlayerTwo]
+        'Received leaderboard (score low to high): $leaderboard'); // Should be [PlayerOne, PlayerTwo]
 
     // --- KEY MANAGEMENT (v0.8.0) ---
-    print("\n--- KEY MANAGEMENT (Expiration & Deletion) ---");
-    print("Sending: EXPIRE greeting 10"); // Expire the 'greeting' key in 10s
+    print('\n--- KEY MANAGEMENT (Expiration & Deletion) ---');
+    print('Sending: EXPIRE greeting 10'); // Expire the 'greeting' key in 10s
     final expireResponse = await client.expire('greeting', 10);
-    print("Received (1=set, 0=not set): $expireResponse");
+    print('Received (1=set, 0=not set): $expireResponse');
 
-    print("Sending: TTL greeting");
+    print('Sending: TTL greeting');
     final ttlResponse = await client.ttl('greeting');
     print(
-        "Received TTL (seconds, -1=no expire, -2=not exist): $ttlResponse"); // Should be <= 10
+        'Received TTL (seconds, -1=no expire, -2=not exist): $ttlResponse'); // Should be <= 10
 
-    print("Sending: DEL mylist"); // Delete the list key
+    print('Sending: DEL mylist'); // Delete the list key
     final delResponse = await client.del('mylist');
-    print("Received (number of keys deleted): $delResponse"); // Should be 1
+    print('Received (number of keys deleted): $delResponse'); // Should be 1
 
-    print("Sending: EXISTS mylist");
+    print('Sending: EXISTS mylist');
     final existsResponse = await client.exists('mylist');
-    print("Received (1=exists, 0=not exist): $existsResponse"); // Should be 0
+    print('Received (1=exists, 0=not exist): $existsResponse'); // Should be 0
 
     // --- TRANSACTIONS (v0.11.0) ---
-    print("\n--- TRANSACTIONS (Atomic Operations) ---");
+    print('\n--- TRANSACTIONS (Atomic Operations) ---');
     try {
-      print("Sending: MULTI");
+      print('Sending: MULTI');
       await client.multi(); // Start transaction
 
       print("Queueing: SET tx:1 'hello'");
       final setFuture = client.set('tx:1', 'hello'); // Queued
-      print("Queueing: INCR tx:counter");
+      print('Queueing: INCR tx:counter');
       final incrFuture = client.execute(['INCR', 'tx:counter']); // Queued
 
       // Await queued responses (optional)
-      print("Awaited SET response: ${await setFuture}"); // Should be 'QUEUED'
-      print("Awaited INCR response: ${await incrFuture}"); // Should be 'QUEUED'
+      print('Awaited SET response: ${await setFuture}'); // Should be 'QUEUED'
+      print('Awaited INCR response: ${await incrFuture}'); // Should be 'QUEUED'
 
-      print("Sending: EXEC");
+      print('Sending: EXEC');
       final execResponse = await client.exec(); // Execute transaction
 
-      print("Received EXEC results: $execResponse"); // Should be [OK, 1]
+      print('Received EXEC results: $execResponse'); // Should be [OK, 1]
 
       // Example of DISCARD (uncomment to test)
-      print("Sending: MULTI... SET... DISCARD");
+      print('Sending: MULTI... SET... DISCARD');
       await client.multi();
       await client.set('tx:2', 'discarded');
       await client.discard(); // Cancel transaction
       print("Value of tx:2 (should be null): ${await client.get('tx:2')}");
     } catch (e) {
-      print("❌ Transaction Failed: $e");
+      print('❌ Transaction Failed: $e');
       // Ensure transaction state is reset if something went wrong
       try {
         await client.discard();
@@ -336,7 +336,7 @@ Future<void> main() async {
   // (Note: These commands are usually run from a *different* client
   // than the one that is subscribed, as a subscribed client can't
   // run most normal commands.)
-  print("\n--- PUBSUB INTROSPECTION (Admin/Info) ---");
+  print('\n--- PUBSUB INTROSPECTION (Admin/Info) ---');
   await runPubSubIntrospectionExample(
     host: host,
     port: port,
@@ -477,16 +477,16 @@ Future<void> runPubSubIntrospectionExample({
     print("Sending: PUBSUB CHANNELS 'channel:*'");
     final channels = await adminClient.pubsubChannels('channel:*');
     print(
-        "Received active channels: $channels"); // e.g., Should be [channel:inspect]
+        'Received active channels: $channels'); // e.g., Should be [channel:inspect]
 
     print("Sending: PUBSUB NUMSUB 'channel:$channelName'");
     final numsub = await adminClient.pubsubNumSub(['channel:$channelName']);
     print(
-        "Received subscriber count: $numsub"); // e.g., Should be {channel:inspect: 1}
+        'Received subscriber count: $numsub'); // e.g., Should be {channel:inspect: 1}
 
-    print("Sending: PUBSUB NUMPAT");
+    print('Sending: PUBSUB NUMPAT');
     final numpat = await adminClient.pubsubNumPat();
-    print("Received pattern subscription count: $numpat"); // Should be 1
+    print('Received pattern subscription count: $numpat'); // Should be 1
   } catch (e) {
     print('❌ Pub/Sub Introspection Example Failed: $e');
   } finally {
