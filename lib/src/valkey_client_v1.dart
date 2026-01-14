@@ -19,7 +19,6 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:convert'; // For UTF8 encoding
 import 'dart:collection'; // A Queue to manage pending commands
-import 'dart:math'; // [v2.2.0] For Random LoadBalancing
 
 // Import the base class and the ValkeyMessage / Subscription
 import 'package:valkey_client/valkey_client_base.dart';
@@ -32,6 +31,12 @@ export 'package:valkey_client/valkey_client_base.dart'
 // Import the top-level function from the parser file
 import 'package:valkey_client/src/cluster_slots_parser.dart'
     show parseClusterSlotsResponse;
+
+// import 'package:valkey_client/src/connection_settings.dart';
+// import 'package:valkey_client/src/exceptions.dart';
+// import 'package:valkey_client/src/commands_mixin.dart';
+// import 'package:valkey_client/src/resp_codec.dart';
+// import 'package:valkey_client/src/subscription.dart';
 
 // Internal helper class to read bytes from the buffer.
 class _BufferReader {
@@ -110,8 +115,10 @@ class _IncompleteDataException implements Exception {
   String toString() => message;
 }
 
-/// The main client implementation for communicating with a Valkey server.
-class ValkeyClient implements ValkeyClientBase {
+/// The main client implementation for communicating with a Valkey/Redis server.
+/// A client for interacting with a Valkey/Redis server.
+// class ValkeyClient implements ValkeyClientBase {
+class ValkeyClient with ValkeyCommands {
   static final _log = ValkeyLogger('ValkeyClient');
 
   /// Sets the logging level for all ValkeyClient instances.
@@ -122,6 +129,11 @@ class ValkeyClient implements ValkeyClientBase {
   static void setLogLevel(ValkeyLogLevel level) {
     ValkeyLogger.level = level;
   }
+
+  final ValkeyConnectionSettings _config;
+  final StreamController<List<int>> _responseController = StreamController();
+  final List<int> _buffer = [];
+  bool _isClosed = false;
 
   Socket? _socket;
   StreamSubscription<Uint8List>? _subscription;
@@ -140,89 +152,12 @@ class ValkeyClient implements ValkeyClientBase {
   /// The timeout duration for commands.
   final Duration _commandTimeout;
 
-  // final Duration _connectTimeout;
-  // final ValkeyConnectionSettings _config;
-
-  // [v2.0.0] SSL Configuration
-  final bool _useSsl;
-  final SecurityContext? _sslContext;
-  final bool Function(X509Certificate)? _onBadCertificate;
-
-  // [v2.1.0] Config & Metadata
-  final ValkeyConnectionSettings _config;
-  ServerMetadata? _metadata;
-
-  /// Returns the metadata of the connected server.
-  ServerMetadata? get metadata => _metadata;
-
-  // [v2.2.0] Read-only commands whitelist
-  // This is a comprehensive list of commands that are safe to send to replicas.
-  static const Set<String> _readOnlyCommands = {
-    'GET',
-    'EXISTS',
-    'TTL',
-    'PTTL',
-    'GETRANGE',
-    'MGET',
-    'STRLEN',
-    'HGET',
-    'HGETALL',
-    'HMGET',
-    'HEXISTS',
-    'HLEN',
-    'HSTRLEN',
-    'LINDEX',
-    'LLEN',
-    'LRANGE',
-    'SCARD',
-    'SISMEMBER',
-    'SMEMBERS',
-    'SRANDMEMBER',
-    'ZCARD',
-    'ZCOUNT',
-    'ZRANGE',
-    'ZOO',
-    'ZSCORE',
-    'ZRANK',
-    'ZREVRANK',
-    'ZLEXCOUNT',
-    'ZRANGEBYLEX',
-    'ZRANGEBYSCORE',
-    'PFCOUNT',
-    'GEOHASH',
-    'GEOPOS',
-    'GEODIST',
-    'GEORADIUS_RO',
-    'GEORADIUSBYMEMBER_RO',
-    'BITCOUNT',
-    'BITPOS',
-    'GETBIT',
-    'TYPE',
-    'SCAN',
-    'HSCAN',
-    'SSCAN',
-    'ZSCAN'
-  };
-
-  // [v2.2.0] Replica Management
-  final List<ValkeyClient> _replicas = [];
-  int _roundRobinIndex = 0;
-  final Random _random = Random();
-
-  // [v2.2.0 Debug Feature] Track the last client used for execution
-  ValkeyClient? _lastUsedClient;
-
-  /// Returns the configuration of the connection used for the last command.
-  /// Useful for debugging load balancing strategies.
-  ValkeyConnectionSettings? get lastUsedConnectionConfig =>
-      _lastUsedClient?._config;
-
   // Command/Response Queue
   /// A queue of Completers, each waiting for a response.
   final Queue<Completer<dynamic>> _responseQueue = Queue();
 
   /// A buffer to store incomplete data chunks from the socket.
-  final BytesBuilder _buffer = BytesBuilder();
+  // final BytesBuilder _buffer = BytesBuilder();
 
   // Connection/Auth State
   /// A Completer for the initial connection/auth handshake.
@@ -273,10 +208,54 @@ class ValkeyClient implements ValkeyClientBase {
   Completer<void>? _sunsubscribeCompleter;
   // -------------------------------------
 
+  /// Creates a new Redis/Valkey client instance.
+  ///
+  /// [host], [port], [username], and [password] are the default
+  /// connection parameters used when [connect] is called.
+  ///
+  /// [commandTimeout] specifies the maximum duration to wait for a command
+  /// response before throwing a [ValkeyClientException].
+  ValkeyClient({
+    // String host = '127.0.0.1',
+    // int port = 6379,
+    required String host,
+    required int port,
+    String? username,
+    String? password,
+    Duration commandTimeout = const Duration(seconds: 10),
+    Duration connectTimeout = const Duration(seconds: 10),
+    // v2.0.0 SSL Options
+    bool useSsl = false,
+    SecurityContext? sslContext,
+    bool Function(X509Certificate)? onBadCertificate,
+    // })  : _defaultHost = host,
+    //       _defaultPort = port,
+    //       _defaultUsername = username,
+    //       _defaultPassword = password,
+    //       _commandTimeout = commandTimeout;
+  }) : _config = ValkeyConnectionSettings(
+          host: host,
+          port: port,
+          username: username,
+          password: password,
+          commandTimeout: commandTimeout,
+          connectTimeout: connectTimeout,
+          useSsl: useSsl,
+          sslContext: sslContext,
+          onBadCertificate: onBadCertificate,
+        );
+
+  // Constructor utilizing an existing settings object
+  ValkeyClient.fromSettings(this._config);
+
   // --- v1.7.0: Smart Connection Pool Support ---
 
   /// Returns true if the client has an active socket connection.
+  /// Returns true if the socket is currently connected.
   bool get isConnected => _socket != null;
+
+  /// Returns true if the client is in a stateful mode (Pub/Sub or Tx).
+  bool get isStateful => _activeSubscription != null; // Add Tx check later
 
   /// Returns true if the client is in a stateful mode that makes it
   /// unsuitable for reuse without a reset (e.g., Pub/Sub, Transaction).
@@ -297,80 +276,6 @@ class ValkeyClient implements ValkeyClientBase {
   }
   // ---------------------------------------------
 
-  /// Creates a new Valkey client instance.
-  ///
-  /// [host], [port], [username], and [password] are the default
-  /// connection parameters used when [connect] is called.
-  ///
-  /// [commandTimeout] specifies the maximum duration to wait for a command
-  /// response before throwing a [ValkeyClientException].
-  ValkeyClient({
-    String host = '127.0.0.1',
-    int port = 6379,
-    String? username,
-    String? password,
-    Duration commandTimeout = const Duration(seconds: 10),
-    Duration connectTimeout = const Duration(seconds: 10),
-    // [v2.0.0] Add SSL parameters
-    bool useSsl = false,
-    SecurityContext? sslContext,
-    bool Function(X509Certificate)? onBadCertificate,
-    int database = 0,
-    ReadPreference readPreference = ReadPreference.master,
-    LoadBalancingStrategy loadBalancingStrategy =
-        LoadBalancingStrategy.roundRobin,
-    List<ValkeyConnectionSettings>? explicitReplicas,
-    AddressMapper? addressMapper,
-  })  : _config = ValkeyConnectionSettings(
-          host: host,
-          port: port,
-          username: username,
-          password: password,
-          commandTimeout: commandTimeout,
-          connectTimeout: connectTimeout,
-          // [v2.0.0] Initialize SSL settings
-          useSsl: useSsl,
-          sslContext: sslContext,
-          onBadCertificate: onBadCertificate,
-          database: database,
-          readPreference: readPreference,
-          loadBalancingStrategy: loadBalancingStrategy,
-          explicitReplicas: explicitReplicas ?? [],
-          addressMapper: addressMapper,
-        ),
-        _defaultHost = host,
-        _defaultPort = port,
-        _defaultUsername = username,
-        _defaultPassword = password,
-        _commandTimeout = commandTimeout,
-        // _connectTimeout = connectTimeout,
-        // [v2.0.0] Initialize SSL settings
-        _useSsl = useSsl,
-        _sslContext = sslContext,
-        _onBadCertificate = onBadCertificate;
-
-  // Constructor utilizing an existing settings object
-  // ValkeyClient.fromSettings(this._config);
-
-  /// Creates a client using a [ValkeyConnectionSettings] object.
-  factory ValkeyClient.fromSettings(ValkeyConnectionSettings settings) =>
-      ValkeyClient(
-        host: settings.host,
-        port: settings.port,
-        username: settings.username,
-        password: settings.password,
-        commandTimeout: settings.commandTimeout,
-        // [v2.0.0] SSL Options mapping
-        useSsl: settings.useSsl,
-        sslContext: settings.sslContext,
-        onBadCertificate: settings.onBadCertificate,
-        database: settings.database,
-        readPreference: settings.readPreference,
-        loadBalancingStrategy: settings.loadBalancingStrategy,
-        explicitReplicas: settings.explicitReplicas,
-        addressMapper: settings.addressMapper,
-      );
-
   /// A Future that completes once the connection and authentication are successful.
   @override
   Future<void> get onConnected =>
@@ -378,507 +283,154 @@ class ValkeyClient implements ValkeyClientBase {
       Future.error(ValkeyClientException(
           'Client not connected or connection attempt failed.'));
 
-  @override
-  Future<void> connect({
-    String? host,
-    int? port,
-    String? username,
-    String? password,
-  }) async {
-    // Prevent multiple concurrent connection attempts
-    if (_connectionCompleter != null && !_connectionCompleter!.isCompleted) {
-      return onConnected;
-    }
-    // If already connected successfully, return immediately
-    if (_socket != null &&
-        _connectionCompleter != null &&
-        _connectionCompleter!.isCompleted) {
-      // Check if the completed future was successful
-      final bool wasSuccessful =
-          await onConnected.then((_) => true, onError: (_) => false);
-      if (wasSuccessful) return onConnected;
-      // If the future completed with an error, allow reconnect attempt
-      await close(); // Ensure cleanup before reconnect if previous connection failed
-    }
-
-    // Use method args if provided, otherwise fallback to defaults
-    _lastHost = host ?? _defaultHost;
-    _lastPort = port ?? _defaultPort;
-    _lastUsername = username ?? _defaultUsername;
-    _lastPassword = password ?? _defaultPassword;
-
-    // Reset the completer for this new connection attempt
-    _connectionCompleter = Completer();
-    // Reset states for a fresh connection
-    _isAuthenticating = false;
-
-    _isInPubSubMode = false; // Reset pubsub state on new connection
-    _subscribedChannels.clear();
-    _subscribedPatterns.clear(); // Clear patterns too
-    _buffer.clear();
-    _responseQueue.clear();
-    _resetPubSubState(); // Close existing controller and reset completers
+  /// Connects to the Valkey server.
+  Future<void> connect() async {
+    if (_socket != null) return;
+    if (_isClosed) throw ValkeyClientException('Client is closed.');
 
     try {
-      // 1. Attempt to connect the socket.
-      // _socket = await Socket.connect(_lastHost, _lastPort);
-
-      // --- BEGIN: v1.3.0 IPv6 HOTFIX ---
-      // On macOS/Windows, Docker often binds to IPv4 (127.0.0.1) but not
-      // IPv6 (::1). Dart's Socket.connect defaults to IPv6 first when
-      // 'localhost' or '127.0.0.1' is used, causing a connection hang.
-      // We explicitly force IPv4 for loopback addresses.
-      dynamic hostToConnect = _lastHost;
-      if (_lastHost == '127.0.0.1' || _lastHost == 'localhost') {
-        _log.fine('Forcing IPv4 loopback address for 127.0.0.1/localhost');
-        hostToConnect = InternetAddress.loopbackIPv4;
-      }
-
-      // 1. Attempt to connect the socket (SSL or Plain).
-      if (_useSsl) {
+      if (_config.useSsl) {
         // [v2.0.0] Secure Connection
         _socket = await SecureSocket.connect(
-          hostToConnect,
-          _lastPort,
-          context: _sslContext,
-          onBadCertificate: _onBadCertificate,
+          _config.host,
+          _config.port,
+          context: _config.sslContext,
+          onBadCertificate: _config.onBadCertificate,
           timeout: _config.connectTimeout,
         );
       } else {
-        // Plain Connection
+        // Standard Connection
         _socket = await Socket.connect(
-          hostToConnect,
-          _lastPort,
+          _config.host,
+          _config.port,
           timeout: _config.connectTimeout,
         );
       }
-      // --- END: v1.3.0 IPv6 HOTFIX ---
 
-      // 2. Set up the socket stream listener.
-      _subscription = _socket!.listen(
-        // This is where we will parse the RESP3 data from the server.
-        _handleSocketData,
-        onError: _handleSocketError,
-        onDone: _handleSocketDone,
-        // false: The subscription will NOT be automatically cancelled if an error occurs. Error handling (including potential cancellation) is managed by the onError callback (_handleSocketError).
-        // true: Automatically cancel the subscription on error.
-        cancelOnError: false, // Keep false
+      // Nagle's algorithm disabled for lower latency
+      _socket!.setOption(SocketOption.tcpNoDelay, true);
+
+      _socket!.listen(
+        _onData,
+        onError: _onError,
+        onDone: _onDone,
+        cancelOnError: true,
       );
 
-      // AUTHENTICATION LOGIC
-      if (_lastPassword != null) {
-        _isAuthenticating = true;
-        _sendAuthCommand(_lastPassword!, username: _lastUsername);
-      } else {
-        // Notify external listeners that the connection is ready.
-        // No password, connection is immediately ready.
-        // No auth needed, connection is ready
-        if (!_connectionCompleter!.isCompleted) {
-          _connectionCompleter!.complete();
+      // Authenticate if needed
+      if (_config.password != null) {
+        if (_config.username != null) {
+          await sendCommand(['AUTH', _config.username!, _config.password!]);
+        } else {
+          await sendCommand(['AUTH', _config.password!]);
         }
       }
-    } catch (e, s) {
-      final connEx = ValkeyConnectionException(
-          'Failed to connect to $_lastHost:$_lastPort. $e', e);
-      _cleanup(); // Clean up socket if connection fails
-      if (_connectionCompleter != null && !_connectionCompleter!.isCompleted) {
-        _connectionCompleter!
-            .completeError(connEx, s); // Rethrow connection error
-      }
-    }
 
-    // return onConnected;
-
-    // [v2.1.0 Logic Addition]
-    // Wait for the basic connection and auth to complete first.
-    await onConnected;
-
-    // Initialize Metadata & DB Selection (v2.1.0)
-    try {
-      await _initializeConnection();
+      // Send CLIENT SETNAME for debugging visibility
+      await sendCommand(['CLIENT', 'SETNAME', 'valkey_client_dart']);
     } catch (e) {
-      // If DB selection fails (e.g. index out of range), close connection and rethrow.
-      await close();
+      _socket?.destroy();
+      _socket = null;
       throw ValkeyConnectionException(
-          'Failed to initialize connection (DB Selection): $e', e);
-    }
-
-    // Return void as the Future<void> signature requires
-
-    // 3. [v2.2.0] Replica Discovery: Discover & Connect to Replicas
-    // Only if the user requested a preference other than 'master'
-    if (_config.readPreference != ReadPreference.master) {
-      // Avoid recursion: If this instance is already a replica (or auxiliary client), skip.
-      // \ We can check this by ensuring we don't pass 'readPreference' to children,
-      // \ OR simply by checking if we are the main client context.
-      // \ For now, _discoverAndConnectReplicas handles recursion by creating clients with ReadPreference.master.
-      await _discoverAndConnectReplicas();
+          'Failed to connect to ${_config.host}:${_config.port}. $e', e);
     }
   }
 
-  /// [v2.2.0] Discovers replicas via Explicit Config AND Auto-Discovery.
-  /// Auto-Discovery: INFO REPLICATION (Standalone) or CLUSTER SLOTS (Cluster).
-  Future<void> _discoverAndConnectReplicas() async {
-    _replicas.clear(); // Clear existing if reconnecting
-
-    // 1. Connect to Explicit Replicas (if any)
-    // These are prioritized as the user manually defined them.
-    if (_config.explicitReplicas != null) {
-      for (final replicaConfig in _config.explicitReplicas!) {
-        await _addReplicaFromConfig(replicaConfig);
-      }
-    }
-
-    // 2. Auto Discovery (Cluster or Standalone) + AutoNAT
-    // Always run auto-discovery to find dynamic nodes.
-
-    // 2-1. Cluster Mode Discovery
-    if (_metadata?.mode == RunningMode.cluster) {
-      try {
-        final slots = await clusterSlots();
-
-        // Iterate through slots to find replica nodes
-        for (final slot in slots) {
-          for (final replicaNode in slot.replicas) {
-            // [AutoNAT] Apply Mapping
-            var targetHost = replicaNode.host;
-            var targetPort = replicaNode.port;
-
-            if (_config.addressMapper != null) {
-              final mapped = _config.addressMapper!(targetHost, targetPort);
-              targetHost = mapped.host;
-              targetPort = mapped.port;
-            }
-
-            // Create config inheriting from Master but overriding Host/Port
-            final discoveredConfig = _config.copyWith(
-              // host: replicaNode.host,
-              // port: replicaNode.port,
-              host: targetHost,
-              port: targetPort,
-              readPreference: ReadPreference.master, // Prevent recursion
-              explicitReplicas: [], // Clear explicit list for child
-            );
-            // await _addReplica(replicaNode.host, replicaNode.port);
-            await _addReplicaFromConfig(discoveredConfig);
-          }
-        }
-      } catch (e) {
-        _log.warning('Failed to discover replicas via CLUSTER SLOTS: $e');
-      }
-    }
-    // 2-2. Standalone / Sentinel Mode Discovery
-    else {
-      try {
-        final info = await execute(['INFO', 'REPLICATION']);
-        // final info = await _executeInternal(['INFO', 'REPLICATION']);
-        _log.info(info);
-        // if (info is! String) return;
-
-        if (info is String) {
-          final lines = info.split('\r\n');
-          for (var line in lines) {
-            // Parse slave lines: "slave0:ip=127.0.0.1,port=6380,state=online,..."
-            // Parse slave lines: "slave0:ip=172.x.x.x,port=6380,state=online,..."
-            if (line.startsWith('slave')) {
-              final parts = line.split(',');
-              String? ip;
-              int? port;
-              String state = 'offline';
-
-              for (var part in parts) {
-                if (part.contains('ip=')) ip = part.split('=')[1];
-                if (part.contains('port=')) {
-                  port = int.tryParse(part.split('=')[1]);
-                }
-                if (part.contains('state=')) state = part.split('=')[1];
-              }
-
-              if (ip != null && port != null && state == 'online') {
-                // [AutoNAT] Apply Mapping
-                // \ Convert Internal IP(172.x) to External IP(127.0.0.1)
-                var targetHost = ip;
-                var targetPort = port;
-
-                if (_config.addressMapper != null) {
-                  final mapped = _config.addressMapper!(targetHost, targetPort);
-                  targetHost = mapped.host;
-                  targetPort = mapped.port;
-                }
-
-                // Auto-discovered nodes inherit Master's Auth/SSL settings
-                final discoveredConfig = _config.copyWith(
-                  // host: ip,
-                  // port: port,
-                  host: targetHost,
-                  port: targetPort,
-                  readPreference: ReadPreference.master,
-                  explicitReplicas: [],
-                );
-                // NOTE: Avoid connecting to self if something is wrong, but usually IP:Port differs.
-                // await _addReplica(ip, port);
-                await _addReplicaFromConfig(discoveredConfig);
-              }
-            }
-          }
-        }
-      } catch (e) {
-        // _log.warning('Auto-discovery failed: $e');
-        _log.warning('Failed to discover replicas via INFO REPLICATION: $e');
-        // Do not fail the master connection just because replica discovery failed.
-      }
-    }
-
-    // Check constraint: If replicaOnly is set but no replicas found
-    if (_config.readPreference == ReadPreference.replicaOnly &&
-        _replicas.isEmpty) {
-      throw ValkeyConnectionException(
-          'ReadPreference is replicaOnly but no online replicas were found.');
-    }
-  }
-
-  /// Helper to connect and add a replica using a full settings object.
-  Future<void> _addReplicaFromConfig(ValkeyConnectionSettings settings) async {
-    // 1. Deduplication
-    //    \ Implement deduplication logic to prevent redundant connections.
-    //    \ If a client with the same IP and Port is already in the list, skip it.
-    //    \ NOTE: Check to prevent connecting to the same replica multiple times.
-    //    \ NOTE: Avoid adding duplicates if multiple slots share the same replica
-    for (final r in _replicas) {
-      // Accessing private member '_config' is allowed since we are in the same class.
-      if (r._config.host == settings.host && r._config.port == settings.port) {
-        _log.info(
-            'Replica ${settings.host}:${settings.port} is already connected. Skipping.');
-        return;
-      }
-    }
-
-    try {
-      // 2. Ensure recursion safety
-      //    \ Create settings (a new client) for the replica.
-      //    \ Force ReadPreference.master to prevent infinite recursion
-      //    \ NOTE: A replica client should not try to discover its own replicas.
-      final safeSettings = settings.copyWith(
-        readPreference: ReadPreference.master, // Stop recursion
-        explicitReplicas: [],
-      );
-
-      // 3. Connect to the replica
-      final replicaClient = ValkeyClient.fromSettings(safeSettings);
-
-      // TODO: REVIEW REQUIRED => REMOVE. NEED CONSENSUS.
-      // final replicaClient = ValkeyClient(
-      //   host: settings.host,
-      //   port: settings.port,
-      //   username: settings.username,
-      //   password: settings.password,
-      //   commandTimeout: settings.commandTimeout,
-      //   useSsl: settings.useSsl,
-      //   sslContext: settings.sslContext,
-      //   onBadCertificate: settings.onBadCertificate,
-      //   database: settings.database,
-      //   readPreference: ReadPreference.master,
-      //   explicitReplicas: settings.explicitReplicas,
-      //   loadBalancingStrategy: settings.loadBalancingStrategy,
-      // );
-
-      await replicaClient.connect();
-
-      // 4. [Cluster Mode] If metadata indicates cluster, we MUST send READONLY
-      // to enable reading from a replica node.
-      if (_metadata?.mode == RunningMode.cluster) {
-        await replicaClient.execute(['READONLY']);
-        //  await replicaClient._executeInternal(['READONLY']);
-      }
-
-      // 5. Add to the list and log success
-      _replicas.add(replicaClient);
-      _log.info('Added replica connection: ${settings.host}:${settings.port}');
-    } catch (e) {
-      // Log connection failure
-      _log.warning(
-          'Failed to connect to replica at ${settings.host}:${settings.port} : $e');
-    }
-  }
-
-  // TODO: REVIEW REQUIRED => REMOVE. NEED CONSENSUS.
-  // Future<void> _addReplica(String host, int port) async {
-  //   // 1. Implement deduplication logic to prevent redundant connections.
-  //   // If a client with the same IP and Port is already in the list, skip it.
-  //   // \ NOTE: Check to prevent connecting to the same replica multiple times.
-  //   // \ NOTE: Avoid adding duplicates if multiple slots share the same replica
-  //   for (final r in _replicas) {
-  //      // Accessing private member '_config' is allowed since we are in the same class.
-  //      if (r._config.host == host && r._config.port == port) {
-  //       _log.info('Replica $host:$port is already connected. Skipping.');
-  //       return;
-  //     }
+  // @override
+  // Future<void> connect({
+  //   String? host,
+  //   int? port,
+  //   String? username,
+  //   String? password,
+  // }) async {
+  //   // Prevent multiple concurrent connection attempts
+  //   if (_connectionCompleter != null && !_connectionCompleter!.isCompleted) {
+  //     return onConnected;
   //   }
+  //   // If already connected successfully, return immediately
+  //   if (_socket != null &&
+  //       _connectionCompleter != null &&
+  //       _connectionCompleter!.isCompleted) {
+  //     // Check if the completed future was successful
+  //     bool wasSuccessful =
+  //         await onConnected.then((_) => true, onError: (_) => false);
+  //     if (wasSuccessful) return onConnected;
+  //     // If the future completed with an error, allow reconnect attempt
+  //     await close(); // Ensure cleanup before reconnect if previous connection failed
+  //   }
+
+  //   // Use method args if provided, otherwise fallback to defaults
+  //   _lastHost = host ?? _defaultHost;
+  //   _lastPort = port ?? _defaultPort;
+  //   _lastUsername = username ?? _defaultUsername;
+  //   _lastPassword = password ?? _defaultPassword;
+
+  //   // Reset the completer for this new connection attempt
+  //   _connectionCompleter = Completer();
+  //   // Reset states for a fresh connection
+  //   _isAuthenticating = false;
+
+  //   _isInPubSubMode = false; // Reset pubsub state on new connection
+  //   _subscribedChannels.clear();
+  //   _subscribedPatterns.clear(); // Clear patterns too
+  //   _buffer.clear();
+  //   _responseQueue.clear();
+  //   _resetPubSubState(); // Close existing controller and reset completers
 
   //   try {
-  //     // 2. Create settings (a new client) for the replica.
-  //     // Force ReadPreference.master to prevent infinite recursion
-  //     // \ NOTE: A replica client should not try to discover its own replicas.
-  //     final replicaSettings = _config.copyWith(
-  //       host: host,
-  //       port: port,
-  //       readPreference: ReadPreference.master, // Stop recursion
-  //     );
+  //     // 1. Attempt to connect the socket.
+  //     // _socket = await Socket.connect(_lastHost, _lastPort);
 
-  //     // 3. Connect to the replica
-  //     final replicaClient = ValkeyClient.fromSettings(replicaSettings);
-  //     await replicaClient.connect();
-
-  //     // 4. [Cluster Mode] If metadata indicates cluster, we MUST send READONLY
-  //     // to enable reading from a replica node.
-  //     if (_metadata?.mode == RunningMode.cluster) {
-  //       await replicaClient.execute(['READONLY']);
+  //     // --- BEGIN: v1.3.0 IPv6 HOTFIX ---
+  //     // On macOS/Windows, Docker often binds to IPv4 (127.0.0.1) but not
+  //     // IPv6 (::1). Dart's Socket.connect defaults to IPv6 first when
+  //     // 'localhost' or '127.0.0.1' is used, causing a connection hang.
+  //     // We explicitly force IPv4 for loopback addresses.
+  //     dynamic hostToConnect = _lastHost;
+  //     if (_lastHost == '127.0.0.1' || _lastHost == 'localhost') {
+  //       _log.fine('Forcing IPv4 loopback address for 127.0.0.1/localhost');
+  //       hostToConnect = InternetAddress.loopbackIPv4;
   //     }
 
-  //     // 5. Add to the list and log success
-  //     _replicas.add(replicaClient);
-  //     _log.info('Added replica connection: $host:$port');
-  //   } catch (e) {
-  //     // Log connection failure
-  //     _log.warning('Failed to connect to replica at $host:$port : $e');
+  //     // 1. Attempt to connect the socket using the corrected host.
+  //     _socket = await Socket.connect(hostToConnect, _lastPort);
+  //     // --- END: v1.3.0 IPv6 HOTFIX ---
+
+  //     // 2. Set up the socket stream listener.
+  //     _subscription = _socket!.listen(
+  //       // This is where we will parse the RESP3 data from the server.
+  //       _handleSocketData,
+  //       onError: _handleSocketError,
+  //       onDone: _handleSocketDone,
+  //       // false: The subscription will NOT be automatically cancelled if an error occurs. Error handling (including potential cancellation) is managed by the onError callback (_handleSocketError).
+  //       // true: Automatically cancel the subscription on error.
+  //       cancelOnError: false, // Keep false
+  //     );
+
+  //     // AUTHENTICATION LOGIC
+  //     if (_lastPassword != null) {
+  //       _isAuthenticating = true;
+  //       _sendAuthCommand(_lastPassword!, username: _lastUsername);
+  //     } else {
+  //       // Notify external listeners that the connection is ready.
+  //       // No password, connection is immediately ready.
+  //       // No auth needed, connection is ready
+  //       if (!_connectionCompleter!.isCompleted) {
+  //         _connectionCompleter!.complete();
+  //       }
+  //     }
+  //   } catch (e, s) {
+  //     final connEx = ValkeyConnectionException(
+  //         'Failed to connect to $_lastHost:$_lastPort. $e', e);
+  //     _cleanup(); // Clean up socket if connection fails
+  //     if (_connectionCompleter != null && !_connectionCompleter!.isCompleted) {
+  //       _connectionCompleter!
+  //           .completeError(connEx, s); // Rethrow connection error
+  //     }
   //   }
+
+  //   return onConnected;
   // }
-
-  /// [v2.1.0] Detects server info and selects the configured database.
-  Future<void> _initializeConnection() async {
-    // 1. Get INFO SERVER
-    final infoString = await execute(['INFO', 'SERVER']) as String;
-    // Use _executeInternal to bypass routing during initialization
-    // final infoString = await _executeInternal(['INFO', 'SERVER']) as String;
-
-    // 2. Parse Metadata (Version, Mode, Max DBs)
-    _metadata = await _parseServerMetadata(infoString);
-
-    // 3. Select Database if needed
-    if (_config.database > 0) {
-      // Check range
-      if (_config.database >= _metadata!.maxDatabases) {
-        throw ValkeyClientException(
-            'Requested database index ${_config.database} is out of range. '
-            'Server (${_metadata!.serverName}) supports 0 to ${_metadata!.maxDatabases - 1}.');
-      }
-
-      // Perform SELECT
-      await execute(['SELECT', _config.database.toString()]);
-      // Use _executeInternal to bypass routing during initialization
-      // await _executeInternal(['SELECT', _config.database.toString()]);
-    }
-  }
-
-  /// Parses 'INFO SERVER' and checks configs based on User Rules.
-  Future<ServerMetadata> _parseServerMetadata(String info) async {
-    final Map<String, String> infoMap = {};
-    final lines = info.split('\r\n');
-    for (var line in lines) {
-      if (line.contains(':')) {
-        final parts = line.split(':');
-        if (parts.length >= 2) {
-          infoMap[parts[0]] = parts[1];
-        }
-      }
-    }
-
-    // --- Rule 1: Determine Name & Version ---
-    String serverName = 'unknown';
-    String version = '0.0.0';
-
-    if (infoMap.containsKey('valkey_version')) {
-      serverName = 'valkey';
-      version = infoMap['valkey_version']!;
-    } else if (infoMap.containsKey('redis_version')) {
-      serverName = 'redis';
-      version = infoMap['redis_version']!;
-    }
-
-    // --- Detect Mode ---
-    final serverMode = infoMap['server_mode'] ?? 'unknown';
-    final RunningMode mode = switch (serverMode) {
-      'cluster' => RunningMode.cluster,
-      'sentinel' => RunningMode.sentinel,
-      'standalone' => RunningMode.standalone,
-      _ => RunningMode.unknown,
-    };
-
-    // --- Rule 2: Determine Max Databases ---
-    int maxDatabases = 16; // Default fallback
-
-    // Logic:
-    // If Valkey >= 9.0.0 -> Check 'cluster-databases'
-    // Else (Valkey < 9.0 OR Redis) -> Check 'databases'
-
-    bool isValkey9OrAbove = false;
-    if (serverName == 'valkey') {
-      isValkey9OrAbove = _compareVersions(version, '9.0.0') >= 0;
-    }
-
-    final String configKeyToCheck = switch (serverMode) {
-      'cluster' => isValkey9OrAbove
-          ? 'cluster-databases' // Default for Valkey 9.0+
-          : 'databases', // Default for Old Valkey (9.0-)
-      _ => 'databases', // Default for Redis
-    };
-
-    // Fetch the specific config
-    try {
-      final configVal = await _getConfigValue(configKeyToCheck);
-      if (configVal != null) {
-        maxDatabases = int.tryParse(configVal) ?? 16;
-      } else {
-        // If config fetch returns null
-        if (mode == RunningMode.cluster && !isValkey9OrAbove) {
-          // Redis Cluster / Old Valkey Cluster usually supports only DB 0.
-          maxDatabases = 1;
-        }
-      }
-    } catch (_) {
-      // If CONFIG GET fails (permission error, etc.)
-      if (mode == RunningMode.cluster && !isValkey9OrAbove) {
-        maxDatabases = 1;
-      }
-    }
-
-    return ServerMetadata(
-      version: version,
-      serverName: serverName,
-      mode: mode,
-      maxDatabases: maxDatabases,
-    );
-  }
-
-  /// Helper to get a single config value. Returns null if not found/error.
-  Future<String?> _getConfigValue(String parameter) async {
-    try {
-      // CONFIG GET returns ['parameter', 'value']
-      final result = await execute(['CONFIG', 'GET', parameter]);
-      if (result is List && result.length >= 2) {
-        return result[1] as String;
-      }
-    } catch (e) {
-      return null;
-    }
-    return null;
-  }
-
-  /// Helper to compare semantic versions.
-  /// Returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal.
-  int _compareVersions(String v1, String v2) {
-    final v1Parts = v1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-    final v2Parts = v2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-
-    for (var i = 0; i < 3; i++) {
-      // Compare major, minor, patch
-      final int p1 = (i < v1Parts.length) ? v1Parts[i] : 0;
-      final int p2 = (i < v2Parts.length) ? v2Parts[i] : 0;
-      if (p1 > p2) return 1;
-      if (p1 < p2) return -1;
-    }
-    return 0;
-  }
 
   // --- Core Data Handler & Parser ---
 
@@ -1392,73 +944,11 @@ class ValkeyClient implements ValkeyClientBase {
 
   // --- Public Command Methods ---
 
-  /// [v2.2.0] Routing Logic
-  @override
-  Future<dynamic> execute(List<String> command) async {
-    final cmdName = command.isNotEmpty ? command[0].toUpperCase() : '';
-
-    // 1. Determine if this is a Read-Only command
-    final isReadOnly = _readOnlyCommands.contains(cmdName);
-
-    // 2. Decide Target Client
-    ValkeyClient targetClient = this; // Default to Master (this instance)
-
-    if (isReadOnly && _config.readPreference != ReadPreference.master) {
-      if (_replicas.isNotEmpty) {
-        // We have replicas, use one according to strategy
-        targetClient = _selectReplica();
-      } else if (_config.readPreference == ReadPreference.replicaOnly) {
-        // Strict mode: Fail if no replicas
-        throw ValkeyClientException(
-            'ReadPreference is replicaOnly but no replicas are available.');
-      }
-      // If preferReplica and no replicas, we naturally stay with 'this' (Master)
-      _log.fine('PreferReplica set but no replicas connected. Using Master.');
-    }
-
-    _lastUsedClient =
-        targetClient; // Most recently selected client record (for debugging)
-
-    // 3. Execute
-    if (targetClient == this) {
-      return _executeInternal(command); // Execute on this socket
-    } else {
-      // Forward to replica
-      // Note: We should handle if replica fails (e.g., retry on master if preferReplica)
-      try {
-        return await targetClient.execute(command);
-        // return await targetClient._executeInternal(command);
-      } catch (e) {
-        // Failover logic for 'preferReplica'
-        if (_config.readPreference == ReadPreference.preferReplica) {
-          _log.warning('Replica failed, falling back to master: $e');
-          _lastUsedClient = this;
-          return _executeInternal(command);
-        }
-        rethrow;
-      }
-    }
-  }
-
-  /// Selects a replica based on LoadBalancingStrategy
-  ValkeyClient _selectReplica() {
-    if (_replicas.isEmpty) return this; // Should not happen given checks
-
-    if (_config.loadBalancingStrategy == LoadBalancingStrategy.random) {
-      return _replicas[_random.nextInt(_replicas.length)];
-    } else {
-      // Round Robin
-      final replica = _replicas[_roundRobinIndex % _replicas.length];
-      _roundRobinIndex = (_roundRobinIndex + 1) % _replicas.length;
-      return replica;
-    }
-  }
-
   /// Executes a raw command. (This will be our main internal method)
   /// Returns a Future that completes with the server's response.
   /// Handle SSUBSCRIBE/SUNSUBSCRIBE futures
-  // Removed @override -> Renamed original 'execute' logic to '_executeInternal'
-  Future<dynamic> _executeInternal(List<String> command) async {
+  @override
+  Future<dynamic> execute(List<String> command) async {
     final cmdUpper = command.isNotEmpty ? command[0].toUpperCase() : '';
 
     if (_isInTransaction &&
@@ -1585,6 +1075,7 @@ class ValkeyClient implements ValkeyClientBase {
           Future.error(
               ValkeyClientException('PSubscribe completer not initialized'));
     }
+
     // if (isPubSubManagementCmd) {
     //    // UNSUBSCRIBE/PUNSUBSCRIBE: Return a new Future tied to the queue
     //    completer = Completer<dynamic>();
@@ -1608,6 +1099,7 @@ class ValkeyClient implements ValkeyClientBase {
       return _sunsubscribeCompleter?.future ??
           Future.error('Sunsubscribe completer not initialized');
     }
+
     // If it's a regular command (completer is not null)
     if (completer != null) {
       return completer.future.timeout(
@@ -2333,47 +1825,33 @@ class ValkeyClient implements ValkeyClientBase {
 
   @override
   Future<void> close() async {
-    // [v2.2.0] 1. Close all replicas first
-    // We iterate backwards or just loop to close them.
-    for (final replica in _replicas) {
-      try {
-        await replica.close();
-      } catch (_) {
-        // Ignore errors during replica closure
-      }
-    }
-    _replicas.clear();
-
-    // 2. Close Master connection and cleanup
-    // await sub?.cancel().catchError((_) { /* Ignore errors on cancel */ });
-    // try {
-    await _subscription?.cancel(); // Cancel listening
-    // } catch (_) {}
-
-    // try {
-    // await sock?.close().catchError((_) { /* Ignore errors on close */ });
-    await _socket?.close(); // Graceful close socket if possible
-    // } catch (_) {}
-
-    _cleanup(); // Then cleanup resources. Ensure resources are released
-
-    // Reset pub/sub state immediately
-    _resetPubSubState(); // Reset pubsub state
+    if (_isClosed) return;
+    _isClosed = true;
+    await _socket?.close(); // Graceful close
+    _socket?.destroy();
+    _socket = null;
+    await _responseController.close();
   }
+
+  // @override
+  // Future<void> close() async {
+  //   // await sub?.cancel().catchError((_) { /* Ignore errors on cancel */ });
+  //   await _subscription?.cancel(); // Cancel listening
+  //   // await sock?.close().catchError((_) { /* Ignore errors on close */ });
+  //   await _socket?.close(); // Graceful close socket if possible
+  //   _cleanup(); // Then cleanup resources. Ensure resources are released
+  //   // Reset pub/sub state immediately
+  //   _resetPubSubState(); // Reset pubsub state
+  // }
 
   /// Internal helper to clean up socket and subscription resources.
   /// Cleans up resources like socket and subscription. MUST be safe to call multiple times.
   void _cleanup() {
-    // try {
     _subscription
         ?.cancel()
         .catchError((_) {}); // Errors are likely if already closed/cancelled
-    // } catch (_) {}
 
-    // try {
     _socket?.destroy(); // Force close // Ensure the socket is fully destroyed.
-    // } catch (_) {}
-
     _socket = null; // Prevent further write attempts
     _subscription = null; // Prevent further listen events
     _buffer.clear();
