@@ -16,3 +16,4 @@ setup/
 
 # Ignore test artifacts
 test/
+analysis_options.yaml
