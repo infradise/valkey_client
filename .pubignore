@@ -13,3 +13,6 @@ pubspec.lock
 docs/
 docs/BUILD.md
 setup/
+
+# Ignore test artifacts
+test/
