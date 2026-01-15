@@ -1,0 +1,15 @@
+name: Test on macOS
+
+on:
+  push:
+    branches: [ macos ]
+  pull_request:
+
+jobs:
+  build-job:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Hello from macOS 👋"
+      - run: pwd
+      - run: ls -la
