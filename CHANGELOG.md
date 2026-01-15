@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.3.0
+
+### Improved
+- Applied strict linter rules project-wide.
+
+
 ## 2.2.0
 
 ### Added
