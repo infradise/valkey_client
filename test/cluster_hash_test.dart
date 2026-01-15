@@ -57,10 +57,3 @@ void main() {
     });
   });
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-00:00 +4: All tests passed!
-*/

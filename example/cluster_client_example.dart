@@ -94,25 +94,3 @@ void main() async {
     await client.close();
   }
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-Connecting to cluster...
-✅ Cluster connected and slot map loaded.
-
-Running SET command for "key:A" (Slot 9366)...
-SET response: OK
-
-Running GET command for "key:A"...
-GET response: Hello from Cluster!
-
-Running SET command for "key:B"...
-SET response: OK
-
-Running GET command for "key:B"...
-GET response: Valkey rocks!
-
-Closing all cluster connections...
-*/

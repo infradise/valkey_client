@@ -73,19 +73,3 @@ void main() {
     });
   });
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-00:00 +0: ClusterSlotMap updateSlot should correctly modify the node for a specific slot
-[2025-12-16T00:06:57.570657] ClusterSlotMap - INFO: key = robustness_check
-[2025-12-16T00:06:57.573907] ClusterSlotMap - INFO: slot = 16173
-[2025-12-16T00:06:57.575253] ClusterSlotMap - INFO: key = robustness_check
-[2025-12-16T00:06:57.575288] ClusterSlotMap - INFO: slot = 16173
-[2025-12-16T00:06:57.576458] ClusterSlotMap - INFO: key = foo
-[2025-12-16T00:06:57.576499] ClusterSlotMap - INFO: slot = 12182
-[2025-12-16T00:06:57.576531] ClusterSlotMap - INFO: key = foo
-[2025-12-16T00:06:57.576553] ClusterSlotMap - INFO: slot = 12182
-00:00 +1: All tests passed!
-*/

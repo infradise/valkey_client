@@ -58,23 +58,3 @@ void main() async {
     await client.close();
   }
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-🔒 [Dev] Connecting to Standalone SSL (Self-Signed)...
-  ✅ Connected securely!
-  Value: works
-  📤 PING -> 📥 PONG
-  📤 GET ssl_key -> 📥 Hello Secure World
-
-OR
-
-🔒 [Dev] Connecting to Standalone SSL (Self-Signed)...
-  ⚠️ Ignoring certificate error for: /CN=localhost
-  ✅ Connected securely!
-  Value: works
-  📤 PING -> 📥 PONG
-  📤 GET ssl_key -> 📥 Hello Secure World
-*/

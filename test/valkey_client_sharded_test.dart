@@ -83,15 +83,3 @@ void main() {
     });
   });
 }
-
-/*
-EXPECTED OUTPUT
-===============
-for both modes (Standalone and Cluster)
-
-00:00 +0: ValkeyClient Sharded Pub/Sub ssubscribe receives messages published via spublish
-Subscribing to shard-channel:{1}...
-Publishing to shard-channel:{1}...
-Received message on shard-channel:{1}: Hello Sharding
-00:00 +1: All tests passed!
-*/

@@ -55,15 +55,3 @@ void main() async {
     await client.close();
   }
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-✅ Connected to Valkey/Redis.
-Initial value: 0
-INCR result: 1
-INCRBY 10 result: 11
-DECR result: 10
-DECRBY 5 result: 5
-*/

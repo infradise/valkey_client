@@ -55,30 +55,3 @@ void main() async {
     await client.close();
   }
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-🗄️ Starting Database Selection Example...
-
-🔍 Server Metadata Discovered:
-   - Software: valkey
-   - Version:  9.0.0
-   - Mode:     standalone
-   - Max DBs:  16
-
-✅ Data in DB 1: app:config:mode = production
-
----
-
-🗄️ Starting Database Selection Example...
-
-🔍 Server Metadata Discovered:
-   - Software: valkey
-   - Version:  9.0.0
-   - Mode:     cluster
-   - Max DBs:  1
-
-✅ Data in DB 1: app:config:mode = production
-*/

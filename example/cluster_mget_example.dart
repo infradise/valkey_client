@@ -76,16 +76,3 @@ void main() async {
     await client.close();
   }
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-Connecting to cluster...
-✅ Connected to cluster.
-
-Setting up test data on multiple nodes...
-Executing MGET for [key:A, key:B, key:C, missing_key]...
-Results: [Value-A, Value-B, Value-C, null]
-✅ MGET Success: Retrieved values from multiple nodes in correct order!
-*/

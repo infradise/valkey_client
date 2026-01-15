@@ -83,19 +83,3 @@ void main() async {
     await client.close();
   }
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-Connecting to cluster...
-✅ Connected to cluster.
-
---- Starting Sharded Pub/Sub (SSUBSCRIBE) ---
-✅ Subscribed to channels: [shard:news:{sports}, shard:news:{tech}]
-broadcasting messages via SPUBLISH...
-📩 Received: [shard:news:{sports}] Lakers won the game!
-📩 Received: [shard:news:{tech}] Valkey 1.6.0 released!
-✅ All messages received.
-Unsubscribed.
-*/

@@ -984,21 +984,3 @@ Future<void> main() async {
           ? 'Valkey server not running on $noAuthHost:$noAuthPort'
           : false);
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-00:00 +41: ValkeyClient Pub/Sub should receive messages on subscribed channel
-TEST: Waiting for subscription ready...
-TEST: Subscription ready!
-TEST Publishing message 1...
-TEST received: Hello from test 1
-TEST Publishing message 2...
-TEST received: Hello from test 2
-TEST Waiting for message 1...
-TEST Received message 1 OK
-TEST Waiting for message 2...
-TEST Received message 2 OK
-00:03 +56: All tests passed!
-*/

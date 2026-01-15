@@ -148,10 +148,3 @@ void main() {
     });
   });
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-00:00 +6: All tests passed!
-*/

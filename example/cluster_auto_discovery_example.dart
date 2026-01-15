@@ -68,30 +68,3 @@ void main() async {
     await client.close();
   }
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-✅ Connected to cluster node at 127.0.0.1:7001
-
-Fetching cluster topology using CLUSTER SLOTS...
-Cluster topology loaded. Found 3 slot ranges:
---------------------
-  Slots: 0 - 5460
-  Master: 192.168.65.254:7001 (ID: 9cb6e8f7e10d85a7a6a30f5fc17f06a5775b1805)
-  Replicas:
-    - 192.168.65.254:7006 (ID: 30620559f4420dd5f05308401a2c96b34362739c)
---------------------
-  Slots: 5461 - 10922
-  Master: 192.168.65.254:7002 (ID: 75d08706344d98c243c9579abf89a6075f39534f)
-  Replicas:
-    - 192.168.65.254:7004 (ID: 9a493209da40578023c314f49a1b234de045d995)
---------------------
-  Slots: 10923 - 16383
-  Master: 192.168.65.254:7003 (ID: e61e5a1ebab6ead786f21183d054fc239c510495)
-  Replicas:
-    - 192.168.65.254:7005 (ID: bdad94835d820ffc4302ea689f2bdba6c439be8e)
-
-Closing connection...
-*/

@@ -49,10 +49,3 @@ void main() async {
     await pool.close();
   }
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-Hello from ValkeyPool!
-*/

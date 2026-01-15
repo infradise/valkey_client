@@ -39,12 +39,3 @@ void main() {
     print('SPUBLISH sent successfully. Receivers: $receiverCount');
   });
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-00:00 +0: SPUBLISH should execute without error
-SPUBLISH sent successfully. Receivers: 0
-00:00 +1: All tests passed!
-*/

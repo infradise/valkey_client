@@ -497,10 +497,3 @@ Future<void> runPubSubIntrospectionExample({
     print('Introspection clients closed.');
   }
 }
-
-/*
-EXPECTED OUTPUT
-===============
-
-See `docs/test_results/valkey_client_example.md`
-*/
