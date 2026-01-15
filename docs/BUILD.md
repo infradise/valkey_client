@@ -60,7 +60,7 @@ dart test --tags example
 
 Expected output:
 ```sh
-00:07 +13: All tests passed!
+00:08 +15: All tests passed!
 ```
 
 ### Excluded Example
