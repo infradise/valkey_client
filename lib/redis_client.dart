@@ -16,12 +16,14 @@
 
 /// This library provides a Redis-compatible interface.
 ///
-/// It allows users to use the client with familiar class names (e.g., [RedisClient], [RedisException]).
-/// This is a wrapper around `valkey_client` to provide a seamless developer experience (DX)
+/// It allows users to use the client with familiar class names (e.g.,
+/// [RedisClient], [RedisException]).
+/// This is a wrapper around `valkey_client` to provide a seamless developer
+/// experience (DX)
 /// for those migrating from Redis or preferring Redis terminology.
 library;
 
-import 'package:valkey_client/valkey_client.dart';
+import 'valkey_client.dart';
 
 // --- Clients ---
 
@@ -55,7 +57,8 @@ typedef RedisException = ValkeyException;
 /// Alias for [ValkeyConnectionException]. Thrown on network/socket errors.
 typedef RedisConnectionException = ValkeyConnectionException;
 
-/// Alias for [ValkeyServerException]. Thrown when the server responds with an error.
+/// Alias for [ValkeyServerException]. Thrown when the server responds with
+/// an error.
 typedef RedisServerException = ValkeyServerException;
 
 /// Alias for [ValkeyClientException]. Thrown on invalid API usage.

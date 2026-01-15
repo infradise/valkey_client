@@ -46,7 +46,7 @@ void main() async {
         ReadPreference.preferReplica, // master, preferReplica, replicaOnly
     // [v2.2.0] Use Round-Robin to distribute load among replicas
     loadBalancingStrategy: LoadBalancingStrategy.roundRobin,
-    commandTimeout: Duration(seconds: 2),
+    commandTimeout: const Duration(seconds: 2),
     // If you had password/SSL, you'd set it here once.
   );
 
@@ -75,27 +75,28 @@ void main() async {
     // 3. Write Operation (Always goes to Master)
     // SET is not a read-only command.
     print('\n✍️  Writing data (Routed to Master)...');
-    for (int i = 0; i < 5; i++) {
+    for (var i = 0; i < 5; i++) {
       await client.set('user:$i', 'value_$i');
     }
 
     // Wait briefly for replication to happen (usually near-instant)
-    await Future.delayed(
-        Duration(milliseconds: 100)); // 100 or 200: Replication wait
+    await Future<void>.delayed(
+        const Duration(milliseconds: 100)); // 100 or 200: Replication wait
 
     // --- Read & Verify Load Balancing ---
     // 4. Read Operations (Routed to Replicas)
     // GET is a read-only command.
-    // Because we use Round-Robin, requests should alternate between Replica 1 and Replica 2.
+    // Because we use Round-Robin, requests should alternate between Replica 1
+    // and Replica 2.
     print('\n📖 Reading data (Routed to Replicas via Round-Robin)...');
 
-    for (int i = 0; i < 5; i++) {
+    for (var i = 0; i < 5; i++) {
       final key = 'user:$i';
       final value = await client.get(key);
 
       final usedConfig = client.lastUsedConnectionConfig;
 
-      String sourceName = 'Unknown';
+      var sourceName = 'Unknown';
       if (usedConfig != null) {
         if (usedConfig.port == portMaster) {
           sourceName = 'Master';

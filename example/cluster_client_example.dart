@@ -24,7 +24,8 @@ void main() async {
     ValkeyConnectionSettings(
       host: '127.0.0.1',
       port: 7001,
-      commandTimeout: Duration(seconds: 5), // Set timeout for all commands
+      commandTimeout:
+          const Duration(seconds: 5), // Set timeout for all commands
     ),
     // You could add other seed nodes here if desired
     // ValkeyConnectionSettings(host: '127.0.0.1', port: 7002),
@@ -84,7 +85,7 @@ void main() async {
     print('\n❌ Server Error: $e');
   } on ValkeyClientException catch (e) {
     print('\n❌ Client Error: $e');
-  } on UnimplementedError catch (e) {
+  } on FeatureNotImplementedException catch (e) {
     print('\n❌ Feature Not Implemented: $e');
   } catch (e) {
     print('\n❌ Unknown Error: $e');

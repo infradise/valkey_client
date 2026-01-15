@@ -40,8 +40,8 @@ Future<void> main() async {
 
   if (!isClusterRunning) {
     print('=' * 70);
-    print(
-        '⚠️  WARNING: Valkey CLUSTER not running on $clusterHost:$clusterPort.');
+    print('⚠️  WARNING: Valkey CLUSTER not running on '
+        '$clusterHost:$clusterPort.');
     print('Skipping ValkeyClusterClient tests.');
     print('Please start a cluster (e.g., ports 7001-7006) to run all tests.');
     print('=' * 70);

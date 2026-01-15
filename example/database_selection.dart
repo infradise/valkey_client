@@ -25,7 +25,7 @@ void main() async {
     port: 6379, // for standalone
     // port: 7002, // for cluster
     database: 1, // Select DB 1 automatically
-    commandTimeout: Duration(seconds: 2),
+    commandTimeout: const Duration(seconds: 2),
   );
 
   final client = ValkeyClient.fromSettings(settings);

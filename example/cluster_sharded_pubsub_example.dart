@@ -24,7 +24,7 @@ void main() async {
     ValkeyConnectionSettings(
       host: '127.0.0.1',
       port: 7001,
-      commandTimeout: Duration(seconds: 5),
+      commandTimeout: const Duration(seconds: 5),
     ),
   ];
   final client = ValkeyClusterClient(initialNodes);
@@ -43,7 +43,8 @@ void main() async {
     print('\n--- Starting Sharded Pub/Sub (SSUBSCRIBE) ---');
 
     // 3. Subscribe (Scatter-Gather)
-    // The client automatically routes subscription requests to the correct nodes.
+    // The client automatically routes subscription requests to
+    // the correct nodes.
     final sub = client.ssubscribe(channels);
 
     // Wait for the subscription to be fully established on all relevant nodes
@@ -53,7 +54,7 @@ void main() async {
     // 4. Listen for messages
     // Use a completer to keep the example running until we get messages
     final messagesReceived = Completer<void>();
-    int count = 0;
+    var count = 0;
 
     sub.messages.listen((msg) {
       print('📩 Received: [${msg.channel}] ${msg.message}');
@@ -70,7 +71,7 @@ void main() async {
     await client.spublish('shard:news:{tech}', 'Valkey 1.6.0 released!');
 
     // Wait for messages
-    await messagesReceived.future.timeout(Duration(seconds: 5));
+    await messagesReceived.future.timeout(const Duration(seconds: 5));
     print('✅ All messages received.');
 
     // 6. Unsubscribe

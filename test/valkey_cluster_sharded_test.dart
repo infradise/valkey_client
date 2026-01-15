@@ -60,7 +60,8 @@ void main() async {
       final channels = [channel1, channel2, channel3];
 
       // 2. Unified Subscription (SSUBSCRIBE)
-      // Internally sends subscription requests to multiple nodes and merges them.
+      // Internally sends subscription requests to multiple nodes and merges
+      // them.
       print('Cluster: Subscribing to $channels...');
       final sub = client.ssubscribe(channels);
       await sub.ready;
@@ -90,7 +91,7 @@ void main() async {
 
       // 5. Verify
       try {
-        await completer.future.timeout(Duration(seconds: 5));
+        await completer.future.timeout(const Duration(seconds: 5));
       } catch (e) {
         fail(
             'Timeout waiting for messages. Received: ${receivedMessages.keys}');

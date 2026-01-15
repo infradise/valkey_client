@@ -61,10 +61,9 @@ Future<void> printOutput(int port) async {
     print('Checking port $port... in use');
 
     if (Platform.isMacOS || Platform.isLinux) {
-      final result = await Process.run('bash', [
-        '-c',
-        "lsof -nP | grep ':$port' | awk '{print \$2}' | sort -u | xargs -I{} ps -p {} -o comm="
-      ]);
+      final cmd = "lsof -nP | grep ':$port' | awk '{print \$2}' "
+          '| sort -u | xargs -I{} ps -p {} -o comm=';
+      final result = await Process.run('bash', ['-c', cmd]);
       print(result.stdout);
     } else if (Platform.isWindows) {
       final result = await Process.run('netstat', ['-ano']);

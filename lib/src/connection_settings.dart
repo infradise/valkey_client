@@ -16,12 +16,17 @@
 
 import 'dart:io';
 
+import '../valkey_client.dart' show ValkeyPool;
+
+import '../valkey_pool.dart' show ValkeyPool;
+
 /// Defines which node to select for read operations.
 enum ReadPreference {
   /// Always read from the master node. (Default)
   master,
 
-  /// Prefer reading from replicas. If no replica is available, fall back to master.
+  /// Prefer reading from replicas.
+  /// If no replica is available, fall back to master.
   preferReplica,
 
   /// Only read from replicas. Throw exception if no replica is available.
@@ -77,7 +82,8 @@ class ValkeyConnectionSettings {
   /// (e.g., providing a client certificate or a custom CA).
   final SecurityContext? sslContext;
 
-  /// Callback to handle bad certificates (e.g., self-signed certificates in dev).
+  /// Callback to handle bad certificates (e.g., self-signed certificates in
+  /// dev).
   /// Returns `true` to allow the connection, `false` to abort.
   final bool Function(X509Certificate)? onBadCertificate;
 

@@ -68,8 +68,8 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
 
     print('Sending: HGETALL user:1');
     final hgetAllResponse = await client.hgetall('user:1');
-    print(
-        'Received Map: $hgetAllResponse'); // Should be {name: Valkyrie, project: valkey_client}
+    // Should be {name: Valkyrie, project: valkey_client}
+    print('Received Map: $hgetAllResponse');
 
     // --- LIST (v0.6.0) ---
     print('\n--- LIST (Queue/Stack) ---');
@@ -81,13 +81,13 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
 
     print('Sending: LRANGE mylist 0 -1');
     final listResponse = await client.lrange('mylist', 0, -1);
-    print(
-        'Received list: $listResponse'); // Should be [item2, item1] (LPUSH prepends)
+    // Should be [item2, item1] (LPUSH prepends)
+    print('Received list: $listResponse');
 
     print('Sending: RPOP mylist');
     final poppedItem = await client.rpop('mylist');
-    print(
-        'Received popped item: $poppedItem'); // Should be "item1" (RPOP removes from the end)
+    // Should be "item1" (RPOP removes from the end)
+    print('Received popped item: $poppedItem');
 
     // --- SET / SORTED SET (v0.7.0) ---
     print('\n--- SET (Unique Tags) / SORTED SET (Leaderboard) ---');
@@ -107,8 +107,8 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
 
     print('Sending: ZRANGE leaderboard 0 -1'); // Get all players by score
     final leaderboard = await client.zrange('leaderboard', 0, -1);
-    print(
-        'Received leaderboard (score low to high): $leaderboard'); // Should be [PlayerOne, PlayerTwo]
+    print('Received leaderboard (score low to high): '
+        '$leaderboard'); // Should be [PlayerOne, PlayerTwo]
 
     // --- KEY MANAGEMENT (v0.8.0) ---
     print('\n--- KEY MANAGEMENT (Expiration & Deletion) ---');
@@ -118,8 +118,8 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
 
     print('Sending: TTL greeting');
     final ttlResponse = await client.ttl('greeting');
-    print(
-        'Received TTL (seconds, -1=no expire, -2=not exist): $ttlResponse'); // Should be <= 10
+    print('Received TTL (seconds, -1=no expire, -2=not exist): '
+        '$ttlResponse'); // Should be <= 10
 
     print('Sending: DEL mylist'); // Delete the list key
     final delResponse = await client.del('mylist');
@@ -286,7 +286,7 @@ Future<void> main() async {
 
     // --- NEW: Wait for subscription ready ---
     print('Waiting for subscription confirmation...');
-    await sub.ready.timeout(Duration(seconds: 2));
+    await sub.ready.timeout(const Duration(seconds: 2));
     print('Subscription confirmed!');
     // ------------------------------------
 
@@ -294,10 +294,10 @@ Future<void> main() async {
     listener = sub.messages.listen(
       // Listen to sub.messages
       (message) {
-        print(
-            '📬 Received: ${message.message} (from channel: ${message.channel})');
+        print('📬 Received: ${message.message} '
+            '(from channel: ${message.channel})');
       },
-      onError: (e) => print('❌ Stream Error: $e'),
+      onError: (Object? e) => print('❌ Stream Error: $e'),
       onDone: () => print('ℹ️ Subscription stream closed.'),
     );
 
@@ -309,7 +309,7 @@ Future<void> main() async {
     await publisher.publish(channel, 'Second update!');
 
     // Wait a bit to receive messages
-    await Future.delayed(Duration(seconds: 1));
+    await Future<void>.delayed(const Duration(seconds: 1));
 
     // 4. Clean up (Need UNSUBSCRIBE command in the future)
     print('\nClosing connections (will stop subscription)...');
@@ -377,22 +377,22 @@ Future<void> runPatternSubscriptionExample({
     // 1. PSubscribe and wait for ready
     final sub = subscriber.psubscribe([pattern]);
     print('Waiting for psubscribe confirmation...');
-    await sub.ready.timeout(Duration(seconds: 2));
+    await sub.ready.timeout(const Duration(seconds: 2));
     print('PSubscription confirmed!');
 
     // 2. Listen to messages
     listener = sub.messages.listen(
       (message) {
         // Now message includes the pattern
-        print(
-            '📬 Received: ${message.message} (Pattern: ${message.pattern}, Channel: ${message.channel})');
+        print('📬 Received: ${message.message} (Pattern: ${message.pattern}, '
+            'Channel: ${message.channel})');
       },
-      onError: (e) => print('❌ Stream Error: $e'),
+      onError: (Object? e) => print('❌ Stream Error: $e'),
       onDone: () => print('ℹ️ Subscription stream closed.'),
     );
 
     // Give the subscription a moment
-    await Future.delayed(Duration(milliseconds: 200));
+    await Future<void>.delayed(const Duration(milliseconds: 200));
 
     // 3. Publish to channels matching the pattern
     print("\nSending: PUBLISH $channelInfo 'Application started'");
@@ -402,18 +402,19 @@ Future<void> runPatternSubscriptionExample({
     await publisher.publish(channelError, 'Critical error occurred!');
 
     // Wait a bit to receive messages
-    await Future.delayed(Duration(seconds: 1));
+    await Future<void>.delayed(const Duration(seconds: 1));
 
     // 4. Unsubscribe from the pattern
     print('\nPUnsubscribing from pattern: $pattern');
     await subscriber.punsubscribe([pattern]);
-    await Future.delayed(Duration(milliseconds: 200)); // Allow processing
+    await Future<void>.delayed(
+        const Duration(milliseconds: 200)); // Allow processing
 
     // 5. Publish again (should not be received)
     print(
         "Sending: PUBLISH $channelInfo 'This message should NOT be received'");
     await publisher.publish(channelInfo, 'This message should NOT be received');
-    await Future.delayed(Duration(seconds: 1));
+    await Future<void>.delayed(const Duration(seconds: 1));
   } catch (e) {
     print('❌ Advanced Pub/Sub Example Failed: $e');
   } finally {
@@ -471,18 +472,19 @@ Future<void> runPubSubIntrospectionExample({
     await Future.wait([sub.ready, psub.ready]);
     listener = sub.messages.listen(null); // Keep subscription active
     pListener = psub.messages.listen(null);
-    await Future.delayed(Duration(milliseconds: 50)); // Give server time
+    await Future<void>.delayed(
+        const Duration(milliseconds: 50)); // Give server time
 
     // Run introspection commands on adminClient
     print("Sending: PUBSUB CHANNELS 'channel:*'");
     final channels = await adminClient.pubsubChannels('channel:*');
-    print(
-        'Received active channels: $channels'); // e.g., Should be [channel:inspect]
+    print('Received active channels: $channels');
+    // e.g., Should be [channel:inspect]
 
     print("Sending: PUBSUB NUMSUB 'channel:$channelName'");
     final numsub = await adminClient.pubsubNumSub(['channel:$channelName']);
-    print(
-        'Received subscriber count: $numsub'); // e.g., Should be {channel:inspect: 1}
+    print('Received subscriber count: $numsub');
+    // e.g., Should be {channel:inspect: 1}
 
     print('Sending: PUBSUB NUMPAT');
     final numpat = await adminClient.pubsubNumPat();

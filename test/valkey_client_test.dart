@@ -44,7 +44,7 @@ Future<bool> checkServerStatus(String host, int port) async {
 
 Future<void> main() async {
   // --- RUN THE CHECK *BEFORE* DEFINING TESTS ---
-  final isServerRunning = await checkServerStatus(noAuthHost, noAuthPort);
+  isServerRunning = await checkServerStatus(noAuthHost, noAuthPort);
 
   // Print the warning ONCE if the server is down.
   if (!isServerRunning) {
@@ -96,7 +96,7 @@ Future<void> main() async {
     test('onConnected Future should complete after successful connection',
         () async {
       // Act: Start the connection but don't await the connect() call itself.
-      client.connect(); // Do not await
+      await client.connect(); // Do not await
       await expectLater(client.onConnected, completes);
     });
 
@@ -129,8 +129,8 @@ Future<void> main() async {
     });
 
     test(
-        'should throw a ValkeyConnectionException when providing auth to a server that does not require it',
-        () async {
+        'should throw a ValkeyConnectionException when providing auth to a '
+        'server that does not require it', () async {
       // This test requires the NO-AUTH server to be running
       final client = ValkeyClient(
         host: noAuthHost,
@@ -148,8 +148,8 @@ Future<void> main() async {
             // (e) => e.toString(),
             (e) => e.message,
             'message',
-            contains(
-                'Authentication failed'))), // ERR AUTH, Changed from 'Valkey authentication failed'
+            contains('Authentication failed'))),
+        // ERR AUTH, Changed from 'Valkey authentication failed'
       );
     },
         skip: !isServerRunning
@@ -167,7 +167,8 @@ Future<void> main() async {
 
     // Connect ONCE before all tests in this group
     setUpAll(() async {
-      // This assumes the isServerRunning check from the main setUpAll has passed
+      // This assumes the isServerRunning check from the main setUpAll has
+      // passed
       client = ValkeyClient(host: noAuthHost, port: noAuthPort);
       await client.connect();
     });
@@ -513,7 +514,7 @@ Future<void> main() async {
 
       // --- NEW: Wait for the subscription to be ready ---
       print('TEST: Waiting for subscription ready...');
-      await sub.ready.timeout(Duration(seconds: 2), onTimeout: () {
+      await sub.ready.timeout(const Duration(seconds: 2), onTimeout: () {
         throw TimeoutException(
             'Timed out waiting for subscription confirmation');
       });
@@ -523,7 +524,7 @@ Future<void> main() async {
       // 2. Use Completers to wait for messages AFTER subscription is ready
       final completer1 = Completer<ValkeyMessage>();
       final completer2 = Completer<ValkeyMessage>();
-      int messageCount = 0;
+      var messageCount = 0;
 
       final subscriptionListener = sub.messages.listen(// Listen to sub.messages
           (message) {
@@ -534,7 +535,7 @@ Future<void> main() async {
         } else if (messageCount == 2 && !completer2.isCompleted) {
           completer2.complete(message);
         }
-      }, onError: (e, s) {
+      }, onError: (Object e, StackTrace? s) {
         print('TEST stream error: $e');
         if (!completer1.isCompleted) completer1.completeError(e, s);
         if (!completer2.isCompleted) completer2.completeError(e, s);
@@ -560,8 +561,8 @@ Future<void> main() async {
 
       // 4. Wait for messages using Completers
       print('TEST Waiting for message 1...');
-      final receivedMessage1 =
-          await completer1.future.timeout(Duration(seconds: 2), onTimeout: () {
+      final receivedMessage1 = await completer1.future
+          .timeout(const Duration(seconds: 2), onTimeout: () {
         print('TEST Timeout waiting for message 1');
         throw TimeoutException('Timeout waiting for message 1');
       });
@@ -571,8 +572,8 @@ Future<void> main() async {
       print('TEST Received message 1 OK');
 
       print('TEST Waiting for message 2...');
-      final receivedMessage2 =
-          await completer2.future.timeout(Duration(seconds: 2), onTimeout: () {
+      final receivedMessage2 = await completer2.future
+          .timeout(const Duration(seconds: 2), onTimeout: () {
         print('TEST Timeout waiting for message 2');
         throw TimeoutException('Timeout waiting for message 2');
       });
@@ -587,7 +588,7 @@ Future<void> main() async {
       await subscriberClient.unsubscribe([channel]);
     },
         // Give this test a bit more time due to async nature
-        timeout: Timeout(Duration(seconds: 10)));
+        timeout: const Timeout(Duration(seconds: 10)));
 
     test('publish should return number of receivers', () async {
       // No active subscribers on this channel yet
@@ -602,7 +603,7 @@ Future<void> main() async {
       const channel = 'test:pubsub:unsub';
       const message1 = 'message before unsub';
       const message2 = 'message after unsub';
-      Completer<ValkeyMessage> msgCompleter = Completer();
+      var msgCompleter = Completer<ValkeyMessage>();
 
       // 1. Subscribe
       final sub = subscriberClient.subscribe([channel]);
@@ -616,16 +617,17 @@ Future<void> main() async {
       });
 
       // 2. Publish message 1 (should be received)
-      await Future.delayed(Duration(milliseconds: 100)); // Allow listener setup
+      await Future<void>.delayed(
+          const Duration(milliseconds: 100)); // Allow listener setup
       await publisherClient.publish(channel, message1);
       final receivedMsg1 =
-          await msgCompleter.future.timeout(Duration(seconds: 2));
+          await msgCompleter.future.timeout(const Duration(seconds: 2));
       expect(receivedMsg1.message, message1);
 
       // 3. Unsubscribe
       await subscriberClient.unsubscribe([channel]);
       // Need a small delay for server to process unsubscribe
-      await Future.delayed(Duration(milliseconds: 200));
+      await Future<void>.delayed(const Duration(milliseconds: 200));
 
       // 4. Publish message 2 (should NOT be received)
       msgCompleter = Completer(); // Reset completer
@@ -633,7 +635,8 @@ Future<void> main() async {
 
       // Verify message 2 is NOT received by checking for timeout
       await expectLater(
-        msgCompleter.future.timeout(Duration(seconds: 1)), // Shorter timeout
+        msgCompleter.future
+            .timeout(const Duration(seconds: 1)), // Shorter timeout
         throwsA(isA<TimeoutException>()),
       );
 
@@ -646,9 +649,9 @@ Future<void> main() async {
       const channel2 = 'test:psub:channelB';
       const message1 = 'Msg A';
       const message2 = 'Msg B';
-      final Completer<ValkeyMessage> msg1Completer = Completer();
-      final Completer<ValkeyMessage> msg2Completer = Completer();
-      int receivedCount = 0;
+      final msg1Completer = Completer<ValkeyMessage>();
+      final msg2Completer = Completer<ValkeyMessage>();
+      var receivedCount = 0;
 
       // 1. PSubscribe
       final sub = subscriberClient.psubscribe([pattern]);
@@ -665,19 +668,19 @@ Future<void> main() async {
       });
 
       // 2. Publish to matching channels AFTER ready
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
       await publisherClient.publish(channel1, message1);
       await publisherClient.publish(channel2, message2);
 
       // 3. Wait and verify messages
       final receivedMsg1 =
-          await msg1Completer.future.timeout(Duration(seconds: 2));
+          await msg1Completer.future.timeout(const Duration(seconds: 2));
       expect(receivedMsg1.pattern, pattern);
       expect(receivedMsg1.channel, channel1);
       expect(receivedMsg1.message, message1);
 
       final receivedMsg2 =
-          await msg2Completer.future.timeout(Duration(seconds: 2));
+          await msg2Completer.future.timeout(const Duration(seconds: 2));
       expect(receivedMsg2.pattern, pattern);
       expect(receivedMsg2.channel, channel2);
       expect(receivedMsg2.message, message2);
@@ -687,8 +690,8 @@ Future<void> main() async {
       await listener.cancel();
       // Need punsubscribe to clean up properly
       await subscriberClient.punsubscribe([pattern]);
-      await Future.delayed(
-          Duration(milliseconds: 100)); // Allow punsubscribe processing
+      await Future<void>.delayed(
+          const Duration(milliseconds: 100)); // Allow punsubscribe processing
     });
 
     test('punsubscribe should stop receiving pattern messages', () async {
@@ -696,7 +699,7 @@ Future<void> main() async {
       const channel = 'test:punsub:channel';
       const message1 = 'Msg before punsub';
       const message2 = 'Msg after punsub';
-      Completer<ValkeyMessage> msgCompleter = Completer();
+      var msgCompleter = Completer<ValkeyMessage>();
 
       // 1. PSubscribe
       final sub = subscriberClient.psubscribe([pattern]);
@@ -706,24 +709,24 @@ Future<void> main() async {
       final listener = sub.messages.listen((msg) {
         if (!msgCompleter.isCompleted) msgCompleter.complete(msg);
       });
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
 
       // 2. Publish message 1 (should be received)
       await publisherClient.publish(channel, message1);
       final receivedMsg1 =
-          await msgCompleter.future.timeout(Duration(seconds: 2));
+          await msgCompleter.future.timeout(const Duration(seconds: 2));
       expect(receivedMsg1.message, message1);
 
       // 3. PUnsubscribe
       await subscriberClient.punsubscribe([pattern]);
-      await Future.delayed(
-          Duration(milliseconds: 200)); // Allow server processing
+      await Future<void>.delayed(
+          const Duration(milliseconds: 200)); // Allow server processing
 
       // 4. Publish message 2 (should NOT be received)
       msgCompleter = Completer();
       await publisherClient.publish(channel, message2);
       await expectLater(
-        msgCompleter.future.timeout(Duration(seconds: 1)),
+        msgCompleter.future.timeout(const Duration(seconds: 1)),
         throwsA(isA<TimeoutException>()),
       );
 
@@ -764,14 +767,15 @@ Future<void> main() async {
       final execResponse = await client.exec();
 
       // Since there are no commands, exec() should return null
-      expect(execResponse, []);
+      expect(execResponse, <List>[]);
     });
 
     test('exec() throws ValkeyServerException when transaction is aborted',
         () async {
       await client.multi();
 
-      // Intentionally send an invalid command to cause transaction failure (missing value argument for SET)
+      // Intentionally send an invalid command to cause transaction failure
+      // (missing value argument for SET)
       // 1) Queue invalid command and assert its immediate error
       final enqueueFuture = client
           .execute(['SET', 'key']); // Missing argument → error // wrong arity
@@ -843,8 +847,8 @@ Future<void> main() async {
     });
 
     test(
-        'exec() throws ValkeyServerException if transaction was aborted (e.g., by syntax error)',
-        () async {
+        'exec() throws ValkeyServerException if transaction was aborted '
+        '(e.g., by syntax error)', () async {
       await client.multi();
 
       // Send a command with a syntax error
@@ -928,7 +932,7 @@ Future<void> main() async {
       subListener = sub.messages.listen(null); // Attach listener
 
       // 3. Give server a moment to register subscriptions
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
 
       // 4. Check active channels
       channels = await client.pubsubChannels('inspect:channel:*');
@@ -944,7 +948,7 @@ Future<void> main() async {
       final sub = subClient.subscribe([channel1, channel2]);
       await sub.ready;
       subListener = sub.messages.listen(null);
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
 
       // 2. Check counts
       final counts =
@@ -970,7 +974,7 @@ Future<void> main() async {
       final sub = subClient.psubscribe([pattern1, pattern2]);
       await sub.ready;
       subListener = sub.messages.listen(null);
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
 
       // 3. Check pattern count
       numPat = await client.pubsubNumPat();

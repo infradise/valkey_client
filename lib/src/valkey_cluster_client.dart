@@ -15,7 +15,7 @@
  */
 
 import 'dart:async';
-import 'package:valkey_client/valkey_client.dart';
+import '../valkey_client.dart';
 import 'cluster_hash.dart';
 import 'cluster_slot_map.dart';
 import 'logging.dart';
@@ -23,14 +23,17 @@ import 'logging.dart';
 /// The concrete implementation of [ValkeyClusterClientBase].
 ///
 /// This client manages connections to all master nodes in a Valkey Cluster,
-/// automatically routing commands to the correct node based on the key's hash slot.
+/// automatically routing commands to the correct node based on the key's hash
+/// slot.
 ///
 /// Features:
 /// - **Auto-Discovery:** Fetches cluster topology on connection.
-/// - **Smart Routing:** Directs commands to the master node owning the key's slot.
+/// - **Smart Routing:** Directs commands to the master node owning the key's
+/// slot.
 /// - **Resilience (v1.8.0+):** Automatically handles `-MOVED` / `-ASK` redirections and
 ///   refreshes topology on connection failures (Failover).
-///   - **Automatic Failover:** Detects connection failures and refreshes topology.
+///   - **Automatic Failover:** Detects connection failures and refreshes
+/// topology.
 ///   - **Topology Refresh:** Queries available nodes to update the slot map.
 /// - **NAT Support:** Automatically detects and maps Docker/NAT IP addresses.
 class ValkeyClusterClient implements ValkeyClusterClientBase {
@@ -44,7 +47,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   /// The initial nodes to connect to for discovering the cluster topology.
   final List<ValkeyConnectionSettings> _initialNodes;
 
-  /// Default connection settings (timeout, auth) derived from the first seed node (to use for all pooled connections).
+  /// Default connection settings (timeout, auth) derived from the first seed
+  /// node (to use for all pooled connections).
   final ValkeyConnectionSettings _defaultSettings;
 
   /// Maximum number of retries/redirects before throwing an exception.
@@ -53,8 +57,10 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   /// Manages the mapping of slots (0-16383) to master nodes.
   ClusterSlotMap? _slotMap;
 
-  /// A map of connection pools, keyed by the node's address "host:port" (one for each master node).
-  /// The key uses the *mapped* address (e.g., localhost:7001) suitable for connection.
+  /// A map of connection pools, keyed by the node's address "host:port" (one
+  /// for each master node).
+  /// The key uses the *mapped* address (e.g., localhost:7001) suitable for
+  /// connection.
   final Map<String, ValkeyPool> _nodePools = {};
 
   bool _isClosed = false;
@@ -170,8 +176,10 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   ///
   /// Handles:
   /// 1. **Routing:** Finds the correct node via CRC16.
-  /// 2. **Redirection:** Handles `-MOVED` (topology change) and `-ASK` (migration).
-  /// 3. **Failover:** Detects connection failures, refreshes topology, and retries.
+  /// 2. **Redirection:** Handles `-MOVED` (topology change) and `-ASK`
+  /// (migration).
+  /// 3. **Failover:** Detects connection failures, refreshes topology, and
+  /// retries.
   Future<T> _executeOnKey<T>(
       String key, Future<T> Function(ValkeyClient client) command) async {
     if (_slotMap == null || _isClosed) {
@@ -179,14 +187,15 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
           'Client is not connected. Call connect() first.');
     }
 
-    int attempts = 0;
+    var attempts = 0;
     Object? lastError;
 
     // Retry loop handles: 1. MOVED/ASK, 2. Connection Failures (Failover)
     while (attempts <= _maxRedirects) {
       try {
         // Locate the master node
-        // Find the correct node for this key (node.host will be '192.168.65.254')
+        // Find the correct node for this key (node.host will be
+        // '192.168.65.254')
         final node = _slotMap!.getNodeForKey(key);
         if (node == null) {
           // If map is empty or stale/broken, try refreshing once
@@ -198,7 +207,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
             continue;
           }
           throw ValkeyClientException(
-              'Could not find a master node for key "$key" (Slot: ${getHashSlot(key)}).');
+              'Could not find a master node for key "$key" '
+              '(Slot: ${getHashSlot(key)}).');
         }
 
         // Get the connection pool
@@ -223,7 +233,7 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
             'Connection failed to mapped node. Refreshing topology... (Attempt $attempts/$_maxRedirects)');
 
         // Wait to allow cluster state to propagate/failover to complete.
-        await Future.delayed(_failoverWait);
+        await Future<void>.delayed(_failoverWait);
 
         try {
           await _refreshTopology();
@@ -279,7 +289,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
     }
 
     throw ValkeyClientException(
-        // 'Cluster operation failed after $attempts retries. Last error: $lastError');
+        // 'Cluster operation failed after $attempts retries. Last error:
+        // $lastError');
         'Cluster operation failed. Last error: $lastError');
   }
 
@@ -303,7 +314,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
 
   /// Refreshes the cluster topology by querying available nodes.
   ///
-  /// This iterates through seed nodes and existing pool nodes, asking for `CLUSTER SLOTS`.
+  /// This iterates through seed nodes and existing pool nodes, asking for
+  /// `CLUSTER SLOTS`.
   /// It updates `_slotMap` and `_hostMap` upon success.
   Future<void> _refreshTopology({bool isInitial = false}) async {
     // 1. Gather candidates: Initial seeds (nodes) + Known active (pool) nodes
@@ -361,7 +373,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
         // if (ranges.isEmpty) {
         //   // This happens if the 'cluster-init' script failed
         //   throw ValkeyClientException(
-        //       'CLUSTER SLOTS returned an empty topology. Is the cluster stable?');
+        //       'CLUSTER SLOTS returned an empty topology. Is the cluster
+        // stable?');
         // }
 
         if (ranges.isNotEmpty) {
@@ -392,7 +405,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
         // Continue to next candidate (Try next candidate)
 
         // Log at fine level to avoid noise during normal failovers
-        // _log.fine('Failed to refresh topology from ${nodeConfig.host}:${nodeConfig.port}: $e');
+        // _log.fine('Failed to refresh topology from
+        // ${nodeConfig.host}:${nodeConfig.port}: $e');
 
         // throw ValkeyClientException('Failed to initialize cluster: $e');
       } finally {
@@ -435,7 +449,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
     // TODO: REVIEW REQUIRED -> REMOVE. NEED CONSENSUS.
     // if (announcedHost == null) {
     //   throw ValkeyClientException(
-    //     'Failed to find initial node ($initialHost:$initialPort) in CLUSTER SLOTS response.');
+    //     'Failed to find initial node ($initialHost:$initialPort) in CLUSTER
+    //      SLOTS response.');
     // }
 
     // --- Keyman. Core Patch ---
@@ -448,7 +463,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
       // \ ValkeyClient.setLogLevel(ValkeyLogLevel.info); // Ensure info is on
       _log.info(
           // 'Detected NAT/Docker environment: Mapping announced IP $announcedHost -> $initialHost'
-          'NAT detected: Mapping Internal($announcedHost) -> External(${connectedNode.host})');
+          'NAT detected: Mapping Internal($announcedHost) -> '
+          'External(${connectedNode.host})');
       _hostMap[announcedHost] = connectedNode.host;
     }
   }
@@ -560,7 +576,7 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
 
     // 1. Scatter: Group keys by node ID
     // Map<NodeId, List<originalIndex>>
-    final Map<String, List<int>> nodeToIndices = {};
+    final nodeToIndices = <String, List<int>>{};
     for (var i = 0; i < keys.length; i++) {
       final key = keys[i];
       final node = _slotMap!.getNodeForKey(key);
@@ -570,7 +586,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
         final newNode = _slotMap!.getNodeForKey(key);
         if (newNode == null) {
           throw ValkeyClientException('No node mapping found for key $key');
-          // 'Could not find a master node for key "$key" (Slot: ${getHashSlot(key)}).'
+          // 'Could not find a master node for key "$key"
+          //  (Slot: ${getHashSlot(key)}).'
         }
       }
       // Use non-nullable node after check
@@ -581,7 +598,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
       nodeToIndices.putIfAbsent(nodeId, () => []).add(i);
     }
 
-    // 2. Execute: Send MGET commands to each node in parallel (Parallel requests to nodes)
+    // 2. Execute: Send MGET commands to each node in parallel (Parallel
+    //    requests to nodes)
     final futures = <Future<List<String?>>>[];
     final nodeIds = <String>[]; // To track which future belongs to which node
 
@@ -595,7 +613,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
       final pool = _nodePools[nodeId];
       if (pool == null) {
         throw ValkeyClientException(
-            'No connection pool found for node $nodeId. Topology may be stale.');
+            'No connection pool found for node $nodeId. '
+            'Topology may be stale.');
       }
 
       // Launch async request
@@ -605,7 +624,7 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
     }
 
     // 3. Gather: Wait for all results and re-assemble in original order
-    final List<List<String?>> results = await Future.wait(futures);
+    final results = await Future.wait(futures);
     final finalResult = List<String?>.filled(keys.length, null);
 
     for (var i = 0; i < results.length; i++) {
@@ -617,7 +636,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
       // Sanity check
       // if (nodeResult.length != originalIndices.length) {
       //   throw ValkeyClientException(
-      //       'MGET response length mismatch from node $nodeId. Expected ${originalIndices.length}, got ${nodeResult.length}.');
+      //       'MGET response length mismatch from node $nodeId. Expected
+      //        ${originalIndices.length}, got ${nodeResult.length}.');
       // }
 
       // Map back to original positions
@@ -701,7 +721,7 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
 
   @override
   Future<Map<String, String>> pingAll([String? message]) async {
-    final Map<String, String> results = {};
+    final results = <String, String>{};
     // Iterate over all active pools (Masters)
     for (final entry in _nodePools.entries) {
       final nodeId = entry.key; // e.g., '127.0.0.1:7001'
@@ -731,7 +751,7 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
     }
 
     // 1. Scatter: Group channels by Node
-    final Map<String, List<String>> nodeToChannels = {};
+    final nodeToChannels = <String, List<String>>{};
     for (final channel in channels) {
       final node = _slotMap!.getNodeForKey(channel);
       if (node == null) {
@@ -743,10 +763,10 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
     }
 
     // 2. Gather: Subscribe per node
-    final List<Subscription> shardSubs = [];
-    final StreamController<ValkeyMessage> controller = StreamController();
-    final List<Future<void>> readyFutures = [];
-    final List<ValkeyClient> acquiredClients = [];
+    final shardSubs = <Subscription>[];
+    final controller = StreamController<ValkeyMessage>();
+    final readyFutures = <Future<void>>[];
+    final acquiredClients = <ValkeyClient>[];
 
     // Create subscriptions per node
     for (final entry in nodeToChannels.entries) {
@@ -768,8 +788,10 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
 
           // Forward messages to the main controller
           sub.messages.listen(
-            (msg) => controller.add(msg),
-            onError: (e) => controller.addError(e),
+            // (msg) => controller.add(msg),
+            // onError: (e) => controller.addError(e),
+            controller.add,
+            onError: controller.addError,
             // Do not close controller on single shard done
           );
 
@@ -796,15 +818,17 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   Future<void> sunsubscribe([List<String> channels = const []]) async {
     // TODO: REVIEW REQUIRED -> FIND BETTER APPROACH. NEED CONSENSUS.
     _log.warning(
-        'Cluster sunsubscribe: Please use subscription.unsubscribe() instead for proper resource cleanup.');
+        'Cluster sunsubscribe: Please use subscription.unsubscribe() instead '
+        'for proper resource cleanup.');
   }
 
   // --- Inspection Helper (v1.5.0 Feature) ---
-  /// Returns the [ClusterNodeInfo] of the master node that currently owns [key].
+  /// Returns the [ClusterNodeInfo] of the master node that currently owns
+  /// [key].
   /// Returns `null` if the client is not connected or the map is not loaded.
   ///
-  /// This relies on the client's cached slot map, which is updated automatically
-  /// when MOVED redirections occur.
+  /// This relies on the client's cached slot map, which is updated
+  /// automatically when MOVED redirections occur.
   ClusterNodeInfo? getMasterFor(String key) => _slotMap?.getNodeForKey(key);
 
   /// DEBUG ONLY: Manually corrupts the slot map to test redirection logic.
@@ -818,7 +842,8 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   }
 }
 
-/// Internal wrapper to manage subscriptions distributed across multiple cluster nodes.
+/// Internal wrapper to manage subscriptions distributed across multiple
+/// cluster nodes.
 class _ClusterSubscription implements Subscription {
   final List<Subscription> _shardSubs;
   final StreamController<ValkeyMessage> _controller;

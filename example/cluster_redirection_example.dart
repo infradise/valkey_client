@@ -23,7 +23,8 @@ void main() async {
     ValkeyConnectionSettings(
       host: '127.0.0.1',
       port: 7001,
-      commandTimeout: Duration(seconds: 2), // Short timeout for fast failover
+      commandTimeout:
+          const Duration(seconds: 2), // Short timeout for fast failover
     ),
   ];
 
@@ -48,7 +49,7 @@ void main() async {
     print(
         '   3. Watch this client recover automatically! (MOVED/ASK handling)\n');
 
-    int count = 0;
+    var count = 0;
     const key = 'resilience:key';
 
     // Infinite loop to demonstrate resilience
@@ -71,8 +72,8 @@ void main() async {
           // Print Success with Node info
           print('[SUCCESS $count] Node $nodeStr | $key = $result');
         } else {
-          print(
-              '[FAILURE $count] Node $nodeStr | Value mismatch! Expected $value, got $result');
+          print('[FAILURE $count] Node $nodeStr | Value mismatch! '
+              'Expected $value, got $result');
         }
       } on ValkeyClientException catch (e) {
         // Client-side errors (e.g. pool exhausted during failover)
@@ -87,7 +88,7 @@ void main() async {
       // await client.del(key);
 
       // Wait a bit before next op
-      await Future.delayed(Duration(seconds: 1));
+      await Future<void>.delayed(const Duration(seconds: 1));
     }
   } finally {
     await client.close();

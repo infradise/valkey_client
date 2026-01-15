@@ -25,14 +25,14 @@ void main() async {
   final subscriber = ValkeyClient(
     host: '127.0.0.1',
     port: 6379,
-    commandTimeout: Duration(seconds: 5),
+    commandTimeout: const Duration(seconds: 5),
   );
 
   // 2. Setup Publisher Client (Sends messages)
   final publisher = ValkeyClient(
     host: '127.0.0.1',
     port: 6379,
-    commandTimeout: Duration(seconds: 5),
+    commandTimeout: const Duration(seconds: 5),
   );
 
   try {
@@ -55,7 +55,7 @@ void main() async {
 
     // 4. Listen for messages
     final messagesReceived = Completer<void>();
-    int count = 0;
+    var count = 0;
 
     sub.messages.listen((msg) {
       print('📩 Received: [${msg.channel}] ${msg.message}');
@@ -73,7 +73,7 @@ void main() async {
     await publisher.spublish('shard:updates:{user2}', 'User 2 updated profile');
 
     // Wait for messages
-    await messagesReceived.future.timeout(Duration(seconds: 5));
+    await messagesReceived.future.timeout(const Duration(seconds: 5));
     print('✅ All messages received.');
 
     // 6. Unsubscribe

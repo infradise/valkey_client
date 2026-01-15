@@ -31,15 +31,15 @@ void main() async {
 
     // 3. Run the new v1.2.0 command
     print('\nFetching cluster topology using CLUSTER SLOTS...');
-    final List<ClusterSlotRange> slotRanges = await client.clusterSlots();
+    final slotRanges = await client.clusterSlots();
 
     // 4. Print the results
     print('Cluster topology loaded. Found ${slotRanges.length} slot ranges:');
     for (final range in slotRanges) {
       print('--------------------');
       print('  Slots: ${range.startSlot} - ${range.endSlot}');
-      print(
-          '  Master: ${range.master.host}:${range.master.port} (ID: ${range.master.id})');
+      print('  Master: ${range.master.host}:${range.master.port} '
+          '(ID: ${range.master.id})');
       if (range.replicas.isNotEmpty) {
         print('  Replicas:');
         for (final replica in range.replicas) {

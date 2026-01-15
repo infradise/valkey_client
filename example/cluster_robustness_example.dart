@@ -49,7 +49,7 @@ void main() async {
 
     // 2. Publish and Receive
     final completer = Completer<void>();
-    int msgCount = 0;
+    var msgCount = 0;
     sub.messages.listen((msg) {
       msgCount++;
       if (msgCount >= 3 && !completer.isCompleted) completer.complete();
@@ -59,7 +59,7 @@ void main() async {
     await cluster.spublish('shard:{b}', 'msg-b');
     await cluster.spublish('shard:{c}', 'msg-c');
 
-    await completer.future.timeout(Duration(seconds: 5));
+    await completer.future.timeout(const Duration(seconds: 5));
     print('2. Received all messages.');
 
     // 3. Unsubscribe & Cleanup
@@ -71,7 +71,8 @@ void main() async {
     print('3. Unsubscribed (Internal connections cleaned up).');
 
     // 4. Verification
-    // Immediately try a normal command. If pools were polluted, this would fail.
+    // Immediately try a normal command. If pools were polluted, this would
+    // fail.
     print('\n--- Verifying Cluster Health ---');
     await cluster.set('robustness_check', 'passed');
     final result = await cluster.get('robustness_check');

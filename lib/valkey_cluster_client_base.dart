@@ -15,15 +15,15 @@
  */
 
 import 'dart:async';
-import 'package:valkey_client/valkey_client.dart'; // Export exceptions
+import 'valkey_client.dart'; // Export exceptions
 // import 'package:valkey_client/valkey_commands_base.dart';
 
 export 'package:valkey_client/valkey_client.dart'
     show
-        ValkeyConnectionException,
-        ValkeyServerException,
         ValkeyClientException,
-        ValkeyParsingException;
+        ValkeyConnectionException,
+        ValkeyParsingException,
+        ValkeyServerException;
 
 /// The abstract base class for a **cluster-aware** Valkey client.
 ///

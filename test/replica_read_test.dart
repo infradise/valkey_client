@@ -45,12 +45,12 @@ void main() {
         await client.set('test:replica:key', 'hello_replica');
 
         // Wait for replication
-        await Future.delayed(Duration(milliseconds: 200));
+        await Future<void>.delayed(const Duration(milliseconds: 200));
 
         // Step 2: Read multiple times (Load Balancing)
         // Since we have multiple replicas, this verifies that
         // switching connections doesn't break data retrieval.
-        for (int i = 0; i < 10; i++) {
+        for (var i = 0; i < 10; i++) {
           final val = await client.get('test:replica:key');
           expect(val, equals('hello_replica'));
         }
@@ -60,11 +60,14 @@ void main() {
     });
 
     test(
-        'Should fall back to Master if ReadPreference is preferReplica but no replicas exist',
-        () async {
-      // Setup: Point to a standalone node (or Master) but pretend it has no replicas
-      // (Testing logic depends on environment, here we verify functionality holds).
-      // If the environment HAS replicas, this tests that 'preferReplica' works generally.
+        'Should fall back to Master if ReadPreference is preferReplica but no '
+        'replicas exist', () async {
+      // Setup: Point to a standalone node (or Master) but pretend it has no
+      // replicas
+      // (Testing logic depends on environment, here we verify functionality
+      // holds).
+      // If the environment HAS replicas, this tests that 'preferReplica' works
+      // generally.
 
       final settings = ValkeyConnectionSettings(
         host: masterHost,
@@ -83,14 +86,15 @@ void main() {
     });
 
     test(
-        'Should throw exception if ReadPreference is replicaOnly but no replicas available',
-        () async {
+        'Should throw exception if ReadPreference is replicaOnly but '
+        'no replicas available', () async {
       // To test this, we need a Master with NO replicas.
       // This test should be failed if replicas exist.
       // Ideally: Point to a port where a standalone Redis/Valkey sits without slaves.
       // For demonstration, we assume port 6399 is a standalone empty Redis/Valkey.
 
-      // print('⚠️ Skipping replicaOnly test (requires standalone instance without replicas)');
+      // print('⚠️ Skipping replicaOnly test (requires standalone instance
+      // without replicas)');
       final settings = ValkeyConnectionSettings(
         host: masterHost,
         port: 6399, // Hypothetical standalone port

@@ -39,7 +39,7 @@ void main() {
         port: sslPort,
         useSsl: true,
         onBadCertificate: (cert) => true,
-        commandTimeout: Duration(seconds: 2),
+        commandTimeout: const Duration(seconds: 2),
       );
 
       try {
@@ -71,7 +71,7 @@ void main() {
         port: seedPort,
         useSsl: true,
         onBadCertificate: (cert) => true,
-        commandTimeout: Duration(seconds: 2),
+        commandTimeout: const Duration(seconds: 2),
       );
 
       final cluster = ValkeyClusterClient([node]);

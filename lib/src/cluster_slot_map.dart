@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import 'cluster_info.dart' show ClusterNodeInfo, ClusterSlotRange;
 import 'cluster_hash.dart' show getHashSlot;
+import 'cluster_info.dart' show ClusterNodeInfo, ClusterSlotRange;
 import 'logging.dart';
 
 /// Manages the mapping of hash slots to cluster nodes.
@@ -35,13 +35,13 @@ class ClusterSlotMap {
 
   /// Creates a new [ClusterSlotMap] from a 'CLUSTER SLOTS' response.
   factory ClusterSlotMap.fromRanges(List<ClusterSlotRange> ranges) {
-    final Map<int, ClusterNodeInfo> slotMap = {};
-    final Set<ClusterNodeInfo> nodes = {};
+    final slotMap = <int, ClusterNodeInfo>{};
+    final nodes = <ClusterNodeInfo>{};
 
     for (final range in ranges) {
       nodes.add(range.master); // Add master to the set of nodes
       // Populate the map for every slot in the range
-      for (int slot = range.startSlot; slot <= range.endSlot; slot++) {
+      for (var slot = range.startSlot; slot <= range.endSlot; slot++) {
         slotMap[slot] = range.master;
       }
     }

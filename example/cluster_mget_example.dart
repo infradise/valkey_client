@@ -25,7 +25,7 @@ void main() async {
     ValkeyConnectionSettings(
       host: '127.0.0.1',
       port: 7001,
-      commandTimeout: Duration(seconds: 5),
+      commandTimeout: const Duration(seconds: 5),
     ),
   ];
   final client = ValkeyClusterClient(initialNodes);
@@ -60,8 +60,8 @@ void main() async {
         results[1] == 'Value-B' &&
         results[2] == 'Value-C' &&
         results[3] == null) {
-      print(
-          '✅ MGET Success: Retrieved values from multiple nodes in correct order!');
+      print('✅ MGET Success: Retrieved values from multiple nodes in '
+          'correct order!');
     } else {
       print('❌ MGET Failed: Order mismatch or missing data.');
     }

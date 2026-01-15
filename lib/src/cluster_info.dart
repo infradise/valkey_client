@@ -60,6 +60,6 @@ class ClusterSlotRange {
   });
 
   @override
-  String toString() =>
-      'ClusterSlotRange(slots: $startSlot-$endSlot, master: $master, replicas: ${replicas.length})';
+  String toString() => 'ClusterSlotRange(slots: $startSlot-$endSlot, '
+      'master: $master, replicas: ${replicas.length})';
 }

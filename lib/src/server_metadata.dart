@@ -45,5 +45,6 @@ class ServerMetadata {
 
   @override
   String toString() =>
-      'ServerMetadata(name: $serverName, version: $version, mode: $mode, maxDatabases: $maxDatabases)';
+      'ServerMetadata(name: $serverName, version: $version, mode: $mode, '
+      'maxDatabases: $maxDatabases)';
 }

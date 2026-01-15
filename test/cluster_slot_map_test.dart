@@ -41,7 +41,8 @@ void main() {
 
       final slotMap = ClusterSlotMap.fromRanges(ranges);
 
-      // Example 1. robustness_check (slot number: 16173) -- changed node2 to node1
+      // Example 1. robustness_check (slot number: 16173) -- changed node2 to
+      // node1
       //
       // Verify initial state
       expect(slotMap.getNodeForKey('robustness_check'),

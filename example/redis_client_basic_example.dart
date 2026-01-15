@@ -36,7 +36,8 @@ void main() async {
 
   // For cluster-mode:
   // If you try to connect a standalone server,
-  //   you will get "ValkeyServerException(ERR): ERR This instance has cluster support disabled".
+  //   you will get "ValkeyServerException(ERR): ERR This instance has cluster
+  //                 support disabled".
   // final client = RedisClusterClient(
   //   initialNodes,
   // );

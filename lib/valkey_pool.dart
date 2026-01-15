@@ -16,7 +16,7 @@
 
 import 'dart:async';
 import 'dart:collection';
-import 'package:valkey_client/valkey_client.dart';
+import 'valkey_client.dart';
 
 /// Manages a pool of [ValkeyClient] connections with robust resource tracking.
 ///
@@ -61,7 +61,8 @@ class ValkeyPool {
   /// Creates a new connection pool.
   ///
   /// [connectionSettings]: The settings used to create new connections.
-  /// [maxConnections]: The maximum number of concurrent connections allowed. Default to 10 max connections.
+  /// [maxConnections]: The maximum number of concurrent connections allowed.
+  /// Default to 10 max connections.
   ValkeyPool({
     required ValkeyConnectionSettings connectionSettings,
     int maxConnections = 10,
@@ -140,7 +141,8 @@ class ValkeyPool {
   }
 
   /// Releases a connection back to the pool.
-  /// Automatically discards if the client is closed or stateful (Smart Release).
+  /// Automatically discards if the client is closed or stateful (Smart
+  /// Release).
   ///
   /// ```dart
   /// final client = await pool.acquire();
@@ -152,7 +154,8 @@ class ValkeyPool {
   /// ```
   ///
   /// - If the client is **stateful** (e.g., Pub/Sub mode), it is automatically **discarded**.
-  /// - If the client does not belong to this pool or was already released, this does nothing (Safe).
+  /// - If the client does not belong to this pool or was already released,
+  ///   this does nothing (Safe).
   void release(ValkeyClient client) {
     // 1. Ownership & State Check
     if (!_allClients.contains(client)) {
@@ -191,7 +194,8 @@ class ValkeyPool {
     }
   }
 
-  /// Explicitly discards a connection, removing it from the pool and closing it.
+  /// Explicitly discards a connection, removing it from the pool and closing
+  /// it.
   ///
   /// Use this if the connection is broken or no longer needed.
   /// Safe to call multiple times.

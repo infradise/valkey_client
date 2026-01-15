@@ -59,12 +59,14 @@ void main() async {
       // 2. Corrupt the client's map intentionally
       // Point key:A (Slot 9366) to Node 7001 (which does NOT own it).
       // This forces 7001 to reply with "-MOVED 9366 127.0.0.1:7002"
-      // NOTE: You must uncomment the debugCorruptSlotMap method in your client class!
+      // NOTE: You must uncomment the debugCorruptSlotMap method in your client
+      // class!
       client.debugCorruptSlotMap(key, 7001);
 
       // 3. Execute GET
       // Expected flow:
-      // Client -> 7001 (Wrong) -> MOVED Error -> Client Update Map -> Client -> 7002 (Right) -> Success
+      // Client -> 7001 (Wrong) -> MOVED Error -> Client Update Map -> Client
+      // -> 7002 (Right) -> Success
       final result = await client.get(key);
 
       // 4. Verify

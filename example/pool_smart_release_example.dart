@@ -50,7 +50,8 @@ void main() async {
 
     // v1.7.0 MAGIC:
     // Even though the client was stateful, we just call release().
-    // The pool detects the state change and automatically refreshes the connection.
+    // The pool detects the state change and automatically refreshes the
+    // connection.
     pool.release(clientTx);
     print('   Client released (Smart Release handled cleanup).');
 

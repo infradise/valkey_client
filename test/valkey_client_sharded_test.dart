@@ -32,7 +32,8 @@ void main() {
   // Use Standalone port (6379) for deterministic protocol testing.
   const port = 6379; // Standalone node port
 
-  // Or use 7002 if you strictly want to test against a specific cluster node that owns the slot.
+  // Or use 7002 if you strictly want to test against a specific cluster node
+  // that owns the slot.
   // const port = 7002; // Cluster master node port
 
   group('ValkeyClient Sharded Pub/Sub', () {
@@ -74,7 +75,8 @@ void main() {
           greaterThanOrEqualTo(1)); // Should have at least 1 subscriber
 
       // 4. Verify
-      final receivedMsg = await completer.future.timeout(Duration(seconds: 2));
+      final receivedMsg =
+          await completer.future.timeout(const Duration(seconds: 2));
       expect(receivedMsg.channel, channel);
       expect(receivedMsg.message, messageContent);
 

@@ -42,7 +42,7 @@ void main() {
         useSsl: true,
         // For development/testing with self-signed certs, we must explicitly allow them.
         onBadCertificate: (cert) => true,
-        commandTimeout: Duration(seconds: 2),
+        commandTimeout: const Duration(seconds: 2),
       );
 
       try {
@@ -88,7 +88,7 @@ void main() {
         sslContext: context,
         // Still needed if the server uses a self-signed cert
         onBadCertificate: (cert) => true,
-        commandTimeout: Duration(seconds: 2),
+        commandTimeout: const Duration(seconds: 2),
       );
 
       try {

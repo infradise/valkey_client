@@ -24,7 +24,7 @@ Future<void> handleRequest(ValkeyPool pool, String userId) async {
   try {
     // 1. Acquire connection
     print('[$userId] Acquiring connection...');
-    client = await pool.acquire().timeout(Duration(seconds: 2));
+    client = await pool.acquire().timeout(const Duration(seconds: 2));
     print('[$userId] Acquired! Pinging...');
 
     // 2. Use connection
@@ -32,7 +32,7 @@ Future<void> handleRequest(ValkeyPool pool, String userId) async {
     print('[$userId] Received: $response');
 
     // Simulate some work
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future<void>.delayed(const Duration(milliseconds: 500));
   } on ValkeyException catch (e) {
     print('[$userId] Valkey Error: $e');
   } on TimeoutException {

@@ -25,6 +25,7 @@
 // Add or modify example Dart files in the /example directory,
 // and they will be automatically validated here.
 
+// import 'dart:convert';
 import 'dart:io';
 import 'package:test/test.dart';
 
@@ -52,7 +53,14 @@ void main() {
           'dart',
           [entity.path],
         );
-        expect(result.exitCode, 0, reason: result.stderr);
+
+        expect(result.exitCode, 0, reason: result.stderr.toString());
+
+        // OR,
+        // final stderr = result.stderr;
+        // final reason = stderr is List<int> ?
+        //   utf8.decode(stderr) : stderr?.toString();
+        // expect(result.exitCode, 0, reason: reason);
       }, tags: tags);
     }
   }

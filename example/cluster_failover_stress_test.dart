@@ -27,11 +27,11 @@ void main() async {
   // Enable retries for failover
   final client = ValkeyClusterClient(initialNodes, maxRedirects: 10);
 
-  int successCount = 0;
-  int failCount = 0;
+  var successCount = 0;
+  var failCount = 0;
 
-  String nodeStr = '';
-  final delay = Duration(milliseconds: 500); // set to human friendly value
+  var nodeStr = '';
+  const delay = Duration(milliseconds: 500); // set to human friendly value
 
   try {
     await client.connect();
@@ -43,14 +43,14 @@ void main() async {
     print('        and watch the client recover automatically.');
     print('----------------------------------------------------------------');
 
-    int i = 0;
+    var i = 0;
     while (true) {
       i++;
       final key = 'stress:key:$i';
       final value = 'val-$i';
 
       final stopwatch = Stopwatch()..start();
-      String status = '';
+      var status = '';
 
       try {
         // Perform Set & Get
@@ -80,15 +80,16 @@ void main() async {
         }
 
         // Print Dashboard (Overwriting current line for a dashboard effect)
-        String output =
-            '\r[Stress Test] nodeStr = $nodeStr | Success: $successCount | Failed: $failCount | Last: $status';
+        var output =
+            '\r[Stress Test] nodeStr = $nodeStr | Success: $successCount | '
+            'Failed: $failCount | Last: $status';
         output += '${' ' * 30} ';
 
         stdout.write(output);
       }
 
       // Throttle slightly to allow reading the logs
-      await Future.delayed(delay);
+      await Future<void>.delayed(delay);
     }
   } catch (e) {
     print('\nFatal Error: $e');

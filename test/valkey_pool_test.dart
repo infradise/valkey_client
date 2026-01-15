@@ -21,7 +21,7 @@ import 'package:valkey_client/valkey_client.dart';
 
 const noAuthHost = 'localhost'; // or 127.0.0.1
 const noAuthPort = 6379;
-const closedPort = 6380;
+// const closedPort = 6380;
 // -----------------------------------------------------------------------
 
 /// Helper function to check server status *before* tests are defined.
@@ -67,7 +67,8 @@ Future<void> main() async {
           pool.release(client);
         }
       }
-      // Pool internals (like _connectionsInUse) are private, so we just test public behavior
+      // Pool internals (like _connectionsInUse) are private, so we just test
+      // public behavior
     });
 
     test('pool respects maxConnections limit', () async {
@@ -85,7 +86,7 @@ Future<void> main() async {
       final acquireFuture = pool.acquire();
 
       await expectLater(
-        acquireFuture.timeout(Duration(milliseconds: 200)),
+        acquireFuture.timeout(const Duration(milliseconds: 200)),
         throwsA(isA<TimeoutException>()),
       );
 
@@ -126,7 +127,7 @@ Future<void> main() async {
       // Acquire should now get client2 (or a new healthy one)
       ValkeyClient? client3;
       try {
-        client3 = await pool.acquire().timeout(Duration(seconds: 1));
+        client3 = await pool.acquire().timeout(const Duration(seconds: 1));
         final response = await client3.ping();
         expect(response, 'PONG'); // Should be healthy
       } finally {
@@ -159,7 +160,8 @@ Future<void> main() async {
       // 3. Verify
       // The client should be gone from the pool (discarded)
       // and replaced by a new one for the next acquire.
-      // (Internal implementation detail: _allClients count depends on replacement logic)
+      // (Internal implementation detail: _allClients count depends on
+      // replacement logic)
 
       // Let's verify by acquiring again. We should get a CLEAN client.
       final client2 = await pool.acquire();

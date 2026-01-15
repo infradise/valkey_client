@@ -26,7 +26,7 @@ const int _totalSlots = 16384; // 0-16383
 /// Valkey/Redis Cluster maps keys to slots using CRC-16(key) % 16384.
 /// It only hashes the part of the key within '{...}' if a hash tag is present.
 int getHashSlot(String key) {
-  String hashableKey = key;
+  var hashableKey = key;
 
   // Check for hash tags: "foo{bar}baz" -> hash "bar"
   final tagStart = key.indexOf('{');
@@ -52,7 +52,7 @@ int getHashSlot(String key) {
 /// - Initial Value: 0x0000
 /// - No reflection, No XOR out.
 int _computeCrc16(List<int> bytes) {
-  int crc = 0x0000; // Initial value
+  var crc = 0x0000; // Initial value
   for (final byte in bytes) {
     // Standard CRC-16 (non-reflected) calculation
     crc = ((crc << 8) & 0xFFFF) ^

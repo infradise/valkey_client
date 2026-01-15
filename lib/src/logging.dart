@@ -77,8 +77,8 @@ class ValkeyLogger {
     }
 
     // Simple print-based logging. Users can configure this later.
-    print(
-        '[${DateTime.now().toIso8601String()}] $name - ${messageLevel.name}: $message');
+    print('[${DateTime.now().toIso8601String()}] $name - '
+        '${messageLevel.name}: $message');
     if (error != null) {
       print('  Error: $error');
     }

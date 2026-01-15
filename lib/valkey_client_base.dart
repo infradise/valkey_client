@@ -16,8 +16,24 @@
 
 import 'dart:async';
 
-import 'package:valkey_client/src/cluster_info.dart';
-import 'package:valkey_client/valkey_commands_base.dart';
+import 'src/cluster_info.dart';
+import 'src/exceptions.dart'
+    show
+        ValkeyClientException,
+        ValkeyConnectionException,
+        ValkeyServerException;
+import 'valkey_client.dart'
+    show
+        ValkeyClientException,
+        ValkeyConnectionException,
+        ValkeyServerException;
+import 'valkey_cluster_client_base.dart'
+    show
+        ValkeyClientException,
+        ValkeyConnectionException,
+        ValkeyServerException;
+import 'valkey_commands_base.dart';
+
 export 'package:valkey_client/src/cluster_info.dart'
     show ClusterNodeInfo, ClusterSlotRange;
 export 'package:valkey_client/src/connection_settings.dart'
@@ -29,7 +45,8 @@ export 'package:valkey_client/src/server_metadata.dart';
 class ValkeyMessage {
   /// The channel the message was sent to.
   ///
-  /// This is `null` if the message was received via a pattern subscription (`pmessage`).
+  /// This is `null` if the message was received via a pattern subscription
+  /// (`pmessage`).
   final String? channel;
 
   /// The message payload.
@@ -37,7 +54,8 @@ class ValkeyMessage {
 
   /// The pattern that matched the channel (only for `pmessage`).
   ///
-  /// This is `null` if the message was received via a channel subscription (`message`).
+  /// This is `null` if the message was received via a channel subscription
+  /// (`message`).
   final String? pattern;
 
   ValkeyMessage({this.channel, required this.message, this.pattern});
@@ -45,7 +63,8 @@ class ValkeyMessage {
   @override
   String toString() {
     if (pattern != null) {
-      return 'ValkeyMessage{pattern: $pattern, channel: $channel, message: $message}';
+      return 'ValkeyMessage{pattern: $pattern, channel: $channel, '
+          'message: $message}';
     } else {
       return 'Message{channel: $channel, message: $message}';
     }
@@ -79,7 +98,8 @@ class Subscription {
   final Future<void> Function()? _onUnsubscribe;
 
   /// Creates a Subscription.
-  /// [onUnsubscribe] is an optional callback invoked when unsubscribe() is called.
+  /// [onUnsubscribe] is an optional callback invoked when unsubscribe() is
+  /// called.
   Subscription(this.messages, this.ready,
       {Future<void> Function()? onUnsubscribe})
       : _onUnsubscribe = onUnsubscribe;
@@ -102,7 +122,8 @@ class Subscription {
 abstract class ValkeyClientBase implements ValkeyCommandsBase {
   // --- Connection & Admin ---
 
-  /// A [Future] that completes once the connection and authentication (if required)
+  /// A [Future] that completes once the connection and authentication
+  /// (if required)
   /// are successfully established.
   ///
   /// Use this to wait for the client to be ready after calling `connect()`:
@@ -122,7 +143,8 @@ abstract class ValkeyClientBase implements ValkeyCommandsBase {
   /// they will override the default values set in the constructor.
   ///
   /// Throws a [ValkeyConnectionException] if the socket connection fails
-  /// (e.g., connection refused) or if authentication fails (e.g., wrong password).
+  /// (e.g., connection refused)
+  /// or if authentication fails (e.g., wrong password).
   Future<void> connect({
     String? host,
     int? port,
@@ -146,7 +168,8 @@ abstract class ValkeyClientBase implements ValkeyCommandsBase {
 
   /// PINGs the server.
   ///
-  /// Returns 'PONG' if no [message] is provided, otherwise returns the [message].
+  /// Returns 'PONG' if no [message] is provided,
+  /// otherwise returns the [message].
   /// Throws a [ValkeyServerException] if an error occurs.
   Future<String> ping([String? message]);
 
@@ -168,12 +191,15 @@ abstract class ValkeyClientBase implements ValkeyCommandsBase {
   /// 2. `ready`: A `Future<void>` that completes when the server confirms
   ///    subscription to all requested channels.
   ///
-  /// You MUST `await subscription.ready` before assuming the subscription is active.
+  /// You MUST `await subscription.ready` before assuming the subscription
+  /// is active.
   ///
-  /// Throws a [ValkeyClientException] if mixing channel and pattern subscriptions.
+  /// Throws a [ValkeyClientException] if mixing channel and
+  /// pattern subscriptions.
   Subscription subscribe(List<String> channels);
 
-  /// Unsubscribes the client from the given [channels], or all channels if none are given.
+  /// Unsubscribes the client from the given [channels], or all channels
+  /// if none are given.
   ///
   /// The [Future] completes when the server confirms the unsubscription.
   Future<void> unsubscribe([List<String> channels = const []]);
@@ -181,12 +207,15 @@ abstract class ValkeyClientBase implements ValkeyCommandsBase {
   /// Subscribes the client to the given [patterns] (e.g., "log:*").
   ///
   /// Returns a [Subscription] object (see `subscribe` for details).
-  /// You MUST `await subscription.ready` before assuming the subscription is active.
+  /// You MUST `await subscription.ready` before assuming the subscription is
+  /// active.
   ///
-  /// Throws a [ValkeyClientException] if mixing channel and pattern subscriptions.
+  /// Throws a [ValkeyClientException] if mixing channel and pattern
+  /// subscriptions.
   Subscription psubscribe(List<String> patterns);
 
-  /// Unsubscribes the client from the given [patterns], or all patterns if none are given.
+  /// Unsubscribes the client from the given [patterns], or all patterns
+  /// if none are given.
   ///
   /// The [Future] completes when the server confirms the unsubscription.
   Future<void> punsubscribe([List<String> patterns = const []]);
@@ -225,7 +254,8 @@ abstract class ValkeyClientBase implements ValkeyCommandsBase {
   /// Executes all commands queued after `multi()`.
   ///
   /// Returns a `List<dynamic>` of replies for each command in the transaction.
-  /// Returns `null` if the transaction was aborted (e.g., due to a `WATCH` failure).
+  /// Returns `null` if the transaction was aborted (e.g., due to a `WATCH`
+  /// failure).
   /// Throws a [ValkeyServerException] (e.g., `EXECABORT`) if the transaction
   /// was discarded due to a command syntax error within the `MULTI` block.
   Future<List<dynamic>?> exec();

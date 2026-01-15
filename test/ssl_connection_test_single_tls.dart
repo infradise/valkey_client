@@ -34,7 +34,7 @@ void main() {
         useSsl: true,
         // Accept self-signed certificates for testing
         onBadCertificate: (cert) => true,
-        commandTimeout: Duration(seconds: 2),
+        commandTimeout: const Duration(seconds: 2),
       );
 
       try {
@@ -61,12 +61,13 @@ void main() {
     });
 
     test('Should fail if useSsl is true but server is not SSL', () async {
-      // Connecting to a non-SSL port (e.g., standard 6379) with SSL enabled should fail
+      // Connecting to a non-SSL port (e.g., standard 6379) with SSL enabled
+      // should fail
       final client = ValkeyClient(
         host: host,
         port: 6379, // Standard non-SSL port
         useSsl: true,
-        commandTimeout: Duration(seconds: 1),
+        commandTimeout: const Duration(seconds: 1),
       );
 
       // Handshake should fail

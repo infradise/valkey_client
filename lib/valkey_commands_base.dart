@@ -16,7 +16,10 @@
 
 import 'dart:async';
 
-import 'package:valkey_client/valkey_client_base.dart';
+import 'valkey_client.dart' show ValkeyClusterClientBase, ValkeyServerException;
+import 'valkey_client_base.dart';
+import 'valkey_cluster_client_base.dart'
+    show ValkeyClusterClientBase, ValkeyServerException;
 
 /// The abstract base class for all common Valkey data commands.
 ///
@@ -27,7 +30,8 @@ abstract class ValkeyCommandsBase {
 
   /// Gets the value of [key].
   ///
-  /// Returns the string value if the key exists, or `null` if the key does not exist.
+  /// Returns the string value if the key exists, or `null` if the key does
+  /// not exist.
   /// Throws a [ValkeyServerException] if the key holds a non-string value.
   Future<String?> get(String key);
 
@@ -121,7 +125,8 @@ abstract class ValkeyCommandsBase {
 
   // --- Sorted Sets ---
 
-  /// Adds [member] with the specified [score] to the sorted set stored at [key].
+  /// Adds [member] with the specified [score] to the sorted set stored at
+  /// [key].
   ///
   /// Returns `1` if the member was added, `0` if it was updated.
   /// Throws a [ValkeyServerException] if the key holds a non-sorted-set value.
@@ -191,7 +196,8 @@ abstract class ValkeyCommandsBase {
   /// Subscribes the client to the specified [channels] using Sharded Pub/Sub.
   ///
   /// Returns a [Subscription] object (same interface as standard subscribe).
-  /// Note: In Cluster mode, this manages multiple connections to different shards transparently.
+  /// Note: In Cluster mode, this manages multiple connections to different
+  /// shards transparently.
   Subscription ssubscribe(List<String> channels);
 
   /// Unsubscribes from the given [channels] using Sharded Pub/Sub.

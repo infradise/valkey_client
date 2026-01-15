@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-import 'package:valkey_client/valkey_client_base.dart'; // For ClusterSlotRange
-import 'package:valkey_client/src/exceptions.dart'; // For ValkeyParsingException
+import '../valkey_client.dart' show ValkeyClient;
+import '../valkey_client_base.dart'; // For ClusterSlotRange
+import 'exceptions.dart';
+import 'valkey_client.dart' show ValkeyClient; // For ValkeyParsingException
 // import 'package:valkey_client/src/cluster_info.dart'
 //     show ClusterNodeInfo, ClusterSlotRange;
 
-/// Internal utility class to parse the complex nested array response from the 'CLUSTER SLOTS' command.
+/// Internal utility class to parse the complex nested array response
+/// from the 'CLUSTER SLOTS' command.
 ///
 /// This logic is separated from [ValkeyClient] to improve testability,
 /// as the response format is complex.
@@ -28,10 +31,11 @@ import 'package:valkey_client/src/exceptions.dart'; // For ValkeyParsingExceptio
 List<ClusterSlotRange> parseClusterSlotsResponse(dynamic response) {
   if (response is! List) {
     throw ValkeyParsingException(
-        'Invalid CLUSTER SLOTS response: expected List, got ${response.runtimeType}');
+        'Invalid CLUSTER SLOTS response: expected List, '
+        'got ${response.runtimeType}');
   }
 
-  final List<ClusterSlotRange> slotRanges = [];
+  final slotRanges = <ClusterSlotRange>[];
 
   try {
     for (final dynamic slotInfo in response) {
@@ -42,16 +46,16 @@ List<ClusterSlotRange> parseClusterSlotsResponse(dynamic response) {
       }
 
       // 1. Parse slot range
-      final int startSlot = slotInfo[0] as int;
-      final int endSlot = slotInfo[1] as int;
+      final startSlot = slotInfo[0] as int;
+      final endSlot = slotInfo[1] as int;
 
       // 2. Parse master node info
-      final ClusterNodeInfo master = _parseNodeInfo(slotInfo[2]);
+      final master = _parseNodeInfo(slotInfo[2]);
 
       // 3. Parse replica node info (optional)
-      final List<ClusterNodeInfo> replicas = [];
+      final replicas = <ClusterNodeInfo>[];
       if (slotInfo.length > 3) {
-        for (int i = 3; i < slotInfo.length; i++) {
+        for (var i = 3; i < slotInfo.length; i++) {
           // Note: Some responses might include node IDs, others might not.
           // The CLUSTER SLOTS documentation shows replicas may also have IDs.
           replicas.add(_parseNodeInfo(slotInfo[i]));
@@ -69,8 +73,8 @@ List<ClusterSlotRange> parseClusterSlotsResponse(dynamic response) {
     rethrow; // Re-throw exceptions from _parseNodeInfo
   } catch (e) {
     // Catching generic errors during parsing (e.g., cast errors)
-    throw ValkeyParsingException(
-        'Failed to parse CLUSTER SLOTS response. Error: $e. Response: $response');
+    throw ValkeyParsingException('Failed to parse CLUSTER SLOTS response. '
+        'Error: $e. Response: $response');
   }
 
   return slotRanges;
