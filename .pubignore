@@ -1,3 +1,15 @@
+# Ignore hidden files and directories
+.git/
+.github/
+.idea/
+.vscode/
+.dart_tool/
+.DS_Store
+
+# Ignore build artifacts
+build/
+pubspec.lock
+
 docs/
 docs/BUILD.md
 setup/
