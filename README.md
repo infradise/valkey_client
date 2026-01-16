@@ -16,13 +16,12 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
 - Valkey 9.0+ Features Support
   - Numbered clusters: Intelligent database selection for seamless cluster management
 
-## Need help? 
+## Need help?
 
-1. Still using Redis instead of Valkey? Check out [Developer Experience Improvements](https://github.com/infradise/valkey_client/wiki/Developer-Experience-Improvements).
-
-2. No GUI for Redis/Valkey? Try [Keyscope](https://keyscope.dev).
-
-3. Need real‑time watch for Redis/Valkey pods and services across multiple K8s clusters? Try [Visualkube Jet](https://jet.visualkube.com).
+1. Still using Redis instead of Valkey? Check out [Developer Experience Improvements](https://github.com/infradise/valkey_client/wiki/Developer-Experience-Improvements)
+2. No GUI for Redis/Valkey? Try [Keyscope Jet](https://keyscope.dev)
+3. Looking for a GUI built with `valkey_client`? Try [Keyscope](https://pub.dev/packages/keyscope)
+4. Need real‑time watch for Redis/Valkey pods and services across multiple K8s clusters? Try [Visualkube Jet](https://jet.visualkube.com)
 
 ## Features
 
