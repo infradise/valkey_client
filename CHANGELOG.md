@@ -1,10 +1,14 @@
 # Changelog
 
+## 2.4.0
+
+* **Built-in Logger**
+    * Exposed the `built-in logger` functionality for external use.
+    * **New Example:** `built_in_logger_example.dart`
+
 ## 2.3.0
 
-### Improved
-- Applied strict linter rules project-wide.
-
+* **Linter**: Applied strict linter rules project-wide.
 
 ## 2.2.0
 
