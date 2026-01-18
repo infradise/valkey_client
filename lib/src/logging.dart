@@ -25,17 +25,20 @@ class ValkeyLogLevel {
 
   const ValkeyLogLevel(this.name, this.value);
 
-  /// Serious failures
-  static const ValkeyLogLevel severe = ValkeyLogLevel('SEVERE', 1000);
-
-  /// Potential problems
-  static const ValkeyLogLevel warning = ValkeyLogLevel('WARNING', 800);
+  /// Fine-grained tracing
+  static const ValkeyLogLevel fine = ValkeyLogLevel('FINE', 500);
 
   /// Informational messages
   static const ValkeyLogLevel info = ValkeyLogLevel('INFO', 700);
 
-  /// Fine-grained tracing
-  static const ValkeyLogLevel fine = ValkeyLogLevel('FINE', 500);
+  /// Potential problems
+  static const ValkeyLogLevel warning = ValkeyLogLevel('WARNING', 800);
+
+  /// Serious failures
+  static const ValkeyLogLevel severe = ValkeyLogLevel('SEVERE', 1000);
+
+  /// Error messages
+  static const ValkeyLogLevel error = ValkeyLogLevel('ERROR', 1400);
 
   /// Disables logging.
   static const ValkeyLogLevel off = ValkeyLogLevel('OFF', 2000);
@@ -69,6 +72,30 @@ class ValkeyLogger {
 
   ValkeyLogger(this.name);
 
+  void setLogLevelFine() {
+    level = ValkeyLogLevel.fine;
+  }
+
+  void setLogLevelInfo() {
+    level = ValkeyLogLevel.info;
+  }
+
+  void setLogLevelWarning() {
+    level = ValkeyLogLevel.warning;
+  }
+
+  void setLogLevelSevere() {
+    level = ValkeyLogLevel.severe;
+  }
+
+  void setLogLevelError() {
+    level = ValkeyLogLevel.error;
+  }
+
+  void setLogLevelOff() {
+    level = ValkeyLogLevel.off;
+  }
+
   /// Logs a message if [messageLevel] is at or above the current [level].
   void _log(ValkeyLogLevel messageLevel, String message,
       [Object? error, StackTrace? stackTrace]) {
@@ -87,19 +114,23 @@ class ValkeyLogger {
     }
   }
 
-  void severe(String message, [Object? error, StackTrace? stackTrace]) {
-    _log(ValkeyLogLevel.severe, message, error, stackTrace);
-  }
-
-  void warning(String message, [Object? error]) {
-    _log(ValkeyLogLevel.warning, message, error);
+  void fine(String message) {
+    _log(ValkeyLogLevel.fine, message);
   }
 
   void info(String message) {
     _log(ValkeyLogLevel.info, message);
   }
 
-  void fine(String message) {
-    _log(ValkeyLogLevel.fine, message);
+  void warning(String message, [Object? error]) {
+    _log(ValkeyLogLevel.warning, message, error);
+  }
+
+  void severe(String message, [Object? error, StackTrace? stackTrace]) {
+    _log(ValkeyLogLevel.severe, message, error, stackTrace);
+  }
+
+  void error(String message) {
+    _log(ValkeyLogLevel.error, message);
   }
 }

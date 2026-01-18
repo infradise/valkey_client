@@ -22,7 +22,7 @@ library;
 export 'src/cluster_info.dart';
 // Export public exception classes (v1.0.0)
 export 'src/exceptions.dart';
-export 'src/logging.dart' show ValkeyLogLevel;
+export 'src/logging.dart' show ValkeyLogLevel, ValkeyLogger;
 // Export the concrete *standalone* implementation
 export 'src/valkey_client.dart';
 // Export the concrete *cluster* implementation

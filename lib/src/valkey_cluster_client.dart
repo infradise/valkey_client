@@ -18,7 +18,6 @@ import 'dart:async';
 import '../valkey_client.dart';
 import 'cluster_hash.dart';
 import 'cluster_slot_map.dart';
-import 'logging.dart';
 
 /// The concrete implementation of [ValkeyClusterClientBase].
 ///
