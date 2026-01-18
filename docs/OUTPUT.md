@@ -12,6 +12,11 @@ DECR result: 10
 DECRBY 5 result: 5
 ```
 
+### built_in_logger_example.dart
+```sh
+[2026-01-19T07:12:31.226568] Built-in Logger Example - INFO: Now you can see this message only.
+```
+
 ### cluster_auto_discovery_example.dart
 ```sh
 ✅ Connected to cluster node at 127.0.0.1:7001
