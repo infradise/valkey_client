@@ -43,6 +43,9 @@ class ValkeyLogLevel {
   /// Disables logging.
   static const ValkeyLogLevel off = ValkeyLogLevel('OFF', 2000);
 
+  /// Enables logging.
+  static const EnableValkeyLog = false;
+
   bool operator <(ValkeyLogLevel other) => value < other.value;
   bool operator <=(ValkeyLogLevel other) => value <= other.value;
 
@@ -69,6 +72,8 @@ class ValkeyLogLevel {
 class ValkeyLogger {
   final String name;
   static ValkeyLogLevel level = ValkeyLogLevel.off; // Logging is off by default
+  bool _enableValkeyLog = ValkeyLogLevel.EnableValkeyLog;
+  void setEnableValkeyLog(bool status) => _enableValkeyLog = status;
 
   ValkeyLogger(this.name);
 
@@ -99,8 +104,10 @@ class ValkeyLogger {
   /// Logs a message if [messageLevel] is at or above the current [level].
   void _log(ValkeyLogLevel messageLevel, String message,
       [Object? error, StackTrace? stackTrace]) {
-    if (messageLevel.value < ValkeyLogger.level.value) {
-      return; // Log level is too low, ignore.
+    if (!_enableValkeyLog) {
+      if (messageLevel.value < ValkeyLogger.level.value) {
+        return; // Log level is too low, ignore.
+      }
     }
 
     // Simple print-based logging. Users can configure this later.
