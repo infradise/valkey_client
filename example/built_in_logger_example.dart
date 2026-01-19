@@ -22,7 +22,8 @@ void main() {
   print('--- PART I. SHOW ALL MESSAGES ---');
 
   // This assures enabling all log levels (default: false)
-  logger.setEnableValkeyLog(true); // Or use logger.fine() instead of this.
+  logger.setEnableValkeyLog(
+      true); // Or use logger.setLogLevelFine() instead of this.
 
   showAllLogs(); // Show all messages regardless of log level.
   logger.setEnableValkeyLog(false);
