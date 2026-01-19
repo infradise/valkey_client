@@ -153,6 +153,9 @@ class ValkeyClient implements ValkeyClientBase {
 
   // [v2.1.0] Config & Metadata
   final ValkeyConnectionSettings _config;
+
+  ValkeyConnectionSettings? get currentConnectionConfig => _config;
+
   ServerMetadata? _metadata;
 
   /// Returns the metadata of the connected server.
