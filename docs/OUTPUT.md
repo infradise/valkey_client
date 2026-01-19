@@ -248,6 +248,13 @@ Unsubscribed.
 ✅ Data in DB 1: app:config:mode = production
 ```
 
+### get_currently_connected_host_info.dart
+```sh
+[2026-01-19T17:47:26.313725] Get Currently Connected Host Info Example - INFO: Connected host: 127.0.0.1
+[2026-01-19T17:47:26.314544] Get Currently Connected Host Info Example - INFO: Connected port: 6379
+[2026-01-19T17:47:26.314556] Get Currently Connected Host Info Example - INFO: Closing all cluster connections...
+```
+
 ### pool_example.dart
 ```sh
 Simulating 5 concurrent requests with a pool size of 3...
