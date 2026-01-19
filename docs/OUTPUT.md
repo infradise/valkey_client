@@ -14,7 +14,73 @@ DECRBY 5 result: 5
 
 ### built_in_logger_example.dart
 ```sh
-[2026-01-19T07:12:31.226568] Built-in Logger Example - INFO: Now you can see this message only.
+--- PART I. SHOW ALL MESSAGES ---
+--- set OFF ---
+[2026-01-19T18:11:21.947983] Built-in Logger Example - FINE: FINE messages
+[2026-01-19T18:11:21.949058] Built-in Logger Example - WARNING: WARNING messages
+[2026-01-19T18:11:21.949096] Built-in Logger Example - SEVERE: SEVERE messages
+[2026-01-19T18:11:21.949125] Built-in Logger Example - ERROR: ERROR messages
+[2026-01-19T18:11:21.949150] Built-in Logger Example - INFO: INFO messages
+--- set FINE ---
+[2026-01-19T18:11:21.949174] Built-in Logger Example - FINE: FINE messages
+[2026-01-19T18:11:21.949183] Built-in Logger Example - WARNING: WARNING messages
+[2026-01-19T18:11:21.949190] Built-in Logger Example - SEVERE: SEVERE messages
+[2026-01-19T18:11:21.949197] Built-in Logger Example - ERROR: ERROR messages
+[2026-01-19T18:11:21.949204] Built-in Logger Example - INFO: INFO messages
+--- set INFO ---
+[2026-01-19T18:11:21.949226] Built-in Logger Example - FINE: FINE messages
+[2026-01-19T18:11:21.949235] Built-in Logger Example - WARNING: WARNING messages
+[2026-01-19T18:11:21.949242] Built-in Logger Example - SEVERE: SEVERE messages
+[2026-01-19T18:11:21.949249] Built-in Logger Example - ERROR: ERROR messages
+[2026-01-19T18:11:21.949259] Built-in Logger Example - INFO: INFO messages
+--- set WARNING ---
+[2026-01-19T18:11:21.949280] Built-in Logger Example - FINE: FINE messages
+[2026-01-19T18:11:21.949290] Built-in Logger Example - WARNING: WARNING messages
+[2026-01-19T18:11:21.949297] Built-in Logger Example - SEVERE: SEVERE messages
+[2026-01-19T18:11:21.949305] Built-in Logger Example - ERROR: ERROR messages
+[2026-01-19T18:11:21.949312] Built-in Logger Example - INFO: INFO messages
+--- set SEVERE ---
+[2026-01-19T18:11:21.949333] Built-in Logger Example - FINE: FINE messages
+[2026-01-19T18:11:21.949342] Built-in Logger Example - WARNING: WARNING messages
+[2026-01-19T18:11:21.949350] Built-in Logger Example - SEVERE: SEVERE messages
+[2026-01-19T18:11:21.949357] Built-in Logger Example - ERROR: ERROR messages
+[2026-01-19T18:11:21.949364] Built-in Logger Example - INFO: INFO messages
+--- set ERROR ---
+[2026-01-19T18:11:21.949387] Built-in Logger Example - FINE: FINE messages
+[2026-01-19T18:11:21.949396] Built-in Logger Example - WARNING: WARNING messages
+[2026-01-19T18:11:21.949403] Built-in Logger Example - SEVERE: SEVERE messages
+[2026-01-19T18:11:21.949411] Built-in Logger Example - ERROR: ERROR messages
+[2026-01-19T18:11:21.949418] Built-in Logger Example - INFO: INFO messages
+--- set OFF ---
+[2026-01-19T18:11:21.949441] Built-in Logger Example - FINE: FINE messages
+[2026-01-19T18:11:21.949452] Built-in Logger Example - WARNING: WARNING messages
+[2026-01-19T18:11:21.949459] Built-in Logger Example - SEVERE: SEVERE messages
+[2026-01-19T18:11:21.949467] Built-in Logger Example - ERROR: ERROR messages
+[2026-01-19T18:11:21.949474] Built-in Logger Example - INFO: INFO messages
+
+--- PART II. SHOW ONLY MESSAGES WITH SPECIFIC LOG LEVEL ---
+--- set OFF ---
+--- set FINE ---
+[2026-01-19T18:11:21.949513] Built-in Logger Example - FINE: FINE messages
+[2026-01-19T18:11:21.949521] Built-in Logger Example - WARNING: WARNING messages
+[2026-01-19T18:11:21.949531] Built-in Logger Example - SEVERE: SEVERE messages
+[2026-01-19T18:11:21.949538] Built-in Logger Example - ERROR: ERROR messages
+[2026-01-19T18:11:21.949547] Built-in Logger Example - INFO: INFO messages
+--- set INFO ---
+[2026-01-19T18:11:21.949556] Built-in Logger Example - WARNING: WARNING messages
+[2026-01-19T18:11:21.949564] Built-in Logger Example - SEVERE: SEVERE messages
+[2026-01-19T18:11:21.949571] Built-in Logger Example - ERROR: ERROR messages
+[2026-01-19T18:11:21.949577] Built-in Logger Example - INFO: INFO messages
+--- set WARNING ---
+[2026-01-19T18:11:21.949585] Built-in Logger Example - WARNING: WARNING messages
+[2026-01-19T18:11:21.949593] Built-in Logger Example - SEVERE: SEVERE messages
+[2026-01-19T18:11:21.949600] Built-in Logger Example - ERROR: ERROR messages
+--- set SEVERE ---
+[2026-01-19T18:11:21.949609] Built-in Logger Example - SEVERE: SEVERE messages
+[2026-01-19T18:11:21.949617] Built-in Logger Example - ERROR: ERROR messages
+--- set ERROR ---
+[2026-01-19T18:11:21.949625] Built-in Logger Example - ERROR: ERROR messages
+--- set OFF ---
 ```
 
 ### cluster_auto_discovery_example.dart

@@ -19,12 +19,54 @@ import 'package:valkey_client/valkey_client.dart' show ValkeyLogger;
 ValkeyLogger logger = ValkeyLogger('Built-in Logger Example');
 
 void main() {
-  logger.info('By default built-in logger is disabled (off), '
-      'you cannot see this message.');
+  print('--- PART I. SHOW ALL MESSAGES ---');
 
+  // This assures enabling all log levels (default: false)
+  logger.setEnableValkeyLog(true); // Or use logger.fine() instead of this.
+
+  showAllLogs(); // Show all messages regardless of log level.
+  logger.setEnableValkeyLog(false);
+
+  print('');
+
+  print('--- PART II. SHOW ONLY MESSAGES WITH SPECIFIC LOG LEVEL ---');
+  showAllLogs();
+}
+
+void showAllLogs() {
+  // By default built-in logger is disabled (off)
+  print('--- set OFF ---');
+  messages();
+
+  print('--- set FINE ---');
+  logger.setLogLevelFine();
+  messages();
+
+  print('--- set INFO ---');
   logger.setLogLevelInfo();
-  logger.info('Now you can see this message only.');
+  messages();
 
+  print('--- set WARNING ---');
+  logger.setLogLevelWarning();
+  messages();
+
+  print('--- set SEVERE ---');
+  logger.setLogLevelSevere();
+  messages();
+
+  print('--- set ERROR ---');
+  logger.setLogLevelError();
+  messages();
+
+  print('--- set OFF ---');
   logger.setLogLevelOff();
-  logger.info('From now on, you cannot see this message again.');
+  messages();
+}
+
+void messages() {
+  logger.fine('FINE messages');
+  logger.warning('WARNING messages');
+  logger.severe('SEVERE messages');
+  logger.error('ERROR messages');
+  logger.info('INFO messages');
 }
