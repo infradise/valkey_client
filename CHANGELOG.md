@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.4.1
+* **Built-in Logger**
+    * **New Feature**: `setEnableValkeyLog()` in `ValkeyLogger`
+    * **Example Update**: `built_in_logger_example.dart`
+* **Currently Connected Host and Port Information Provider**
+    * **New Feature**: `currentConnectionConfig` to get `ValkeyConnectionSettings` in `ValkeyClient`
+    * **New Example:** `get_currently_connected_host_info.dart`
+
 ## 2.4.0
 
 * **Built-in Logger**

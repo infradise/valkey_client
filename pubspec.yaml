@@ -1,6 +1,6 @@
 name: valkey_client
 description: A high-performance, cluster-aware Dart client for Redis and Valkey.
-version: 2.4.0
+version: 2.4.1
 repository: https://github.com/infradise/valkey_client
 homepage: https://github.com/infradise/valkey_client
 issue_tracker: https://github.com/infradise/valkey_client/issues
