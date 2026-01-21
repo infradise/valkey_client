@@ -37,36 +37,37 @@ mixin JsonCommands {
   /// This getter must be implemented by the main client class.
   bool get allowRedisOnlyJsonMerge;
 
-  /// JSON.SET key path value [NX | XX]
-  ///
-  /// Sets the JSON value at [path] in [key].
-  ///
-  /// [key] The key to modify.
-  /// [path] The JSON path (e.g., `r'$'`, `r'$.score'`). Must be a String.
-  /// [data] The data to store. It will be automatically serialized using
-  /// [jsonEncode].
-  /// [nx] If true, set the value only if it does not exist.
-  /// [xx] If true, set the value only if it already exists.
-  Future<void> jsonSet({
-    required String key,
-    required String
-        path, // Changed from dynamic to String to prevent type errors
-    dynamic data,
-    bool? nx,
-    bool? xx,
-  }) async {
-    // Convert data to JSON string
-    final jsonData = jsonEncode(data);
+  // jsonArrAppend
 
-    // Construct the command list as List<String> to maintain backward
-    // compatibility
-    final cmd = <String>['JSON.SET', key, path, jsonData];
+  // jsonArrAppendEnhanced
 
-    if (nx ?? false) cmd.add('NX');
-    if (xx ?? false) cmd.add('XX');
+  // jsonArrIndex
 
-    await execute(cmd);
-  }
+  // jsonArrIndexEnhanced
+
+  // jsonArrInsert
+
+  // jsonArrInsertEnhanced
+
+  // jsonArrLen
+
+  // jsonArrLenEnhanced
+
+  // jsonArrPop
+
+  // jsonArrPopEnhanced
+
+  // jsonArrTrim
+
+  // jsonArrTrimEnhanced
+
+  // jsonClear
+
+  // jsonDel
+
+  // jsonForget
+
+  // jsonGet
 
   /// JSON.GET key [path ...]
   ///
@@ -91,6 +92,8 @@ mixin JsonCommands {
     if (result is int) return result;
     return int.tryParse(result.toString());
   }
+
+  // jsonMerge
 
   /// JSON.MERGE key path value
   ///
@@ -123,4 +126,58 @@ mixin JsonCommands {
     final jsonData = jsonEncode(data);
     await execute(<String>['JSON.MERGE', key, path, jsonData]);
   }
+
+  // jsonMget
+
+  // jsonMset
+
+  // jsonNumincrby
+
+  // jsonNummultby
+
+  // jsonObjkeys
+
+  // jsonObjkeysEnhanced
+
+  // jsonSet
+
+  /// JSON.SET key path value [NX | XX]
+  ///
+  /// Sets the JSON value at [path] in [key].
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path (e.g., `r'$'`, `r'$.score'`). Must be a String.
+  /// [data] The data to store. It will be automatically serialized using
+  /// [jsonEncode].
+  /// [nx] If true, set the value only if it does not exist.
+  /// [xx] If true, set the value only if it already exists.
+  Future<void> jsonSet({
+    required String key,
+    required String
+        path, // Changed from dynamic to String to prevent type errors
+    dynamic data,
+    bool? nx,
+    bool? xx,
+  }) async {
+    // Convert data to JSON string
+    final jsonData = jsonEncode(data);
+
+    // Construct the command list as List<String> to maintain backward
+    // compatibility
+    final cmd = <String>['JSON.SET', key, path, jsonData];
+
+    if (nx ?? false) cmd.add('NX');
+    if (xx ?? false) cmd.add('XX');
+
+    await execute(cmd);
+  }
+
+  // jsonStrappend
+
+  // jsonStrappendEnhanced
+
+  // jsonStrlen
+
+  // jsonStrlenEnhanced
+
 }
