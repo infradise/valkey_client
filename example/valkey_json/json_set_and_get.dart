@@ -16,7 +16,7 @@
 
 import 'package:valkey_client/valkey_client.dart';
 
-ValkeyLogger logger = ValkeyLogger('JSON Example');
+ValkeyLogger logger = ValkeyLogger('JSON Set and Get Example');
 
 void main() async {
   logger.setEnableValkeyLog(true); // Enable all log levels (default: false)
