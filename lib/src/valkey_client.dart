@@ -790,6 +790,13 @@ class ValkeyClient implements ValkeyClientBase {
     }
   }
 
+  /// Determine Server Name & Version
+  Future<bool> isRedisServer() async => await getServerName() == 'redis';
+  Future<bool> isValkeyServer() async => await getServerName() == 'valkey';
+
+  Future<String?> getServerName() async => _metadata?.serverName;
+  Future<String?> getServerVersion() async => _metadata?.version;
+
   /// Parses 'INFO SERVER' and checks configs based on User Rules.
   Future<ServerMetadata> _parseServerMetadata(String info) async {
     final infoMap = <String, String>{};
