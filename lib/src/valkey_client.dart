@@ -27,6 +27,7 @@ import '../valkey_client_base.dart';
 import '../valkey_pool.dart' show ValkeyPool;
 // Import the top-level function from the parser file
 import 'cluster_slots_parser.dart' show parseClusterSlotsResponse;
+import 'commands/json_commands.dart';
 // Import the new exceptions file
 import 'exceptions.dart';
 import 'logging.dart';
@@ -114,8 +115,22 @@ class _IncompleteDataException implements Exception {
 }
 
 /// The main client implementation for communicating with a Valkey server.
-class ValkeyClient implements ValkeyClientBase {
+class ValkeyClient with JsonCommands implements ValkeyClientBase {
   static final _log = ValkeyLogger('ValkeyClient');
+
+  /// JSON.MERGE
+  ///
+  /// Internal configuration for Redis-only commands.
+  ///
+  /// Redis  : Currently Redis only.
+  /// Valkey : Currently not yet supported.
+  ///          In the future, if Valkey supports this feature, set to true.
+  final bool _allowRedisOnlyJsonMerge = false;
+
+  /// [Implementation of JsonCommands Interface]
+  /// Exposes the private variable to the Mixin via a getter.
+  @override
+  bool get allowRedisOnlyJsonMerge => _allowRedisOnlyJsonMerge;
 
   /// Sets the logging level for all ValkeyClient instances.
   ///
@@ -790,8 +805,12 @@ class ValkeyClient implements ValkeyClientBase {
     }
   }
 
+  /// Helper to check server type based on metadata.
+  ///
   /// Determine Server Name & Version
+  @override
   Future<bool> isRedisServer() async => await getServerName() == 'redis';
+  @override
   Future<bool> isValkeyServer() async => await getServerName() == 'valkey';
 
   Future<String?> getServerName() async => _metadata?.serverName;
