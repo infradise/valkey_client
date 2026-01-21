@@ -1,5 +1,34 @@
 # EXPECTED OUTPUT
 
+## example/valkey_json
+
+### json_basic_get_example.dart
+```sh
+[2026-01-22T04:11:36.254971] JSON Basic Get Example - INFO: User Name (expected): [Nana]
+[2026-01-22T04:11:36.257661] JSON Basic Get Example - INFO: User Name (not shown): []
+[2026-01-22T04:11:36.257677] JSON Basic Get Example - INFO: Closing all cluster connections...
+```
+
+### json_set_and_get.dart
+```sh
+[2026-01-22T01:12:23.109090] JSON Set and Get Example - INFO: ✅ Saved User Data
+[2026-01-22T01:12:23.113201] JSON Set and Get Example - INFO: User Result: [{name: Alice, age: 30, isStudent: false}]
+[2026-01-22T01:12:23.114280] JSON Set and Get Example - INFO: User Name: [Alice]
+[2026-01-22T01:12:23.115016] JSON Set and Get Example - INFO: ✅ Saved Fruits
+[2026-01-22T01:12:23.115510] JSON Set and Get Example - INFO: Fruit Result: [[apple, banana, cherry]]
+[2026-01-22T01:12:23.115983] JSON Set and Get Example - INFO: First Fruit: [apple]
+[2026-01-22T01:12:23.116707] JSON Set and Get Example - INFO: ✅ Saved User Profile (Miami Beach Vibe)
+[2026-01-22T01:12:23.117267] JSON Set and Get Example - INFO: City: [Miami Beach]
+[2026-01-22T01:12:23.117740] JSON Set and Get Example - INFO: Street: [1020 Ocean Drive]
+[2026-01-22T01:12:23.118883] JSON Set and Get Example - INFO: Updated Email: [support@tech-example.com]
+[2026-01-22T01:12:23.119898] JSON Set and Get Example - INFO: ✅ Saved Cluster Configuration
+[2026-01-22T01:12:23.120372] JSON Set and Get Example - INFO: Region: [us-east-1]
+[2026-01-22T01:12:23.120777] JSON Set and Get Example - INFO: First Feature Flag: [mfa_enabled]
+[2026-01-22T01:12:23.121155] JSON Set and Get Example - INFO: First Node Status: [healthy]
+[2026-01-22T01:12:23.121759] JSON Set and Get Example - INFO: All Node Uptimes: [99.999, 95.995, 99.998]
+[2026-01-22T01:12:23.121775] JSON Set and Get Example - INFO: Closing all cluster connections...
+```
+
 ## example
 
 ### atomic_counters_example.dart
@@ -253,6 +282,24 @@ Unsubscribed.
 [2026-01-19T17:47:26.313725] Get Currently Connected Host Info Example - INFO: Connected host: 127.0.0.1
 [2026-01-19T17:47:26.314544] Get Currently Connected Host Info Example - INFO: Connected port: 6379
 [2026-01-19T17:47:26.314556] Get Currently Connected Host Info Example - INFO: Closing all cluster connections...
+```
+
+### get_server_metadata.dart
+Valkey 9.0.0
+```sh
+[2026-01-22T01:05:04.412779] Get Server Metadata Example - INFO: Server Name: valkey
+[2026-01-22T01:05:04.413595] Get Server Metadata Example - INFO: Server Version: 9.0.0
+[2026-01-22T01:05:04.413623] Get Server Metadata Example - INFO: Is RedisServer: false
+[2026-01-22T01:05:04.413636] Get Server Metadata Example - INFO: Is ValkeyServer: true
+[2026-01-22T01:05:04.413645] Get Server Metadata Example - INFO: Closing all cluster connections...
+```
+Redis 8.4.0
+```sh
+[2026-01-22T04:13:27.121520] Get Server Metadata Example - INFO: Server Name: redis
+[2026-01-22T04:13:27.122345] Get Server Metadata Example - INFO: Server Version: 8.4.0
+[2026-01-22T04:13:27.122375] Get Server Metadata Example - INFO: Is RedisServer: true
+[2026-01-22T04:13:27.122386] Get Server Metadata Example - INFO: Is ValkeyServer: false
+[2026-01-22T04:13:27.122395] Get Server Metadata Example - INFO: Closing all cluster connections...
 ```
 
 ### pool_example.dart
