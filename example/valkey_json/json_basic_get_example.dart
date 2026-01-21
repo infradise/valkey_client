@@ -31,17 +31,29 @@ void main() async {
   try {
     await client.connect();
 
-    final userMap = {
+    // Valid usage example
+    final validUserMap = {
       'name': 'Nana',
       'age': 21,
       'isStudent': false,
     };
 
-    // Root($)
-    await client.jsonSet(key: 'user:100', path: r'$', data: userMap);
-    final name = await client.jsonGet('user:100', r'$.name'); // [Nana]
+    // Invalid usage example (reason: redundant quotations)
+    final invalidUserMap = {
+      '"name"': '"Alice"',
+      '"age"': 30,
+    };
 
-    logger.info('User Name: $name');
+    // Root($)
+    await client.jsonSet(key: 'user:100', path: r'$', data: validUserMap);
+    final expectedName = await client.jsonGet('user:100', r'$.name');
+    logger.info('User Name (expected): $expectedName');
+    // Expected output: [Nana] / Actual output: [Nana]
+
+    await client.jsonSet(key: 'user:200', path: r'$', data: invalidUserMap);
+    final unexpectedName = await client.jsonGet('user:200', r'$.name');
+    logger.info('User Name (not shown): $unexpectedName');
+    // Expected output: [Alice] / Actual output: []
   } on ValkeyConnectionException catch (e) {
     logger.error('❌ Connection Failed: $e');
     logger.error('Ensure a Redis or Valkey CLUSTER node is running.');
