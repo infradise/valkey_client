@@ -5,6 +5,7 @@
 The `valkey_client` is a high-performance, cluster-aware Dart client for Redis and Valkey.
 
 ## Overview
+- Data format: RedisJSON; ValkeyJSON
 - Deployment modes: Standalone; Sentinel; Cluster
 - Scalability: Scalable replica reads offloading; smart load balancing
 - Reliability: Automatic failover; smart connection pooling
@@ -28,7 +29,7 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
 All features are supported in the latest release.
 
 ### New in v2.0.0 and later
-
+  * **JSON Data Format (v2.5.0+):** RedisJSON; ValkeyJSON - JSON-based document formats for storing structured payloads.
   * **Scalable Replica Reads (v2.2.0+):** Boost read performance by offloading read-only commands (e.g., `GET`, `EXISTS`) to replica nodes. Supports `ReadPreference` settings (`master`, `preferReplica`, `replicaOnly`) to control traffic flow.
   * **Smart Load Balancing (v2.2.0+):** Built-in load balancing strategies (`Round-Robin`, `Random`) to efficiently distribute read traffic across available replicas.
   * **Automatic Replica Discovery (v2.2.0+):** Automatically detects and connects to replica nodes via `INFO REPLICATION` (Standalone/Sentinel) to maintain an up-to-date pool of connections.
