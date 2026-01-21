@@ -1,8 +1,14 @@
 # Testing for Redis
 
-## Standalone/Sentinel environments
+## Standalone/Sentinel environments (+RedisJSON)
 ```sh
 docker run --name my-redis -p 6379:6379 redis:latest
+```
+
+## (Deprecated) JSON environment (Redis v7.4.7)
+Do not use this if not legacy test.
+```sh
+docker run --name redis-json-test -p 6379:6379 redis/redis-stack-server:latest
 ```
 
 ## Cluster environment

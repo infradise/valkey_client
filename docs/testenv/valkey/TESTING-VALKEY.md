@@ -5,6 +5,22 @@
 docker run --name my-valkey -p 6379:6379 valkey/valkey:latest
 ```
 
+## JSON environment
+
+Valkey JSON, Valkey Bloom, Valkey Search, LDAP
+
+```sh
+# Valkey 9.0.0
+docker run --name valkey-json-test -p 6379:6379 valkey/valkey-bundle:latest
+```
+
+OR
+
+```sh
+docker run --name my-valkey -p 6379:6379 valkey/valkey:8.1.0
+# from [Docker image](https://hub.docker.com/r/valkey/valkey/)
+```
+
 ## Cluster environment
 ```sh
 docker compose -f valkey_macos.yaml up --force-recreate
