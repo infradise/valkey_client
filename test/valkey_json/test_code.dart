@@ -317,7 +317,7 @@ void main() async {
     await client.jsonSet(key: 'json:nx', path: '.', data: '{"a":3}', xx: true);
     final result2 = await client.jsonGet(key: 'json:nx', path: '.');
     // (X) expect(result2, equals('{"a":3}')); // This is String
-    expect(result2, equals({'a':3})); // Expected Usage
+    expect(result2, equals({'a': 3})); // Expected Usage
     expect(result2, containsPair('a', 3)); // Expected Usage
   });
 
