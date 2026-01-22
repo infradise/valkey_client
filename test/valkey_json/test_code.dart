@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import 'dart:convert' show jsonEncode;
+
 import 'package:test/test.dart';
 import 'package:valkey_client/src/utils/module_printer.dart'
     show printPrettyModuleList;
@@ -52,21 +54,60 @@ void main() async {
 
   // TODO: Test for commands without enhancedPaths
 
-  // test('jsonSet & jsonGet - simple array', () async {
-  //   await client.jsonSet(key: 'json:simple', path: '.', value: '["a","b","c"]');
-  //   final result = await client.jsonGet(key: 'json:simple', path: '.');
-  //   expect(result, equals('["a","b","c"]'));
-  // });
+  test('jsonSet & jsonGet - simple array', () async {
+    await client.jsonSet(key: 'json:simple', path: '.', data: '["a","b","c"]');
+    final result = await client.jsonGet(key: 'json:simple', path: '.');
 
-  // test('jsonSet & jsonGet - nested object', () async {
-  //   await client.jsonSet(
-  //       key: 'json:nested',
-  //       path: '.',
-  //       value: '{"foo":1,"bar":{"baz":[1,2,3],"qux":"val"}}');
-  //   final result = await client.jsonGet(key: 'json:nested', path: '.');
-  //   expect(result, contains('"foo":1'));
-  //   expect(result, contains('"baz":[1,2,3]'));
-  // });
+    // (X) expect(result, equals('["a","b","c"]'));
+    //
+    // >>> Expected Usage (KEEP your "as-is" test code)
+    final jsonString = jsonEncode(result);
+    expect(jsonString, equals('["a","b","c"]'));
+    //
+    // >>> Expected Usage (CHANGE like this)
+    expect(result, equals(['a', 'b', 'c']));
+  });
+
+  test('jsonSet & jsonGet - nested object', () async {
+    await client.jsonSet(
+        key: 'json:nested',
+        path: '.',
+        data: '{"foo":1,"bar":{"baz":[1,2,3],"qux":"val"}}');
+
+    // (X) final result = await client.jsonGet(key: 'json:nested', path: '.');
+    //
+    // >>> Expected Usage (NEED to declare an explicit type)
+    final result = await client.jsonGet(key: 'json:nested', path: '.')
+        as Map<String, dynamic>;
+
+    // (X) expect(result, contains('"foo":1'));
+    //
+    // >>> Expected Usage (KEEP your "as-is" test code)
+    final jsonString = jsonEncode(result);
+    expect(jsonString, contains('"foo":1'));
+    //
+    // >>> Expected Usage (CHANGE like this)
+    expect(result, containsPair('foo', 1));
+    //
+    // >>> Expected Usage (PINPOINT like this)
+    expect(result['foo'], equals(1));
+
+    // (X) expect(result, contains('"baz":[1,2,3]'));
+    //
+    // >>> Expected Usage (KEEP your "as-is" test code)
+    jsonEncode(result);
+    expect(jsonString, contains('"baz":[1,2,3]'));
+    //
+    // >>> Expected Usage (CHANGE like this)
+    expect(result['bar'], containsPair('baz', [1, 2, 3]));
+    //
+    // >>> Expected Usage (PINPOINT like this)
+    final bar = result['bar'] as Map;
+    expect(bar['baz'], equals([1, 2, 3]));
+
+    // >>> Expected Usage
+    expect(bar['qux'], equals('val'));
+  });
 
   // test('jsonSet & jsonGet - empty object', () async {
   //   await client.jsonSet(key: 'json:emptyobj', path: '.', value: '{}');
