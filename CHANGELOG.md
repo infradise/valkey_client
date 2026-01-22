@@ -3,6 +3,10 @@
 ## 2.5.0
 * **JSON Commands**: Introduced Redis JSON and Valkey JSON (aka. valkey-json)
     * `jsonSet`, `jsonDel`, `jsonGet`, `jsonMerge`
+* **Redis/Valkey Module Detector**: show all modules from Redis and Valkey module loaded
+    * e.g., `json`, `search`, `ldap`, `bf`, etc.
+* **JSON Module Checker**: checks JSON module names in advance before running logic
+    * `json`, `ReJSON`, `valkey-json`
 
 ## 2.4.1
 * **Built-in Logger**
