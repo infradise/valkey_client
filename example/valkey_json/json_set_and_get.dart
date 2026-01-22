@@ -31,6 +31,15 @@ void main() async {
   try {
     await client.connect();
 
+    // Check environment before running logic
+    if (!await client.isJsonModuleLoaded()) {
+      logger.info('❌ Error: JSON module is NOT loaded on this server.');
+      // logger.info('   Please install valkey-json or redis-stack.');
+      return;
+    } else {
+      logger.info('✅ JSON module detected. Ready to go!');
+    }
+
     await runJsonObjectMapExample(client);
     await runJsonArrayListExample(client);
     await runNestedJsonObjectExample(client);

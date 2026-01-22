@@ -16,6 +16,12 @@
 
 ✅ JSON Module is ready!
 ```
+OR
+```sh
+No modules loaded.
+❌ JSON Module is missing.
+[2026-01-23T01:52:04.077250] Get Module List Example - INFO: Closing all cluster connections...
+```
 
 ### json_basic_get_example.dart
 ```sh
@@ -23,6 +29,11 @@
 [2026-01-23T01:36:23.143001] JSON Basic Get Example - INFO: User Name (expected): [Nana]
 [2026-01-23T01:36:23.144700] JSON Basic Get Example - INFO: User Name (not shown): []
 [2026-01-23T01:36:23.144722] JSON Basic Get Example - INFO: Closing all cluster connections...
+```
+OR
+```sh
+[2026-01-23T01:53:36.111006] JSON Basic Get Example - INFO: ❌ Error: JSON module is NOT loaded on this server.
+[2026-01-23T01:53:36.111841] JSON Basic Get Example - INFO: Closing all cluster connections...
 ```
 
 ### json_set_and_get.dart
@@ -44,6 +55,11 @@
 [2026-01-23T01:44:22.550982] JSON Set and Get Example - INFO: First Node Status: [healthy]
 [2026-01-23T01:44:22.551705] JSON Set and Get Example - INFO: All Node Uptimes: [99.999, 95.995, 99.998]
 [2026-01-23T01:44:22.551723] JSON Set and Get Example - INFO: Closing all cluster connections...
+```
+OR
+```sh
+[2026-01-23T01:53:53.017730] JSON Set and Get Example - INFO: ❌ Error: JSON module is NOT loaded on this server.
+[2026-01-23T01:53:53.018552] JSON Set and Get Example - INFO: Closing all cluster connections...
 ```
 
 ## example

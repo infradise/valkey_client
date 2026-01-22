@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
+import 'package:valkey_client/src/utils/module_printer.dart'
+    show printPrettyModuleList;
 import 'package:valkey_client/valkey_client.dart';
 
-ValkeyLogger logger = ValkeyLogger('JSON Basic Get Example');
+ValkeyLogger logger = ValkeyLogger('Get Module List Example');
 
 void main() async {
   logger.setEnableValkeyLog(true); // Enable all log levels (default: false)
 
+  // ... Initialize client ...
   final settings = ValkeyConnectionSettings(
     host: '127.0.0.1',
     port: 6379,
@@ -32,38 +35,21 @@ void main() async {
     await client.connect();
 
     // Check environment before running logic
-    if (!await client.isJsonModuleLoaded()) {
-      logger.info('❌ Error: JSON module is NOT loaded on this server.');
-      // logger.info('   Please install valkey-json or redis-stack.');
-      return;
+
+    // 1. Get the structured list of modules
+    final modules = await client.getModuleList();
+
+    // 2. Print them nicely
+    printPrettyModuleList(modules);
+
+    // 3. Check specifically for JSON module using the logic
+    if (await client.isJsonModuleLoaded()) {
+      print('✅ JSON Module is ready!'); // JSON module detected. Ready to go!
+      // Proceed with jsonSet...
     } else {
-      logger.info('✅ JSON module detected. Ready to go!');
+      // Error: JSON module is NOT loaded on this server.
+      print('❌ JSON Module is missing.');
     }
-
-    // Valid usage example
-    final validUserMap = {
-      'name': 'Nana',
-      'age': 21,
-      'isStudent': false,
-    };
-
-    // Invalid usage example (reason: redundant quotations)
-    final invalidUserMap = {
-      '"name"': '"Alice"',
-      '"age"': 30,
-    };
-
-    // Root($)
-    await client.jsonSet(key: 'user:100', path: r'$', data: validUserMap);
-    final expectedName = await client.jsonGet(key: 'user:100', path: r'$.name');
-    logger.info('User Name (expected): $expectedName');
-    // Expected output: [Nana] / Actual output: [Nana]
-
-    await client.jsonSet(key: 'user:200', path: r'$', data: invalidUserMap);
-    final unexpectedName =
-        await client.jsonGet(key: 'user:200', path: r'$.name');
-    logger.info('User Name (not shown): $unexpectedName');
-    // Expected output: [Alice] / Actual output: []
   } on ValkeyConnectionException catch (e) {
     logger.error('❌ Connection Failed: $e');
     logger.error('Ensure a Redis or Valkey CLUSTER node is running.');
