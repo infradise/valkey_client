@@ -2,12 +2,12 @@
 
 * **JSON Data Format**: JSON-based document formats for storing structured payloads.
     * Redis JSON and Valkey JSON (aka. valkey-json)
-    * [ ] jsonArrAppend,  [ ] jsonArrAppendEnhanced
-    * [ ] jsonArrIndex,   [ ] jsonArrIndexEnhanced
-    * [ ] jsonArrInsert,  [ ] jsonArrInsertEnhanced
-    * [ ] jsonArrLen,     [ ] jsonArrLenEnhanced
-    * [ ] jsonArrPop,     [ ] jsonArrPopEnhanced
-    * [ ] jsonArrTrim,    [ ] jsonArrTrimEnhanced
+    * [x] jsonArrAppend,  [x] jsonArrAppendEnhanced
+    * [x] jsonArrIndex,   [x] jsonArrIndexEnhanced
+    * [x] jsonArrInsert,  [x] jsonArrInsertEnhanced
+    * [x] jsonArrLen,     [x] jsonArrLenEnhanced
+    * [x] jsonArrPop,     [x] jsonArrPopEnhanced
+    * [x] jsonArrTrim,    [x] jsonArrTrimEnhanced
     * [ ] jsonClear
     * [x] jsonDel
     * [ ] jsonForget
