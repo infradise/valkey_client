@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import 'dart:convert' show jsonEncode;
-
 import 'package:test/test.dart';
 import 'package:valkey_client/src/utils/module_printer.dart'
     show printPrettyModuleList;
@@ -292,22 +290,11 @@ void main() async {
     expect(deleted, equals(1));
     final result = await client.jsonGet(key: 'json:del', path: '.');
 
-    // (!) expect(result, contains('"b":2'));
-    //
-    // >>> Expected Usage (KEEP your "as-is" test code)
-    expect(jsonEncode(result), contains('"b":2'));
-    //
-    // >>> Expected Usage (CHANGE like this)
-    expect(result, containsPair('b', 2));
+    // (X) expect(result, contains('"b":2')); // This is String
+    expect(result, containsPair('b', 2)); // Expected Usage
 
-    // (!) expect(result, isNot(contains('"a":1')));
-    //
-    // >>> Expected Usage (KEEP your "as-is" test code)
-    expect(jsonEncode(result), isNot(contains('"a":1')));
-    //
-    // >>> Expected Usage (CHANGE like this)
-    // expect(jsonEncode(result), containsPair('a', 1));
-    // expect(jsonEncode(result), isNot(containsPair('a', 1)));
+    // (X) expect(result, isNot(contains('"a":1'))); // This is String
+    expect(result, isNot(containsPair('a', 1))); // Expected Usage
   });
 
   // test('jsonDel - non-existent path', () async {
