@@ -17,3 +17,6 @@ setup/
 # Ignore test artifacts
 test/
 analysis_options.yaml
+
+# Will be removed in the future
+lib/src/utils/module_printer_deprecated.dart
