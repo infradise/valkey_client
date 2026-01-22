@@ -81,6 +81,63 @@ mixin JsonCommands {
     }
   }
 
+  /// Checks if the JSON module is loaded on the server.
+  ///
+  /// This method internally uses [getModuleList] to check if
+  /// `ReJSON`, `json`, or `valkey-json` is present in the module list.
+  Future<bool> isJsonModuleLoaded() async {
+    final modules = await getModuleList();
+
+    for (final module in modules) {
+      final name = module['name']?.toString() ?? '';
+
+      // Check for common JSON module names
+      if (name == 'json' || name == 'ReJSON' || name == 'valkey-json') {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Checks if the JSON module is loaded on the server.
+  ///
+  /// This command sends `MODULE LIST` and checks if `ReJSON`, `json`,
+  /// or `valkey-json`
+  /// exists in the loaded module list.
+  ///
+  /// Returns `true` if the JSON module is detected, `false` otherwise.
+  @Deprecated('Will be removed in the future.')
+  Future<bool> isJsonModuleLoadedOld() async {
+    try {
+      // Execute the MODULE LIST command
+      final result = await execute(<String>['MODULE', 'LIST']);
+
+      // Result is usually a List of Lists (List<dynamic>)
+      // Example: [[name, ReJSON, ver, 20406], [name, search, ...]]
+      if (result is List) {
+        for (final moduleInfo in result) {
+          if (moduleInfo is List) {
+            // Convert list items to string for safer comparison
+            final infoString = moduleInfo.join(' ');
+
+            // Check for common JSON module names
+            if (infoString.contains('ReJSON') ||
+                infoString.contains('valkey-json') ||
+                // Exact match check for generic 'json' to avoid false positives
+                moduleInfo.contains('json')) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    } catch (e) {
+      // If MODULE command fails (e.g., restricted environment or very old
+      // Redis), assume false or handle error as needed.
+      return false;
+    }
+  }
+
   // jsonArrAppend
 
   // jsonArrAppendEnhanced
@@ -120,12 +177,54 @@ mixin JsonCommands {
   ///
   /// [key] The key to retrieve.
   /// [path] The JSON path. Defaults to root (`$`).
-  Future<dynamic> jsonGet({
+  @Deprecated('Will be removed in the future.')
+  Future<dynamic> jsonGetOld({
     required String key,
     String path = r'$',
   }) async {
     // Send command
     final result = await execute(<String>['JSON.GET', key, path]);
+
+    if (result == null) return null;
+
+    // Decode the response string back to a Dart Object (Map, List, etc.)
+    return jsonDecode(result.toString());
+  }
+
+  /// JSON.GET key [path ...]
+  ///
+  /// Return the value at [path] in JSON format.
+  /// The returned JSON string is automatically decoded into a Dart Object.
+  ///
+  /// [key] The key to retrieve.
+  /// [path] The JSON path. Defaults to root (`$`).
+  ///
+  /// Note on Path Behavior:
+  /// - If [path] is `$` (default), the command is sent as `JSON.GET key`.
+  ///   This returns the single raw value (e.g., Map or List).
+  /// - If [path] is specific (e.g., `$.name`), the command is sent as
+  ///     `JSON.GET key $.name`.
+  ///   Standard JSONPath queries usually return a List of matches
+  ///     (e.g., `[value]`).
+  Future<dynamic> jsonGet({
+    required String key,
+    String path = r'$',
+  }) async {
+    final List<String> cmd;
+
+    // [Optimization]
+    // If the path is the root ('$'), we omit it in the command.
+    // 'JSON.GET key' returns the object directly (e.g., {...}).
+    // 'JSON.GET key $' returns a list containing the object (e.g., [{...}]).
+    // To be user-friendly, we prefer the direct object for the root query.
+    if (path == r'$') {
+      cmd = <String>['JSON.GET', key];
+    } else {
+      cmd = <String>['JSON.GET', key, path];
+    }
+
+    // Send command
+    final result = await execute(cmd);
 
     if (result == null) return null;
 
@@ -221,7 +320,8 @@ mixin JsonCommands {
   /// [jsonEncode].
   /// [nx] If true, set the value only if it does not exist.
   /// [xx] If true, set the value only if it already exists.
-  Future<void> jsonSet({
+  @Deprecated('Will be removed in the future.')
+  Future<void> jsonSetOld({
     required String key,
     required String path,
     required dynamic data,
@@ -230,6 +330,62 @@ mixin JsonCommands {
   }) async {
     // Convert data to JSON string
     final jsonData = jsonEncode(data);
+
+    // Construct the command list as List<String> to maintain backward
+    // compatibility
+    final cmd = <String>['JSON.SET', key, path, jsonData];
+
+    if (nx) cmd.add('NX');
+    if (xx) cmd.add('XX');
+
+    await execute(cmd);
+  }
+
+  /// JSON.SET key path value [NX | XX]
+  ///
+  /// Sets the JSON value at [path] in [key].
+  ///
+  /// This method is smart enough to handle both Dart Objects (Map, List)
+  /// and Raw JSON Strings.
+  ///
+  /// If [data] is a String that looks like JSON (e.g., '{"a":1}'),
+  /// it will be automatically parsed and stored as a JSON Object,
+  /// preventing double-encoding issues.
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path (e.g., `r'$'`, `r'$.score'`). Must be a String.
+  /// [data] The data to store. Can be a Map, List, num, bool, String, etc.
+  /// [nx] If true, set the value only if it does not exist.
+  /// [xx] If true, set the value only if it already exists.
+  Future<void> jsonSet({
+    required String key,
+    required String path,
+    required dynamic data,
+    bool nx = false, // Only set if path does not exist
+    bool xx = false, // Only set if path already exists
+  }) async {
+    dynamic payload = data;
+
+    // [Smart Parsing Logic]
+    // If the user provided a String, try to decode it first.
+    // This allows users to pass raw JSON strings like '{"a": 1}'
+    // without double-encoding.
+    if (data is String) {
+      try {
+        final trimmed = data.trim();
+        // Check if it looks like a JSON Object or Array
+        if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+            (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+          payload = jsonDecode(data);
+        }
+      } catch (e) {
+        // If decoding fails, treat it as a regular string value.
+        // e.g., data = "Hello World" -> stored as "Hello World"
+      }
+    }
+
+    // Convert the final payload to a JSON string for the command
+    final jsonData = jsonEncode(payload);
 
     // Construct the command list as List<String> to maintain backward
     // compatibility
