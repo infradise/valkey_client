@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.5.1
+* **JSON Commands**: Introduced Redis JSON and Valkey JSON (aka. valkey-json)
+    * `jsonArrAppend`, `jsonArrIndex`, `jsonArrInsert`, `jsonArrLen`, `jsonArrPop`,`jsonArrTrim`
+    * `jsonArrAppendEnhanced`, `jsonArrIndexEnhanced`, `jsonArrInsertEnhanced`, `jsonArrLenEnhanced`, `jsonArrPopEnhanced`,`jsonArrTrimEnhanced`
+
 ## 2.5.0
 * **JSON Commands**: Introduced Redis JSON and Valkey JSON (aka. valkey-json)
     * `jsonSet`, `jsonDel`, `jsonGet`, `jsonMerge`
