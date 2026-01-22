@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.5.0
+* **JSON Commands**: Introduced Redis JSON and Valkey JSON (aka. valkey-json)
+    * `jsonSet`, `jsonDel`, `jsonGet`, `jsonMerge`
+
 ## 2.4.1
 * **Built-in Logger**
     * **New Feature**: `setEnableValkeyLog()` in `ValkeyLogger`
