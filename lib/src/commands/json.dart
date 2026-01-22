@@ -37,6 +37,50 @@ mixin JsonCommands {
   /// This getter must be implemented by the main client class.
   bool get allowRedisOnlyJsonMerge;
 
+  /// Returns a list of loaded modules and their details.
+  ///
+  /// This method parses the raw response from `MODULE LIST` into a structured
+  /// `List<Map<String, dynamic>>` for easier usage in Dart.
+  ///
+  /// Example return:
+  /// ```dart
+  /// [
+  ///   {'name': 'json', 'ver': '10002', 'path': '/usr/lib/valkey/libjson.so', 'args': []},
+  ///   {'name': 'search', 'ver': '10000', 'path': '/usr/lib/valkey/libsearch.so', 'args': []}
+  ///   {'name': 'ldap', 'ver': '16777471', 'path': '/usr/lib/valkey/libvalkey_ldap.so', 'args': []},
+  ///   {'name': 'bf', 'ver': '10000', 'path': '/usr/lib/valkey/libvalkey_bloom.so', 'args': []}
+  /// ]
+  /// ```
+  Future<List<Map<String, dynamic>>> getModuleList() async {
+    try {
+      final result = await execute(<String>['MODULE', 'LIST']);
+
+      if (result is! List) return [];
+
+      final parsedModules = <Map<String, dynamic>>[];
+
+      for (final rawModule in result) {
+        if (rawModule is List) {
+          final moduleMap = <String, dynamic>{};
+
+          // The raw module info is a flat list like [key, value, key, value...]
+          // Iterate by 2 to construct a Map
+          for (var i = 0; i < rawModule.length; i += 2) {
+            final key = rawModule[i].toString();
+            final value = rawModule[i + 1];
+            moduleMap[key] = value;
+          }
+          parsedModules.add(moduleMap);
+        }
+      }
+
+      return parsedModules;
+    } catch (e) {
+      // Return an empty list if the command fails (e.g., command not supported)
+      return [];
+    }
+  }
+
   // jsonArrAppend
 
   // jsonArrAppendEnhanced
