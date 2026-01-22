@@ -58,13 +58,8 @@ void main() async {
     await client.jsonSet(key: 'json:simple', path: '.', data: '["a","b","c"]');
     final result = await client.jsonGet(key: 'json:simple', path: '.');
 
-    // (!) expect(result, equals('["a","b","c"]'));
-    //
-    // >>> Expected Usage (KEEP your "as-is" test code)
-    expect(jsonEncode(result), equals('["a","b","c"]'));
-    //
-    // >>> Expected Usage (CHANGE like this)
-    expect(result, equals(['a', 'b', 'c']));
+    // (X) expect(result, equals('["a","b","c"]')); // This is String
+    expect(result, equals(['a', 'b', 'c'])); // Expected Usage
   });
 
   test('jsonSet & jsonGet - nested object', () async {
@@ -74,60 +69,35 @@ void main() async {
         data: '{"foo":1,"bar":{"baz":[1,2,3],"qux":"val"}}');
 
     // (!) final result = await client.jsonGet(key: 'json:nested', path: '.');
-    //
-    // >>> Expected Usage (NEED to declare an explicit type)
     final result = await client.jsonGet(key: 'json:nested', path: '.')
-        as Map<String, dynamic>;
+        as Map<String, dynamic>; // Expected Usage
 
-    // (!) expect(result, contains('"foo":1'));
-    //
-    // >>> Expected Usage (KEEP your "as-is" test code)
-    expect(jsonEncode(result), contains('"foo":1'));
-    //
-    // >>> Expected Usage (CHANGE like this)
-    expect(result, containsPair('foo', 1));
-    //
-    // >>> Expected Usage (PINPOINT like this)
-    expect(result['foo'], equals(1));
+    // (X) expect(result, contains('"foo":1')); // This is String
+    expect(result, containsPair('foo', 1)); // Expected Usage
+    expect(result['foo'], equals(1)); // Expected Usage
 
-    // (!) expect(result, contains('"baz":[1,2,3]'));
-    //
-    // >>> Expected Usage (KEEP your "as-is" test code)
-    expect(jsonEncode(result), contains('"baz":[1,2,3]'));
-    //
-    // >>> Expected Usage (CHANGE like this)
-    expect(result['bar'], containsPair('baz', [1, 2, 3]));
-    //
-    // >>> Expected Usage (PINPOINT like this)
+    // (X) expect(result, contains('"baz":[1,2,3]')); // This is String
+    expect(result['bar'], containsPair('baz', [1, 2, 3])); // Expected Usage
     final bar = result['bar'] as Map;
-    expect(bar['baz'], equals([1, 2, 3]));
+    expect(bar['baz'], equals([1, 2, 3])); // Expected Usage
 
-    // >>> Expected Usage
-    expect(bar['qux'], equals('val'));
+    expect(bar['qux'], equals('val')); // Expected Usage
   });
 
   test('jsonSet & jsonGet - empty object', () async {
     await client.jsonSet(key: 'json:emptyobj', path: '.', data: '{}');
     final result = await client.jsonGet(key: 'json:emptyobj', path: '.');
-    // (!) expect(result, equals('{}'));
-    //
-    // >>> Expected Usage (KEEP your "as-is" test code)
-    expect(jsonEncode(result), equals('{}'));
-    //
-    // >>> Expected Usage (CHANGE like this)
-    expect(result, equals({}));
+
+    // (X) expect(result, equals('{}')); // This is String
+    expect(result, equals({})); // Expected Usage
   });
 
   test('jsonSet & jsonGet - empty array', () async {
     await client.jsonSet(key: 'json:emptyarr', path: '.', data: '[]');
     final result = await client.jsonGet(key: 'json:emptyarr', path: '.');
-    // (!) expect(result, equals('[]'));
-    //
-    // >>> Expected Usage (KEEP your "as-is" test code)
-    expect(jsonEncode(result), equals('[]'));
-    //
-    // >>> Expected Usage (CHANGE like this)
-    expect(result, equals([]));
+
+    // (X) expect(result, equals('[]')); // This is String
+    expect(result, equals([])); // Expected Usage
   });
 
   // test('jsonArrAppend - normal array', () async {
@@ -316,14 +286,29 @@ void main() async {
   //   expect(result, equals('""'));
   // });
 
-  // test('jsonDel - normal', () async {
-  //   await client.jsonSet(key: 'json:del', path: '.', value: '{"a":1,"b":2}');
-  //   final deleted = await client.jsonDel(key: 'json:del', path: '.a');
-  //   expect(deleted, equals(1));
-  //   final result = await client.jsonGet(key: 'json:del', path: '.');
-  //   expect(result, contains('"b":2'));
-  //   expect(result, isNot(contains('"a":1')));
-  // });
+  test('jsonDel - normal', () async {
+    await client.jsonSet(key: 'json:del', path: '.', data: '{"a":1,"b":2}');
+    final deleted = await client.jsonDel(key: 'json:del', path: '.a');
+    expect(deleted, equals(1));
+    final result = await client.jsonGet(key: 'json:del', path: '.');
+
+    // (!) expect(result, contains('"b":2'));
+    //
+    // >>> Expected Usage (KEEP your "as-is" test code)
+    expect(jsonEncode(result), contains('"b":2'));
+    //
+    // >>> Expected Usage (CHANGE like this)
+    expect(result, containsPair('b', 2));
+
+    // (!) expect(result, isNot(contains('"a":1')));
+    //
+    // >>> Expected Usage (KEEP your "as-is" test code)
+    expect(jsonEncode(result), isNot(contains('"a":1')));
+    //
+    // >>> Expected Usage (CHANGE like this)
+    // expect(jsonEncode(result), containsPair('a', 1));
+    // expect(jsonEncode(result), isNot(containsPair('a', 1)));
+  });
 
   // test('jsonDel - non-existent path', () async {
   //   await client.jsonSet(key: 'json:del2', path: '.', value: '{"a":1}');
