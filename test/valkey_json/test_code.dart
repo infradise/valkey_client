@@ -297,23 +297,29 @@ void main() async {
     expect(result, isNot(containsPair('a', 1))); // Expected Usage
   });
 
-  // test('jsonDel - non-existent path', () async {
-  //   await client.jsonSet(key: 'json:del2', path: '.', value: '{"a":1}');
-  //   final deletedCount = await client.jsonDel(key: 'json:del2', path: '.b');
-  //   expect(deletedCount, equals(0));
-  // });
+  test('jsonDel - non-existent path', () async {
+    await client.jsonSet(key: 'json:del2', path: '.', data: '{"a":1}');
+    final deletedCount = await client.jsonDel(key: 'json:del2', path: '.b');
+    expect(deletedCount, equals(0));
+  });
 
-  // test('jsonSet - NX/XX options', () async {
-  //   await client.jsonSet(key: 'json:nx', path: '.', value: '{"a":1}');
-  //   // Should not overwrite with NX
-  //   await client.jsonSet(key: 'json:nx', path: '.', value: '{"a":2}', nx: true);
-  //   final result = await client.jsonGet(key: 'json:nx', path: '.');
-  //   expect(result, equals('{"a":1}'));
-  //   // Should overwrite with XX
-  //   await client.jsonSet(key: 'json:nx', path: '.', value: '{"a":3}', xx: true);
-  //   final result2 = await client.jsonGet(key: 'json:nx', path: '.');
-  //   expect(result2, equals('{"a":3}'));
-  // });
+  test('jsonSet - NX/XX options', () async {
+    await client.jsonSet(key: 'json:nx', path: '.', data: '{"a":1}');
+
+    // Should not overwrite with NX
+    await client.jsonSet(key: 'json:nx', path: '.', data: '{"a":2}', nx: true);
+    final result = await client.jsonGet(key: 'json:nx', path: '.');
+    // (X) expect(result, equals('{"a":1}')); // This is String
+    expect(result, equals({'a': 1})); // Expected Usage
+    expect(result, containsPair('a', 1)); // Expected Usage
+
+    // Should overwrite with XX
+    await client.jsonSet(key: 'json:nx', path: '.', data: '{"a":3}', xx: true);
+    final result2 = await client.jsonGet(key: 'json:nx', path: '.');
+    // (X) expect(result2, equals('{"a":3}')); // This is String
+    expect(result2, equals({'a':3})); // Expected Usage
+    expect(result2, containsPair('a', 3)); // Expected Usage
+  });
 
   // test('jsonMget - multiple keys', () async {
   //   await client.jsonSet(key: 'json:mget1', path: '.', value: '{"a":1}');
