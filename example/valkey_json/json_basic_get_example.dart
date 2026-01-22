@@ -46,12 +46,13 @@ void main() async {
 
     // Root($)
     await client.jsonSet(key: 'user:100', path: r'$', data: validUserMap);
-    final expectedName = await client.jsonGet('user:100', r'$.name');
+    final expectedName = await client.jsonGet(key: 'user:100', path: r'$.name');
     logger.info('User Name (expected): $expectedName');
     // Expected output: [Nana] / Actual output: [Nana]
 
     await client.jsonSet(key: 'user:200', path: r'$', data: invalidUserMap);
-    final unexpectedName = await client.jsonGet('user:200', r'$.name');
+    final unexpectedName =
+        await client.jsonGet(key: 'user:200', path: r'$.name');
     logger.info('User Name (not shown): $unexpectedName');
     // Expected output: [Alice] / Actual output: []
   } on ValkeyConnectionException catch (e) {

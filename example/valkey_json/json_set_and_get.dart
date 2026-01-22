@@ -65,11 +65,13 @@ Future<void> runJsonObjectMapExample(ValkeyClient client) async {
   await client.jsonSet(key: 'user:100', path: r'$', data: userMap);
   logger.info('✅ Saved User Data');
 
-  final result = await client.jsonGet('user:100');
+  final result = await client.jsonGet(key: 'user:100'
+      // path is optional (default: '$')
+      );
   logger.info('User Result: $result');
   // {name: Alice, age: 30, isStudent: false}
 
-  final name = await client.jsonGet('user:100', r'$.name');
+  final name = await client.jsonGet(key: 'user:100', path: r'$.name');
   logger.info('User Name: $name'); // [Alice]
 }
 
@@ -85,10 +87,10 @@ Future<void> runJsonArrayListExample(ValkeyClient client) async {
   await client.jsonSet(key: 'fruits', path: r'$', data: fruits);
   logger.info('✅ Saved Fruits');
 
-  final fruitResult = await client.jsonGet('fruits');
+  final fruitResult = await client.jsonGet(key: 'fruits');
   logger.info('Fruit Result: $fruitResult'); // [apple, banana, cherry]
 
-  final firstFruit = await client.jsonGet('fruits', r'$[0]');
+  final firstFruit = await client.jsonGet(key: 'fruits', path: r'$[0]');
   logger.info('First Fruit: $firstFruit'); // [apple]
 }
 
@@ -120,13 +122,14 @@ Future<void> runNestedJsonObjectExample(ValkeyClient client) async {
 
   // 2. Retrieve data from a nested field (City)
   // Path: $.address.city
-  final city = await client.jsonGet('user:profile:1001', r'$.address.city');
+  final city =
+      await client.jsonGet(key: 'user:profile:1001', path: r'$.address.city');
   logger.info('City: $city'); // ["Miami Beach"]
 
   // 3. Retrieve data from a deeply nested field (Street Name)
   // Path: $.address.details.street
-  final street =
-      await client.jsonGet('user:profile:1001', r'$.address.details.street');
+  final street = await client.jsonGet(
+      key: 'user:profile:1001', path: r'$.address.details.street');
   logger.info('Street: $street'); // ["1020 Ocean Drive"]
 
   // 4. Update a specific nested field only (Update Email)
@@ -136,7 +139,7 @@ Future<void> runNestedJsonObjectExample(ValkeyClient client) async {
       path: r'$.contact.email',
       data: 'support@tech-example.com');
   final newEmail =
-      await client.jsonGet('user:profile:1001', r'$.contact.email');
+      await client.jsonGet(key: 'user:profile:1001', path: r'$.contact.email');
   logger.info('Updated Email: $newEmail'); // ["support@tech-example.com"]
 }
 
@@ -167,26 +170,26 @@ Future<void> runComplexJsonExample(ValkeyClient client) async {
   logger.info('✅ Saved Cluster Configuration');
 
   // 2. Retrieve a value inside a nested object (Deployment Region)
-  final region =
-      await client.jsonGet('config:svc_auth', r'$.deployment.region');
+  final region = await client.jsonGet(
+      key: 'config:svc_auth', path: r'$.deployment.region');
   logger.info('Region: $region'); // ["us-east-1"]
 
   // 3. Retrieve a simple value from a list (First feature flag)
   // Path: $.feature_flags[0] -> Access the element at index 0
   final firstFlag =
-      await client.jsonGet('config:svc_auth', r'$.feature_flags[0]');
+      await client.jsonGet(key: 'config:svc_auth', path: r'$.feature_flags[0]');
   logger.info('First Feature Flag: $firstFlag'); // ["mfa_enabled"]
 
   // 4. Retrieve a field value from an object inside a list (Status of
   //    the first node)
   // Path: $.active_nodes[0].status
-  final firstNodeStatus =
-      await client.jsonGet('config:svc_auth', r'$.active_nodes[0].status');
+  final firstNodeStatus = await client.jsonGet(
+      key: 'config:svc_auth', path: r'$.active_nodes[0].status');
   logger.info('First Node Status: $firstNodeStatus'); // ["healthy"]
 
   // 5. (Advanced) Extract uptime from all nodes
   // Path: $.active_nodes[*].uptime -> Select 'uptime' from ALL nodes
-  final allUptimes =
-      await client.jsonGet('config:svc_auth', r'$.active_nodes[*].uptime');
+  final allUptimes = await client.jsonGet(
+      key: 'config:svc_auth', path: r'$.active_nodes[*].uptime');
   logger.info('All Node Uptimes: $allUptimes'); // [99.9, 95.5, 99.8]
 }

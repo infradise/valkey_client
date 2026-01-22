@@ -16,7 +16,7 @@
 
 import 'dart:convert';
 
-/// Mixin to support Valkey-JSON commands.
+/// Mixin to support Redis-JSON and Valkey-JSON commands.
 /// This mixin ensures compatibility with the existing `execute` method
 /// by converting all parameters to Strings before sending.
 mixin JsonCommands {
@@ -73,7 +73,13 @@ mixin JsonCommands {
   ///
   /// Return the value at [path] in JSON format.
   /// The returned JSON string is automatically decoded into a Dart Object.
-  Future<dynamic> jsonGet(String key, [String path = r'$']) async {
+  ///
+  /// [key] The key to retrieve.
+  /// [path] The JSON path. Defaults to root (`$`).
+  Future<dynamic> jsonGet({
+    required String key,
+    String path = r'$',
+  }) async {
     // Send command
     final result = await execute(<String>['JSON.GET', key, path]);
 
@@ -86,8 +92,15 @@ mixin JsonCommands {
   /// JSON.DEL key [path]
   ///
   /// Deletes a value.
-  Future<int?> jsonDel(String key, [String path = r'$']) async {
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path to delete. Defaults to root (`$`).
+  Future<int?> jsonDel({
+    required String key,
+    String path = r'$',
+  }) async {
     final result = await execute(<String>['JSON.DEL', key, path]);
+
     // Valkey returns the integer number of paths deleted (0 or 1 usually)
     if (result is int) return result;
     return int.tryParse(result.toString());
@@ -99,15 +112,28 @@ mixin JsonCommands {
   ///
   /// Merges a given JSON value into the existing JSON value at path.
   ///
-  /// Note: This command is available ONLY in Redis (due to RSAL license).
-  /// Attempting to use this on a Valkey server will throw an error
-  /// unless [allowRedisOnlyJsonMerge] is explicitly set to true (though Valkey
-  /// server will still reject it).
+  /// [key] The key to modify.
+  /// [path] The JSON path.
+  /// [data] The data to merge.
   ///
-  /// Note: JSON.MERGE is implemented for Redis compatibility only.
+  /// Note1: This command is available ONLY in Redis (due to RSAL license).
+  /// Attempting to use this on a Valkey server will throw an error
+  /// unless [allowRedisOnlyJsonMerge] is explicitly set to true
+  /// (though Valkey server will still reject it).
+  ///
+  /// Note2: JSON.MERGE is implemented for Redis compatibility only.
   /// It should not be called when connected to a Valkey server.
-  Future<void> jsonMerge(String key, String path, dynamic data) async {
-    // Check if the server is Redis
+  Future<void> jsonMerge({
+    required String key,
+    required String path,
+    required dynamic data,
+  }) async {
+    /// Check if the server is Redis
+    ///
+    /// Alternatively, isValkeyServer() can be used for DX improvements.
+    /// ```dart
+    /// final isValkey = await isValkeyServer();
+    /// ```
     final isRedis = await isRedisServer();
 
     // If it's not Redis (i.e., Valkey) and the override flag is off,
@@ -153,11 +179,10 @@ mixin JsonCommands {
   /// [xx] If true, set the value only if it already exists.
   Future<void> jsonSet({
     required String key,
-    required String
-        path, // Changed from dynamic to String to prevent type errors
-    dynamic data,
-    bool? nx,
-    bool? xx,
+    required String path,
+    required dynamic data,
+    bool nx = false, // Only set if path does not exist
+    bool xx = false, // Only set if path already exists
   }) async {
     // Convert data to JSON string
     final jsonData = jsonEncode(data);
@@ -166,8 +191,8 @@ mixin JsonCommands {
     // compatibility
     final cmd = <String>['JSON.SET', key, path, jsonData];
 
-    if (nx ?? false) cmd.add('NX');
-    if (xx ?? false) cmd.add('XX');
+    if (nx) cmd.add('NX');
+    if (xx) cmd.add('XX');
 
     await execute(cmd);
   }
