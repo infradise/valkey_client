@@ -2,31 +2,48 @@
 
 ## example/valkey_json
 
+### get_module_list.dart
+```sh
+📦 Loaded Modules:
++--------+----------+------------------------------------+--------+
+| NAME   | VER      | PATH                               | ARGS   |
++--------+----------+------------------------------------+--------+
+| json   | 10002    | /usr/lib/valkey/libjson.so         | -      |
+| search | 10000    | /usr/lib/valkey/libsearch.so       | -      |
+| ldap   | 16777471 | /usr/lib/valkey/libvalkey_ldap.so  | -      |
+| bf     | 10000    | /usr/lib/valkey/libvalkey_bloom.so | -      |
++--------+----------+------------------------------------+--------+
+
+✅ JSON Module is ready!
+```
+
 ### json_basic_get_example.dart
 ```sh
-[2026-01-22T04:11:36.254971] JSON Basic Get Example - INFO: User Name (expected): [Nana]
-[2026-01-22T04:11:36.257661] JSON Basic Get Example - INFO: User Name (not shown): []
-[2026-01-22T04:11:36.257677] JSON Basic Get Example - INFO: Closing all cluster connections...
+[2026-01-23T01:36:23.137143] JSON Basic Get Example - INFO: ✅ JSON module detected. Ready to go!
+[2026-01-23T01:36:23.143001] JSON Basic Get Example - INFO: User Name (expected): [Nana]
+[2026-01-23T01:36:23.144700] JSON Basic Get Example - INFO: User Name (not shown): []
+[2026-01-23T01:36:23.144722] JSON Basic Get Example - INFO: Closing all cluster connections...
 ```
 
 ### json_set_and_get.dart
 ```sh
-[2026-01-22T01:12:23.109090] JSON Set and Get Example - INFO: ✅ Saved User Data
-[2026-01-22T01:12:23.113201] JSON Set and Get Example - INFO: User Result: [{name: Alice, age: 30, isStudent: false}]
-[2026-01-22T01:12:23.114280] JSON Set and Get Example - INFO: User Name: [Alice]
-[2026-01-22T01:12:23.115016] JSON Set and Get Example - INFO: ✅ Saved Fruits
-[2026-01-22T01:12:23.115510] JSON Set and Get Example - INFO: Fruit Result: [[apple, banana, cherry]]
-[2026-01-22T01:12:23.115983] JSON Set and Get Example - INFO: First Fruit: [apple]
-[2026-01-22T01:12:23.116707] JSON Set and Get Example - INFO: ✅ Saved User Profile (Miami Beach Vibe)
-[2026-01-22T01:12:23.117267] JSON Set and Get Example - INFO: City: [Miami Beach]
-[2026-01-22T01:12:23.117740] JSON Set and Get Example - INFO: Street: [1020 Ocean Drive]
-[2026-01-22T01:12:23.118883] JSON Set and Get Example - INFO: Updated Email: [support@tech-example.com]
-[2026-01-22T01:12:23.119898] JSON Set and Get Example - INFO: ✅ Saved Cluster Configuration
-[2026-01-22T01:12:23.120372] JSON Set and Get Example - INFO: Region: [us-east-1]
-[2026-01-22T01:12:23.120777] JSON Set and Get Example - INFO: First Feature Flag: [mfa_enabled]
-[2026-01-22T01:12:23.121155] JSON Set and Get Example - INFO: First Node Status: [healthy]
-[2026-01-22T01:12:23.121759] JSON Set and Get Example - INFO: All Node Uptimes: [99.999, 95.995, 99.998]
-[2026-01-22T01:12:23.121775] JSON Set and Get Example - INFO: Closing all cluster connections...
+[2026-01-23T01:44:22.536583] JSON Set and Get Example - INFO: ✅ JSON module detected. Ready to go!
+[2026-01-23T01:44:22.539614] JSON Set and Get Example - INFO: ✅ Saved User Data
+[2026-01-23T01:44:22.542779] JSON Set and Get Example - INFO: User Result: [{name: Alice, age: 30, isStudent: false}]
+[2026-01-23T01:44:22.543438] JSON Set and Get Example - INFO: User Name: [Alice]
+[2026-01-23T01:44:22.544036] JSON Set and Get Example - INFO: ✅ Saved Fruits
+[2026-01-23T01:44:22.544446] JSON Set and Get Example - INFO: Fruit Result: [[apple, banana, cherry]]
+[2026-01-23T01:44:22.545097] JSON Set and Get Example - INFO: First Fruit: [apple]
+[2026-01-23T01:44:22.545964] JSON Set and Get Example - INFO: ✅ Saved User Profile (Miami Beach Vibe)
+[2026-01-23T01:44:22.546377] JSON Set and Get Example - INFO: City: [Miami Beach]
+[2026-01-23T01:44:22.546841] JSON Set and Get Example - INFO: Street: [1020 Ocean Drive]
+[2026-01-23T01:44:22.547618] JSON Set and Get Example - INFO: Updated Email: [support@tech-example.com]
+[2026-01-23T01:44:22.548737] JSON Set and Get Example - INFO: ✅ Saved Cluster Configuration
+[2026-01-23T01:44:22.549821] JSON Set and Get Example - INFO: Region: [us-east-1]
+[2026-01-23T01:44:22.550421] JSON Set and Get Example - INFO: First Feature Flag: [mfa_enabled]
+[2026-01-23T01:44:22.550982] JSON Set and Get Example - INFO: First Node Status: [healthy]
+[2026-01-23T01:44:22.551705] JSON Set and Get Example - INFO: All Node Uptimes: [99.999, 95.995, 99.998]
+[2026-01-23T01:44:22.551723] JSON Set and Get Example - INFO: Closing all cluster connections...
 ```
 
 ## example
