@@ -110,7 +110,8 @@ void main() async {
   // test('jsonArrAppend - not an array', () async {
   //   await client.jsonSet(key: 'json:notarray', path: '.', value: '{"a":1}');
   //   try {
-  //     await client.jsonArrAppend(key: 'json:notarray', path: '.', value: '"b"');
+  //     await client.jsonArrAppend(
+  //         key: 'json:notarray', path: '.', value: '"b"');
   //     fail('Should throw an error');
   //   } catch (e) {
   //     expect(e, isA<ValkeyException>());
@@ -127,7 +128,8 @@ void main() async {
   // });
 
   // test('jsonArrIndex - value exists', () async {
-  //   await client.jsonSet(key: 'json:arridx', path: '.', value: '["a","b","c"]');
+  //   await client.jsonSet(
+  //       key: 'json:arridx', path: '.', value: '["a","b","c"]');
   //   final idx = await client.jsonArrIndex(
   //       key: 'json:arridx', path: '.', value: '"b"', start: null, end: null);
   //   expect(idx, equals(1));
@@ -136,7 +138,8 @@ void main() async {
   // test('jsonArrIndex - value not exists', () async {
   //   await client.jsonSet(key: 'json:arridx2', path: '.', value: '["a","b"]');
   //   final idx = await client.jsonArrIndex(
-  //       key: 'json:arridx2', path: '.', value: '"z"', start: null, end: null);
+  //       key: 'json:arridx2', path: '.', value: '"z"',
+  //       start: null, end: null);
   //   expect(idx, equals(-1));
   // });
 
@@ -158,7 +161,8 @@ void main() async {
   // });
 
   // test('jsonArrPop - normal', () async {
-  //   await client.jsonSet(key: 'json:arrpop', path: '.', value: '["a","b","c"]');
+  //   await client.jsonSet(
+  //       key: 'json:arrpop', path: '.', value: '["a","b","c"]');
   //   final popped =
   //       await client.jsonArrPop(key: 'json:arrpop', path: '.', index: 1);
   //   expect(popped, equals('"b"'));
@@ -251,7 +255,8 @@ void main() async {
   // });
 
   // test('jsonClear - array', () async {
-  //   await client.jsonSet(key: 'json:cleararr', path: '.', value: '["a","b"]');
+  //   await client.jsonSet(
+  //       key: 'json:cleararr', path: '.', value: '["a","b"]');
   //   final cleared = await client.jsonClear(key: 'json:cleararr', path: '.');
   //   expect(cleared, greaterThanOrEqualTo(1));
   //   final result = await client.jsonGet(key: 'json:cleararr', path: '.');
@@ -259,7 +264,8 @@ void main() async {
   // });
 
   // test(
-  //     'jsonClear - json string (not container) and returns json empty string (It is a bug)',
+  //     'jsonClear - json string (not container) and '
+  //          'returns json empty string (It is a bug)',
   //     () async {
   //   await client.jsonSet(
   //       key: 'json:clearnotcontainer', path: '.', value: '"foo"');
@@ -272,7 +278,8 @@ void main() async {
   // });
 
   // test(
-  //     'jsonClear - json empty string (not container) and returns empty json string (It is a bug)',
+  //     'jsonClear - json empty string (not container) and '
+  //                'returns empty json string (It is a bug)',
   //     () async {
   //   await client.jsonSet(
   //       key: 'json:clearnotcontainer', path: '.', value: '"foo"');
@@ -325,7 +332,8 @@ void main() async {
   //   await client.jsonSet(key: 'json:mget1', path: '.', value: '{"a":1}');
   //   await client.jsonSet(key: 'json:mget2', path: '.', value: '{"a":2}');
   //   final vals =
-  //       await client.jsonMget(keys: ['json:mget1', 'json:mget2'], path: '.a');
+  //       await client.jsonMget(
+  //           keys: ['json:mget1', 'json:mget2'], path: '.a');
   //   expect(vals, isA<List>());
   //   expect(vals.length, equals(2));
   //   expect(vals[0], equals('1'));
@@ -335,7 +343,8 @@ void main() async {
   // test('jsonMget - some keys missing', () async {
   //   await client.jsonSet(key: 'json:mget3', path: '.', value: '{"a":1}');
   //   final vals =
-  //       await client.jsonMget(keys: ['json:mget3', 'json:missing'], path: '.a');
+  //       await client.jsonMget(
+  //           keys: ['json:mget3', 'json:missing'], path: '.a');
   //   expect(vals.length, equals(2));
   //   expect(vals[0], equals('1'));
   //   expect(vals[1], isNull);
@@ -381,12 +390,14 @@ void main() async {
   // test('jsonNumincrby - normal', () async {
   //   await client.jsonSet(key: 'json:numincr', path: '.', value: '{"n":10}');
   //   final newVal =
-  //       await client.jsonNumincrby(key: 'json:numincr', path: '.n', value: 5);
+  //       await client.jsonNumincrby(
+  //           key: 'json:numincr', path: '.n', value: 5);
   //   expect(newVal, contains('15'));
   // });
 
   // test('jsonNumincrby - not a number', () async {
-  //   await client.jsonSet(key: 'json:numincr2', path: '.', value: '{"n":"foo"}');
+  //   await client.jsonSet(
+  //       key: 'json:numincr2', path: '.', value: '{"n":"foo"}');
   //   try {
   //     await client.jsonNumincrby(key: 'json:numincr2', path: '.n', value: 1);
   //     fail('Should throw');
@@ -398,7 +409,8 @@ void main() async {
   // test('jsonNummultby - normal', () async {
   //   await client.jsonSet(key: 'json:nummult', path: '.', value: '{"n":2}');
   //   final newVal =
-  //       await client.jsonNummultby(key: 'json:nummult', path: '.n', value: 3);
+  //       await client.jsonNummultby(
+  //           key: 'json:nummult', path: '.n', value: 3);
   //   expect(newVal, contains('6'));
   // });
 
@@ -410,7 +422,8 @@ void main() async {
   // });
 
   // test('jsonObjkeys - not an object', () async {
-  //   await client.jsonSet(key: 'json:objkeys2', path: '.', value: '["a","b"]');
+  //   await client.jsonSet(
+  //       key: 'json:objkeys2', path: '.', value: '["a","b"]');
   //   final keys = await client.jsonObjkeys(key: 'json:objkeys2', path: '.a');
   //   expect(keys, isNull);
   // });
@@ -418,7 +431,8 @@ void main() async {
   // test('jsonStrappend & jsonStrlen', () async {
   //   await client.jsonSet(key: 'json:str', path: '.', value: '"foo"');
   //   final newLen =
-  //       await client.jsonStrappend(key: 'json:str', path: '.', value: '"bar"');
+  //       await client.jsonStrappend(
+  //           key: 'json:str', path: '.', value: '"bar"');
   //   expect(newLen, greaterThan(3));
   //   final strlen = await client.jsonStrlen(key: 'json:str', path: '.');
   //   expect(strlen, equals(newLen));
@@ -427,7 +441,8 @@ void main() async {
   // test('jsonStrappend - not a string', () async {
   //   await client.jsonSet(key: 'json:str2', path: '.', value: '[1,2,3]');
   //   try {
-  //     await client.jsonStrappend(key: 'json:str2', path: '.', value: '"baz"');
+  //     await client.jsonStrappend(
+  //         key: 'json:str2', path: '.', value: '"baz"');
   //     fail('Should throw');
   //   } catch (e) {
   //     expect(e, isA<ValkeyException>());
