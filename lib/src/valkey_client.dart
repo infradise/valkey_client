@@ -27,10 +27,12 @@ import '../valkey_client_base.dart';
 import '../valkey_pool.dart' show ValkeyPool;
 // Import the top-level function from the parser file
 import 'cluster_slots_parser.dart' show parseClusterSlotsResponse;
-// Commands
-import 'commands/json.dart'; // Redis JSON and Valkey JSON
+// Redis/Valkey Commands
+import 'commands/generic.dart' show GenericCommands;
+import 'commands/json.dart' show JsonCommands; // Redis JSON and Valkey JSON
 // Import the new exceptions file
 import 'exceptions.dart';
+// Built-in Logger
 import 'logging.dart';
 
 // Re-export ValkeyMessage from the main library file
@@ -116,7 +118,9 @@ class _IncompleteDataException implements Exception {
 }
 
 /// The main client implementation for communicating with a Valkey server.
-class ValkeyClient with JsonCommands implements ValkeyClientBase {
+class ValkeyClient
+    with JsonCommands, GenericCommands
+    implements ValkeyClientBase {
   static final _log = ValkeyLogger('ValkeyClient');
 
   /// JSON.MERGE
