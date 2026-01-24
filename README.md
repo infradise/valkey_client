@@ -31,8 +31,9 @@ All features are supported in the latest release.
 ### New in v2.0.0 and later
   * **Generic Commands (v2.5.1+):** Added `scan` with `--match`
   * **JSON Commands (v2.5.0+):** Introduced RedisJSON; ValkeyJSON - JSON-based document formats for storing structured payloads.
-    * v2.5.0: `jsonGet`, `jsonSet`, `jsonDel`, `jsonMerge`
+    * v2.5.2: `jsonClear`, `jsonForget`, `jsonMget`, `jsonMset`, `jsonNumincrby`,`jsonNummultby`
     * v2.5.1: `jsonArrAppend`, `jsonArrIndex`, `jsonArrInsert`, `jsonArrLen`, `jsonArrPop`,`jsonArrTrim`
+    * v2.5.0: `jsonGet`, `jsonSet`, `jsonDel`, `jsonMerge`
   * **Redis/Valkey Module Detector (v2.5.0+):** Introduced to get Redis and Valkey module list and information. (e.g., `json`, `search`, `ldap`, `bf`, etc.)
   * **JSON Module Checker (v2.5.0+):** Introduced to check JSON module names in advance before running logic.
   * **Scalable Replica Reads (v2.2.0+):** Boost read performance by offloading read-only commands (e.g., `GET`, `EXISTS`) to replica nodes. Supports `ReadPreference` settings (`master`, `preferReplica`, `replicaOnly`) to control traffic flow.
