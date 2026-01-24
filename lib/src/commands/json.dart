@@ -138,37 +138,221 @@ mixin JsonCommands {
     }
   }
 
-  // jsonArrAppend
-
+  // ===========================================================================
+  // JSON Commands
+  // ===========================================================================
+  // jsonArrAppend              v2.5.1
   // jsonArrAppendEnhanced
-
-  // jsonArrIndex
-
+  // jsonArrIndex               v2.5.1
   // jsonArrIndexEnhanced
-
-  // jsonArrInsert
-
+  // jsonArrInsert              v2.5.1
   // jsonArrInsertEnhanced
-
-  // jsonArrLen
-
+  // jsonArrLen                 v2.5.1
   // jsonArrLenEnhanced
-
-  // jsonArrPop
-
+  // jsonArrPop                 v2.5.1
   // jsonArrPopEnhanced
-
-  // jsonArrTrim
-
+  // jsonArrTrim                v2.5.1
   // jsonArrTrimEnhanced
-
   // jsonClear
-
-  // jsonDel
-
+  // jsonDel                    v2.5.0
   // jsonForget
+  // jsonGet                    v2.5.0
+  // jsonMerge                  v2.5.0
+  // jsonMget
+  // jsonMset
+  // jsonNumincrby
+  // jsonNummultby
+  // jsonObjkeys
+  // jsonObjkeysEnhanced
+  // jsonSet                    v2.5.0
+  // jsonStrappend
+  // jsonStrappendEnhanced
+  // jsonStrlen
+  // jsonStrlenEnhanced
 
-  // jsonGet
+  // ===========================================================================
+  // JSON Array Commands
+  // ===========================================================================
+
+  /// Helper to unwrap the result if it is a single-element list.
+  /// RedisJSON often returns [result] for path commands.
+  dynamic _unwrapOne(dynamic result) {
+    if (result is List && result.length == 1) {
+      return result.first;
+    }
+    return result;
+  }
+
+  /// JSON.ARRAPPEND key [path] value [value ...]
+  ///
+  /// Appends the [values] to the JSON array at [path].
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path. Defaults to root (`$`).
+  /// [values] A list of values to append. Each item in the list will be
+  /// encoded individually.
+  ///
+  /// Returns the integer length of the new array, or a list of lengths if
+  /// path matches multiple arrays.
+  Future<dynamic> jsonArrAppend({
+    required String key,
+    String path = r'$',
+    required List<dynamic> values,
+  }) async {
+    final cmd = <String>['JSON.ARRAPPEND', key, path];
+
+    // Encode each value in the list to a JSON string
+    for (final val in values) {
+      cmd.add(jsonEncode(val));
+    }
+
+    final result = await execute(cmd);
+    return _unwrapOne(result); // Unwrap [int] -> int
+  }
+
+  /// JSON.ARRINDEX key path value [start [stop]]
+  ///
+  /// Searches for the first occurrence of [value] in the array.
+  ///
+  /// [key] The key to search.
+  /// [path] The JSON path.
+  /// [value] The value to search for. It will be encoded to JSON before
+  ///         searching.
+  /// [start] The start index (inclusive, optional).
+  /// [stop] The stop index (exclusive, optional).
+  ///
+  /// Returns the integer index of the value, or -1 if not found.
+  Future<dynamic> jsonArrIndex({
+    required String key,
+    required String path,
+    required dynamic value,
+    int? start,
+    int? stop,
+  }) async {
+    final encodedValue = jsonEncode(value);
+    final cmd = <String>['JSON.ARRINDEX', key, path, encodedValue];
+
+    if (start != null) {
+      cmd.add(start.toString());
+      if (stop != null) {
+        cmd.add(stop.toString());
+      }
+    }
+
+    final result = await execute(cmd);
+    return _unwrapOne(result); // Unwrap [int] -> int
+  }
+
+  /// JSON.ARRINSERT key path index value [value ...]
+  ///
+  /// Inserts the [values] into the array at [index].
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path.
+  /// [index] The index to insert at.
+  /// [values] A list of values to insert.
+  ///
+  /// Returns the integer length of the new array.
+  Future<dynamic> jsonArrInsert({
+    required String key,
+    required String path,
+    required int index,
+    required List<dynamic> values,
+  }) async {
+    final cmd = <String>['JSON.ARRINSERT', key, path, index.toString()];
+
+    for (final val in values) {
+      cmd.add(jsonEncode(val));
+    }
+
+    final result = await execute(cmd);
+    return _unwrapOne(result); // Unwrap [int] -> int
+  }
+
+  /// JSON.ARRLEN key [path]
+  ///
+  /// Returns the length of the JSON array at [path].
+  ///
+  /// [key] The key to check.
+  /// [path] The JSON path. Defaults to root (`$`).
+  ///
+  /// Returns an integer (if path targets one array) or a list of integers.
+  Future<dynamic> jsonArrLen({
+    required String key,
+    String path = r'$',
+  }) async {
+    final result = await execute(<String>['JSON.ARRLEN', key, path]);
+    return _unwrapOne(result); // Unwrap [int] -> int
+  }
+
+  /// JSON.ARRPOP key [path [index]]
+  ///
+  /// Removes and returns the element at [index] in the array.
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path. Defaults to root (`$`).
+  /// [index] The index to pop. Defaults to -1 (last element).
+  ///
+  /// Returns the popped element (automatically decoded to Dart Object).
+  Future<dynamic> jsonArrPop({
+    required String key,
+    String path = r'$',
+    int? index,
+  }) async {
+    final cmd = <String>['JSON.ARRPOP', key, path];
+
+    if (index != null) {
+      cmd.add(index.toString());
+    }
+
+    // 1. Execute command
+    // Result is usually List<String> like ['"value"'] or ['123']
+    var result = await execute(cmd);
+
+    // Use smart decoding (similar to jsonGet)
+    if (result == null) return null;
+
+    // 2. Unwrap if it's a single-element list
+    result = _unwrapOne(result);
+
+    // Redis returns the popped value as a JSON string.
+    // If it returns a List (path matched multiple arrays), we might need to
+    // handle it,
+    // but usually ARRPOP targets a specific path.
+    // 3. Decode JSON string to Dart Object
+    if (result is String) {
+      try {
+        return jsonDecode(result);
+      } catch (e) {
+        return result; // Fallback
+      }
+    }
+    // If multiple paths matched, result might still be a List of strings.
+    // In that case, we might want to map decode, but usually POP is specific.
+    return result;
+  }
+
+  /// JSON.ARRTRIM key path start stop
+  ///
+  /// Trims the array so that it contains only the specified inclusive range of
+  /// elements.
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path.
+  /// [start] The start index (inclusive).
+  /// [stop] The stop index (inclusive).
+  ///
+  /// Returns the integer length of the new array.
+  Future<dynamic> jsonArrTrim({
+    required String key,
+    required String path,
+    required int start,
+    required int stop,
+  }) async {
+    final result = await execute(
+        <String>['JSON.ARRTRIM', key, path, start.toString(), stop.toString()]);
+    return _unwrapOne(result); // Unwrap [int] -> int
+  }
 
   /// JSON.GET key [path ...]
   ///
@@ -249,8 +433,6 @@ mixin JsonCommands {
     return int.tryParse(result.toString());
   }
 
-  // jsonMerge
-
   /// JSON.MERGE key path value
   ///
   /// Merges a given JSON value into the existing JSON value at path.
@@ -295,20 +477,6 @@ mixin JsonCommands {
     final jsonData = jsonEncode(data);
     await execute(<String>['JSON.MERGE', key, path, jsonData]);
   }
-
-  // jsonMget
-
-  // jsonMset
-
-  // jsonNumincrby
-
-  // jsonNummultby
-
-  // jsonObjkeys
-
-  // jsonObjkeysEnhanced
-
-  // jsonSet
 
   /// JSON.SET key path value [NX | XX]
   ///
@@ -396,12 +564,4 @@ mixin JsonCommands {
 
     await execute(cmd);
   }
-
-  // jsonStrappend
-
-  // jsonStrappendEnhanced
-
-  // jsonStrlen
-
-  // jsonStrlenEnhanced
 }
