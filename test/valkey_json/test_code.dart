@@ -130,14 +130,26 @@ void main() async {
   test('jsonArrIndex - value exists', () async {
     await client.jsonSet(key: 'json:arridx', path: '.', data: '["a","b","c"]');
     final idx = await client.jsonArrIndex(
-        key: 'json:arridx', path: '.', value: '"b"', start: null, stop: null);
+        // (X) value: '"b"' // This is String
+        // (O) value: 'b' // Expected Usage
+        key: 'json:arridx',
+        path: '.',
+        value: 'b',
+        start: null,
+        stop: null);
     expect(idx, equals(1));
   });
 
   test('jsonArrIndex - value not exists', () async {
     await client.jsonSet(key: 'json:arridx2', path: '.', data: '["a","b"]');
     final idx = await client.jsonArrIndex(
-        key: 'json:arridx2', path: '.', value: '"z"', start: null, stop: null);
+        key: 'json:arridx2',
+        path: '.',
+        // (X) value: '"z"' // This is String
+        // (O) value: 'z' // Expected Usage
+        value: 'z',
+        start: null,
+        stop: null);
     expect(idx, equals(-1));
   });
 
