@@ -139,38 +139,6 @@ mixin JsonCommands {
   }
 
   // ===========================================================================
-  // JSON Commands
-  // ===========================================================================
-  // jsonArrAppend              v2.5.1
-  // jsonArrAppendEnhanced
-  // jsonArrIndex               v2.5.1
-  // jsonArrIndexEnhanced
-  // jsonArrInsert              v2.5.1
-  // jsonArrInsertEnhanced
-  // jsonArrLen                 v2.5.1
-  // jsonArrLenEnhanced
-  // jsonArrPop                 v2.5.1
-  // jsonArrPopEnhanced
-  // jsonArrTrim                v2.5.1
-  // jsonArrTrimEnhanced
-  // jsonClear
-  // jsonDel                    v2.5.0
-  // jsonForget
-  // jsonGet                    v2.5.0
-  // jsonMerge                  v2.5.0
-  // jsonMget
-  // jsonMset
-  // jsonNumincrby
-  // jsonNummultby
-  // jsonObjkeys
-  // jsonObjkeysEnhanced
-  // jsonSet                    v2.5.0
-  // jsonStrappend
-  // jsonStrappendEnhanced
-  // jsonStrlen
-  // jsonStrlenEnhanced
-
-  // ===========================================================================
   // JSON Array Commands
   // ===========================================================================
 
@@ -354,6 +322,29 @@ mixin JsonCommands {
     return _unwrapOne(result); // Unwrap [int] -> int
   }
 
+  // TODO: jsonClear
+
+  // TODO: jsonDebug
+
+  /// JSON.DEL key [path]
+  ///
+  /// Deletes a value.
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path to delete. Defaults to root (`$`).
+  Future<int?> jsonDel({
+    required String key,
+    String path = r'$',
+  }) async {
+    final result = await execute(<String>['JSON.DEL', key, path]);
+
+    // Valkey returns the integer number of paths deleted (0 or 1 usually)
+    if (result is int) return result;
+    return int.tryParse(result.toString());
+  }
+
+  // TODO: jsonForget
+
   /// JSON.GET key [path ...]
   ///
   /// Return the value at [path] in JSON format.
@@ -414,23 +405,6 @@ mixin JsonCommands {
 
     // Decode the response string back to a Dart Object (Map, List, etc.)
     return jsonDecode(result.toString());
-  }
-
-  /// JSON.DEL key [path]
-  ///
-  /// Deletes a value.
-  ///
-  /// [key] The key to modify.
-  /// [path] The JSON path to delete. Defaults to root (`$`).
-  Future<int?> jsonDel({
-    required String key,
-    String path = r'$',
-  }) async {
-    final result = await execute(<String>['JSON.DEL', key, path]);
-
-    // Valkey returns the integer number of paths deleted (0 or 1 usually)
-    if (result is int) return result;
-    return int.tryParse(result.toString());
   }
 
   /// JSON.MERGE key path value
@@ -564,4 +538,12 @@ mixin JsonCommands {
 
     await execute(cmd);
   }
+
+  // TODO: jsonObjLen
+
+  // TODO: jsonResp
+
+  // TODO: jsonToggle
+
+  // TODO: jsonType
 }
