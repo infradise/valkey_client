@@ -191,7 +191,9 @@ void main() async {
     await client.jsonSet(key: 'json:arrpop2', path: '.', data: '["a"]');
     final popped =
         await client.jsonArrPop(key: 'json:arrpop2', path: '.', index: 5);
-    expect(popped, '"a"');
+    // (X) equals('"a"') // This is String
+    // (O) equals('a') // Expected Usage
+    expect(popped, 'a');
   });
 
   test('jsonArrPop - empty array but returns null', () async {
@@ -200,7 +202,9 @@ void main() async {
         await client.jsonArrPop(key: 'json:emptyarr3', path: '.', index: 0);
     expect(popped, isNull);
     final result = await client.jsonGet(key: 'json:emptyarr3', path: '.');
-    expect(result, equals('[]'));
+    // (X) equals('[]') // This is String
+    // (O) equals([]) // Expected Usage
+    expect(result, equals([]));
   });
 
   test('jsonArrPop - not an array', () async {
@@ -246,7 +250,10 @@ void main() async {
         key: 'json:arrtrim', path: '.', start: 1, stop: 2);
     expect(newLen, equals(2));
     final result = await client.jsonGet(key: 'json:arrtrim', path: '.');
-    expect(result, equals('["b","c"]'));
+
+    // (X) equals('["b","c"]') // This is String
+    // (O) equals(['b','c']) // Expected Usage
+    expect(result, equals(['b', 'c']));
   });
 
   test('jsonArrTrim - not an array', () async {
