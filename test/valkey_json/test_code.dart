@@ -99,19 +99,19 @@ void main() async {
   });
 
   // test('jsonArrAppend - normal array', () async {
-  //   await client.jsonSet(key: 'json:arrappend', path: '.', value: '["x"]');
+  //   await client.jsonSet(key: 'json:arrappend', path: '.', data: '["x"]');
   //   final len = await client.jsonArrAppend(
-  //       key: 'json:arrappend', path: '.', value: '"y"');
+  //       key: 'json:arrappend', path: '.', values: '"y"');
   //   expect(len, equals(2));
   //   final result = await client.jsonGet(key: 'json:arrappend', path: '.');
   //   expect(result, equals('["x","y"]'));
   // });
 
   // test('jsonArrAppend - not an array', () async {
-  //   await client.jsonSet(key: 'json:notarray', path: '.', value: '{"a":1}');
+  //   await client.jsonSet(key: 'json:notarray', path: '.', data: '{"a":1}');
   //   try {
   //     await client.jsonArrAppend(
-  //         key: 'json:notarray', path: '.', value: '"b"');
+  //         key: 'json:notarray', path: '.', values: '"b"');
   //     fail('Should throw an error');
   //   } catch (e) {
   //     expect(e, isA<ValkeyException>());
@@ -121,133 +121,130 @@ void main() async {
   // });
 
   // test('jsonArrAppend - empty array', () async {
-  //   await client.jsonSet(key: 'json:emptyarr2', path: '.', value: '[]');
+  //   await client.jsonSet(key: 'json:emptyarr2', path: '.', data: '[]');
   //   final len = await client.jsonArrAppend(
-  //       key: 'json:emptyarr2', path: '.', value: '"foo"');
+  //       key: 'json:emptyarr2', path: '.', values: '"foo"');
   //   expect(len, equals(1));
   // });
 
-  // test('jsonArrIndex - value exists', () async {
-  //   await client.jsonSet(
-  //       key: 'json:arridx', path: '.', value: '["a","b","c"]');
-  //   final idx = await client.jsonArrIndex(
-  //       key: 'json:arridx', path: '.', value: '"b"', start: null, end: null);
-  //   expect(idx, equals(1));
-  // });
+  test('jsonArrIndex - value exists', () async {
+    await client.jsonSet(key: 'json:arridx', path: '.', data: '["a","b","c"]');
+    final idx = await client.jsonArrIndex(
+        key: 'json:arridx', path: '.', value: '"b"', start: null, stop: null);
+    expect(idx, equals(1));
+  });
 
-  // test('jsonArrIndex - value not exists', () async {
-  //   await client.jsonSet(key: 'json:arridx2', path: '.', value: '["a","b"]');
-  //   final idx = await client.jsonArrIndex(
-  //       key: 'json:arridx2', path: '.', value: '"z"',
-  //       start: null, end: null);
-  //   expect(idx, equals(-1));
-  // });
+  test('jsonArrIndex - value not exists', () async {
+    await client.jsonSet(key: 'json:arridx2', path: '.', data: '["a","b"]');
+    final idx = await client.jsonArrIndex(
+        key: 'json:arridx2', path: '.', value: '"z"', start: null, stop: null);
+    expect(idx, equals(-1));
+  });
 
-  // test('jsonArrIndex - not an array', () async {
-  //   await client.jsonSet(key: 'json:notarray2', path: '.', value: '{"a":1}');
-  //   try {
-  //     await client.jsonArrIndex(
-  //         key: 'json:notarray2',
-  //         path: '.',
-  //         value: '"a"',
-  //         start: null,
-  //         end: null);
-  //     fail('Should throw an error');
-  //   } catch (e) {
-  //     expect(e, isA<ValkeyException>());
-  //     expect((e as ValkeyException).message,
-  //         equals('WRONGTYPE JSON element is not an array'));
-  //   }
-  // });
+  test('jsonArrIndex - not an array', () async {
+    await client.jsonSet(key: 'json:notarray2', path: '.', data: '{"a":1}');
+    try {
+      await client.jsonArrIndex(
+          key: 'json:notarray2',
+          path: '.',
+          value: '"a"',
+          start: null,
+          stop: null);
+      fail('Should throw an error');
+    } catch (e) {
+      expect(e, isA<ValkeyException>());
+      expect((e as ValkeyException).message,
+          equals('WRONGTYPE JSON element is not an array'));
+    }
+  });
 
-  // test('jsonArrPop - normal', () async {
-  //   await client.jsonSet(
-  //       key: 'json:arrpop', path: '.', value: '["a","b","c"]');
-  //   final popped =
-  //       await client.jsonArrPop(key: 'json:arrpop', path: '.', index: 1);
-  //   expect(popped, equals('"b"'));
-  //   final result = await client.jsonGet(key: 'json:arrpop', path: '.');
-  //   expect(result, equals('["a","c"]'));
-  // });
+  test('jsonArrPop - normal', () async {
+    await client.jsonSet(key: 'json:arrpop', path: '.', data: '["a","b","c"]');
+    final popped =
+        await client.jsonArrPop(key: 'json:arrpop', path: '.', index: 1);
+    expect(popped, equals('"b"'));
+    final result = await client.jsonGet(key: 'json:arrpop', path: '.');
+    expect(result, equals('["a","c"]'));
+  });
 
-  // test('jsonArrPop - out of bounds but returns last element', () async {
-  //   await client.jsonSet(key: 'json:arrpop2', path: '.', value: '["a"]');
-  //   final popped =
-  //       await client.jsonArrPop(key: 'json:arrpop2', path: '.', index: 5);
-  //   expect(popped, '"a"');
-  // });
+  test('jsonArrPop - out of bounds but returns last element', () async {
+    await client.jsonSet(key: 'json:arrpop2', path: '.', data: '["a"]');
+    final popped =
+        await client.jsonArrPop(key: 'json:arrpop2', path: '.', index: 5);
+    expect(popped, '"a"');
+  });
 
-  // test('jsonArrPop - empty array but returns null', () async {
-  //   await client.jsonSet(key: 'json:emptyarr3', path: '.', value: '[]');
-  //   final popped =
-  //       await client.jsonArrPop(key: 'json:emptyarr3', path: '.', index: 0);
-  //   expect(popped, isNull);
-  //   final result = await client.jsonGet(key: 'json:emptyarr3', path: '.');
-  //   expect(result, equals('[]'));
-  // });
+  test('jsonArrPop - empty array but returns null', () async {
+    await client.jsonSet(key: 'json:emptyarr3', path: '.', data: '[]');
+    final popped =
+        await client.jsonArrPop(key: 'json:emptyarr3', path: '.', index: 0);
+    expect(popped, isNull);
+    final result = await client.jsonGet(key: 'json:emptyarr3', path: '.');
+    expect(result, equals('[]'));
+  });
 
-  // test('jsonArrPop - not an array', () async {
-  //   await client.jsonSet(key: 'json:notarray3', path: '.', value: '{"a":1}');
-  //   try {
-  //     await client.jsonArrPop(key: 'json:notarray3', path: '.', index: 0);
-  //     fail('Should throw an error');
-  //   } catch (e) {
-  //     expect(e, isA<ValkeyException>());
-  //     expect((e as ValkeyException).message,
-  //         equals('WRONGTYPE JSON element is not an array'));
-  //   }
-  // });
+  test('jsonArrPop - not an array', () async {
+    await client.jsonSet(key: 'json:notarray3', path: '.', data: '{"a":1}');
+    try {
+      await client.jsonArrPop(key: 'json:notarray3', path: '.', index: 0);
+      fail('Should throw an error');
+    } catch (e) {
+      expect(e, isA<ValkeyException>());
+      expect((e as ValkeyException).message,
+          equals('WRONGTYPE JSON element is not an array'));
+    }
+  });
 
-  // test('jsonArrLen - normal', () async {
-  //   await client.jsonSet(key: 'json:arrlen', path: '.', value: '["a","b"]');
-  //   final len = await client.jsonArrLen(key: 'json:arrlen', path: '.');
-  //   expect(len, equals(2));
-  // });
+  test('jsonArrLen - normal', () async {
+    await client.jsonSet(key: 'json:arrlen', path: '.', data: '["a","b"]');
+    final len = await client.jsonArrLen(key: 'json:arrlen', path: '.');
+    expect(len, equals(2));
+  });
 
-  // test('jsonArrLen - not an array', () async {
-  //   await client.jsonSet(key: 'json:notarray4', path: '.', value: '{"a":1}');
-  //   try {
-  //     await client.jsonArrLen(key: 'json:notarray4', path: '.');
-  //     fail('Should throw an error');
-  //   } catch (e) {
-  //     expect(e, isA<ValkeyException>());
-  //     expect((e as ValkeyException).message,
-  //         equals('WRONGTYPE JSON element is not an array'));
-  //   }
-  // });
+  test('jsonArrLen - not an array', () async {
+    await client.jsonSet(key: 'json:notarray4', path: '.', data: '{"a":1}');
+    try {
+      await client.jsonArrLen(key: 'json:notarray4', path: '.');
+      fail('Should throw an error');
+    } catch (e) {
+      expect(e, isA<ValkeyException>());
+      expect((e as ValkeyException).message,
+          equals('WRONGTYPE JSON element is not an array'));
+    }
+  });
 
-  // test('jsonArrLen - empty array', () async {
-  //   await client.jsonSet(key: 'json:emptyarr3', path: '.', value: '[]');
-  //   final len = await client.jsonArrLen(key: 'json:emptyarr3', path: '.');
-  //   expect(len, equals(0));
-  // });
+  test('jsonArrLen - empty array', () async {
+    await client.jsonSet(key: 'json:emptyarr3', path: '.', data: '[]');
+    final len = await client.jsonArrLen(key: 'json:emptyarr3', path: '.');
+    expect(len, equals(0));
+  });
 
-  // test('jsonArrTrim - normal', () async {
-  //   await client.jsonSet(
-  //       key: 'json:arrtrim', path: '.', value: '["a","b","c","d"]');
-  //   final newLen = await client.jsonArrTrim(
-  //       key: 'json:arrtrim', path: '.', start: 1, stop: 2);
-  //   expect(newLen, equals(2));
-  //   final result = await client.jsonGet(key: 'json:arrtrim', path: '.');
-  //   expect(result, equals('["b","c"]'));
-  // });
+  test('jsonArrTrim - normal', () async {
+    await client.jsonSet(
+        key: 'json:arrtrim', path: '.', data: '["a","b","c","d"]');
+    final newLen = await client.jsonArrTrim(
+        key: 'json:arrtrim', path: '.', start: 1, stop: 2);
+    expect(newLen, equals(2));
+    final result = await client.jsonGet(key: 'json:arrtrim', path: '.');
+    expect(result, equals('["b","c"]'));
+  });
 
-  // test('jsonArrTrim - not an array', () async {
-  //   await client.jsonSet(key: 'json:notarray5', path: '.', value: '{"a":1}');
-  //   try {
-  //     await client.jsonArrTrim(
-  //         key: 'json:notarray5', path: '.', start: 0, stop: 1);
-  //     fail('Should throw an error');
-  //   } catch (e) {
-  //     expect(e, isA<ValkeyException>());
-  //     expect((e as ValkeyException).message,
-  //         equals('WRONGTYPE JSON element is not an array'));
-  //   }
-  // });
+  test('jsonArrTrim - not an array', () async {
+    await client.jsonSet(key: 'json:notarray5', path: '.', data: '{"a":1}');
+    try {
+      await client.jsonArrTrim(
+          key: 'json:notarray5', path: '.', start: 0, stop: 1);
+      fail('Should throw an error');
+    } catch (e) {
+      expect(e, isA<ValkeyException>());
+      expect((e as ValkeyException).message,
+          equals('WRONGTYPE JSON element is not an array'));
+    }
+  });
 
   // test('jsonClear - object', () async {
   //   await client.jsonSet(
-  //       key: 'json:clearobj', path: '.', value: '{"a":1,"b":2}');
+  //       key: 'json:clearobj', path: '.', data: '{"a":1,"b":2}');
   //   final cleared = await client.jsonClear(key: 'json:clearobj', path: '.');
   //   expect(cleared, greaterThanOrEqualTo(1));
   //   final result = await client.jsonGet(key: 'json:clearobj', path: '.');
@@ -256,7 +253,7 @@ void main() async {
 
   // test('jsonClear - array', () async {
   //   await client.jsonSet(
-  //       key: 'json:cleararr', path: '.', value: '["a","b"]');
+  //       key: 'json:cleararr', path: '.', data: '["a","b"]');
   //   final cleared = await client.jsonClear(key: 'json:cleararr', path: '.');
   //   expect(cleared, greaterThanOrEqualTo(1));
   //   final result = await client.jsonGet(key: 'json:cleararr', path: '.');
@@ -268,7 +265,7 @@ void main() async {
   //          'returns json empty string (It is a bug)',
   //     () async {
   //   await client.jsonSet(
-  //       key: 'json:clearnotcontainer', path: '.', value: '"foo"');
+  //       key: 'json:clearnotcontainer', path: '.', data: '"foo"');
   //   final cleared =
   //       await client.jsonClear(key: 'json:clearnotcontainer', path: '.');
   //   final result =
@@ -282,7 +279,7 @@ void main() async {
   //                'returns empty json string (It is a bug)',
   //     () async {
   //   await client.jsonSet(
-  //       key: 'json:clearnotcontainer', path: '.', value: '"foo"');
+  //       key: 'json:clearnotcontainer', path: '.', data: '"foo"');
   //   final cleared =
   //       await client.jsonClear(key: 'json:clearnotcontainer', path: '.');
   //   final result =
