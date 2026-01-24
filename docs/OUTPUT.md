@@ -2,7 +2,7 @@
 
 ## example/valkey_json
 
-### get_module_list.dart
+### get_module_list_example.dart
 ```sh
 📦 Loaded Modules:
 +--------+----------+------------------------------------+--------+
@@ -36,7 +36,7 @@ OR
 [2026-01-23T01:53:36.111841] JSON Basic Get Example - INFO: Closing all cluster connections...
 ```
 
-### json_set_and_get.dart
+### json_set_and_get_example.dart
 ```sh
 [2026-01-23T01:44:22.536583] JSON Set and Get Example - INFO: ✅ JSON module detected. Ready to go!
 [2026-01-23T01:44:22.539614] JSON Set and Get Example - INFO: ✅ Saved User Data
