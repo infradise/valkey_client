@@ -190,6 +190,21 @@ mixin JsonCommands {
   /// [stop] The stop index (exclusive, optional).
   ///
   /// Returns the integer index of the value, or -1 if not found.
+  ///
+  /// **Note on Error Handling:**
+  /// Considering Valkey's schema-less flexibility, this method returns `null`
+  /// instead of throwing an exception if the target path is not an array or
+  /// does not exist. This allows for a more natural flow where the caller
+  /// can handle "missing target" or "invalid type" scenarios gracefully,
+  /// rather than crashing the program.
+  /// ```dart
+  /// [Strict Check]
+  /// // DO NOT USE THIS KIND OF CODE HERE. (SEE THE NOTE ABOVE)
+  /// if (result == null) {
+  ///   throw ValkeyException('WRONGTYPE JSON element is not an array or'
+  ///       'key does not exist');
+  /// }
+  /// ```
   Future<dynamic> jsonArrIndex({
     required String key,
     required String path,
@@ -208,6 +223,8 @@ mixin JsonCommands {
     }
 
     final result = await execute(cmd);
+
+    // Returns null if the key doesn't exist or path is not an array.
     return _unwrapOne(result); // Unwrap [int] -> int
   }
 
