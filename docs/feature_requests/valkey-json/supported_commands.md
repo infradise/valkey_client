@@ -1,4 +1,6 @@
-## Supported Module Commands (*Planned*)
+## Supported Module Commands for JSON
+
+### Valkey JSON (aka. valkey-json)
 
 ```sh
 JSON.ARRAPPEND
@@ -24,4 +26,12 @@ JSON.STRAPPEND
 JSON.STRLEN
 JSON.TOGGLE
 JSON.TYPE
+```
+
+### Commands for Redis JSON
+
+Valkey JSON, plus
+
+```
+JSON.MERGE
 ```

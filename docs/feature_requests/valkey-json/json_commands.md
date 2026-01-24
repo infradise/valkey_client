@@ -17,6 +17,7 @@ Commands for Redis JSON and Valkey JSON (aka. valkey-json)
 * [x] jsonArrTrim
 * [ ] jsonArrTrimEnhanced
 * [ ] jsonClear
+* [ ] jsonDebug
 * [x] jsonDel
 * [ ] jsonForget
 * [x] jsonGet
@@ -27,17 +28,22 @@ Commands for Redis JSON and Valkey JSON (aka. valkey-json)
 * [ ] jsonNummultby
 * [ ] jsonObjkeys
 * [ ] jsonObjkeysEnhanced
+* [ ] jsonObjLen
+* [ ] jsonResp
 * [x] jsonSet
 * [ ] jsonStrappend
 * [ ] jsonStrappendEnhanced
 * [ ] jsonStrlen
 * [ ] jsonStrlenEnhanced
+* [ ] jsonToggle
+* [ ] jsonType
 
 ### Roadmap
 
+* **v2.5.6**: `jsonDebug`, `jsonForget`, `jsonResp`, `jsonToggle`, `jsonType`
 * **v2.5.5**: `jsonObjkeysEnhanced`, `jsonStrappendEnhanced`, `jsonStrlenEnhanced`
 * **v2.5.4**: `jsonArrAppendEnhanced`, `jsonArrIndexEnhanced`, `jsonArrInsertEnhanced`, `jsonArrLenEnhanced`, `jsonArrPopEnhanced`,`jsonArrTrimEnhanced`
-* **v2.5.3**: `jsonObjkeys`, `jsonStrappend`, `jsonStrlen`
+* **v2.5.3**: `jsonObjkeys`, `jsonObjLen`, `jsonStrappend`, `jsonStrlen`
 * **v2.5.2**: `jsonClear`, `jsonForget`, `jsonMget`, `jsonMset`, `jsonNumincrby`,`jsonNummultby`
 * **v2.5.1**: `jsonArrAppend`, `jsonArrIndex`, `jsonArrInsert`, `jsonArrLen`, `jsonArrPop`,`jsonArrTrim`
 * **v2.5.0**: `jsonSet`, `jsonDel`, `jsonGet`, `jsonMerge`
