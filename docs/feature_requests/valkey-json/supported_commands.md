@@ -1,5 +1,6 @@
 ## Supported Module Commands (*Planned*)
 
+```sh
 JSON.ARRAPPEND
 JSON.ARRINDEX
 JSON.ARRINSERT
@@ -23,3 +24,4 @@ JSON.STRAPPEND
 JSON.STRLEN
 JSON.TOGGLE
 JSON.TYPE
+```
