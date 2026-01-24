@@ -23,6 +23,31 @@ No modules loaded.
 [2026-01-23T01:52:04.077250] Get Module List Example - INFO: Closing all cluster connections...
 ```
 
+### json_array_simple_example.dart
+```sh
+[2026-01-24T10:00:58.933517] JSON Array Simple Example - INFO: ✅ JSON module detected. Ready to go!
+[2026-01-24T10:00:58.937210] JSON Array Simple Example - INFO: New Length: [5]
+[2026-01-24T10:00:58.938262] JSON Array Simple Example - INFO: Index of X: [1]
+[2026-01-24T10:00:58.939248] JSON Array Simple Example - INFO: Popped Value: ["b"]
+[2026-01-24T10:00:58.941429] JSON Array Simple Example - INFO: Final Array: [a, X]
+[2026-01-24T10:00:58.941451] JSON Array Simple Example - INFO: Closing all cluster connections...
+```
+
+### json_array_basic_example.dart
+```sh
+[2026-01-24T10:35:01.703930] JSON Array Basic Example - INFO: ✅ JSON module detected. Ready to go!
+[2026-01-24T10:35:01.704868] JSON Array Basic Example - INFO: --- 🚀 JSON Array Commands Example ---
+[2026-01-24T10:35:01.706383] JSON Array Basic Example - INFO: 0. Initialized: ["apple", "banana"]
+[2026-01-24T10:35:01.706993] JSON Array Basic Example - INFO: 1. ARRAPPEND result: 4
+[2026-01-24T10:35:01.707526] JSON Array Basic Example - INFO: 2. ARRINSERT result: 5
+[2026-01-24T10:35:01.708115] JSON Array Basic Example - INFO: 3. ARRINDEX ("banana"): 2
+[2026-01-24T10:35:01.708603] JSON Array Basic Example - INFO: 4. ARRLEN result: 5
+[2026-01-24T10:35:01.710510] JSON Array Basic Example - INFO: 5. ARRPOP result: date
+[2026-01-24T10:35:01.711088] JSON Array Basic Example - INFO: 6. ARRTRIM result: 2
+[2026-01-24T10:35:01.712149] JSON Array Basic Example - INFO: ✅ Final Data: [apple, mango]
+[2026-01-24T10:35:01.712179] JSON Array Basic Example - INFO: Closing all cluster connections...
+```
+
 ### json_basic_get_example.dart
 ```sh
 [2026-01-23T01:36:23.137143] JSON Basic Get Example - INFO: ✅ JSON module detected. Ready to go!
