@@ -159,7 +159,9 @@ void main() async {
       await client.jsonArrIndex(
           key: 'json:notarray2',
           path: '.',
-          value: '"a"',
+          // (X) value: '"a"' // This is String
+          // (O) value: 'a' // Expected Usage
+          value: 'a',
           start: null,
           stop: null);
       fail('Should throw an error');
@@ -174,9 +176,15 @@ void main() async {
     await client.jsonSet(key: 'json:arrpop', path: '.', data: '["a","b","c"]');
     final popped =
         await client.jsonArrPop(key: 'json:arrpop', path: '.', index: 1);
-    expect(popped, equals('"b"'));
+
+    // (X) equals('"b"') // This is String
+    // (O) equals('b') // Expected Usage
+    expect(popped, equals('b'));
+
     final result = await client.jsonGet(key: 'json:arrpop', path: '.');
-    expect(result, equals('["a","c"]'));
+    // (X) equals('["a","c"]') // This is String
+    // (O) equals(['a','c']) // Expected Usage
+    expect(result, equals(['a', 'c']));
   });
 
   test('jsonArrPop - out of bounds but returns last element', () async {
