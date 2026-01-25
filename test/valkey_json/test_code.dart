@@ -50,7 +50,7 @@ void main() async {
     printPrettyModuleList(modules);
   });
 
-  // TODO: Test for commands without enhancedPaths
+  // Test for commands without enhancedPaths
 
   test('jsonSet & jsonGet - simple array', () async {
     await client.jsonSet(key: 'json:simple', path: '.', data: '["a","b","c"]');
@@ -483,40 +483,55 @@ void main() async {
     expect(newVal, equals(6)); // Expected usage
   });
 
-  // test('jsonObjkeys - object', () async {
-  //   await client.jsonSet(
-  //       key: 'json:objkeys', path: '.', value: '{"a":1,"b":2}');
-  //   final keys = await client.jsonObjkeys(key: 'json:objkeys', path: '.');
-  //   expect(keys, containsAll(['a', 'b']));
-  // });
+  test('jsonObjKeys - object', () async {
+    await client.jsonSet(
+        key: 'json:objkeys',
+        path: '.',
+        // (X) data: '{"a":1,"b":2}');
+        data: {'a': 1, 'b': 2}); // Expected usage
+    final keys = await client.jsonObjKeys(key: 'json:objkeys', path: '.');
+    expect(keys, containsAll(['a', 'b']));
+  });
 
-  // test('jsonObjkeys - not an object', () async {
-  //   await client.jsonSet(
-  //       key: 'json:objkeys2', path: '.', value: '["a","b"]');
-  //   final keys = await client.jsonObjkeys(key: 'json:objkeys2', path: '.a');
-  //   expect(keys, isNull);
-  // });
+  test('jsonObjkeys - not an object', () async {
+    await client.jsonSet(
+        key: 'json:objkeys2',
+        path: '.',
+        // (X) data: '["a","b"]');
+        data: ['a', 'b']); // Expected usage
+    final keys = await client.jsonObjKeys(key: 'json:objkeys2', path: '.a');
+    expect(keys, isNull);
+  });
 
-  // test('jsonStrappend & jsonStrlen', () async {
-  //   await client.jsonSet(key: 'json:str', path: '.', value: '"foo"');
-  //   final newLen =
-  //       await client.jsonStrappend(
-  //           key: 'json:str', path: '.', value: '"bar"');
-  //   expect(newLen, greaterThan(3));
-  //   final strlen = await client.jsonStrlen(key: 'json:str', path: '.');
-  //   expect(strlen, equals(newLen));
-  // });
+  test('jsonStrAppend & jsonStrlen', () async {
+    await client.jsonSet(
+        key: 'json:str',
+        path: '.',
+        // (X) data: '"foo"'); // 5
+        data: 'foo'); // 3
+    final newLen = await client.jsonStrAppend(
+        key: 'json:str',
+        path: '.',
+        // (X) value: '"bar"'); // 5
+        value: 'bar'); // 3
 
-  // test('jsonStrappend - not a string', () async {
-  //   await client.jsonSet(key: 'json:str2', path: '.', value: '[1,2,3]');
-  //   try {
-  //     await client.jsonStrappend(
-  //         key: 'json:str2', path: '.', value: '"baz"');
-  //     fail('Should throw');
-  //   } catch (e) {
-  //     expect(e, isA<ValkeyException>());
-  //     expect((e as ValkeyException).message,
-  //         equals('WRONGTYPE JSON element is not a string'));
-  //   }
-  // });
+    expect(newLen, greaterThan(3));
+    final strlen = await client.jsonStrLen(key: 'json:str', path: '.');
+    expect(strlen, equals(newLen));
+
+    // Expected usage (check the actual value of newLen)
+    expect(strlen, equals(6));
+  });
+
+  test('jsonStrAppend - not a string', () async {
+    await client.jsonSet(key: 'json:str2', path: '.', data: '[1,2,3]');
+    try {
+      await client.jsonStrAppend(key: 'json:str2', path: '.', value: '"baz"');
+      fail('Should throw');
+    } catch (e) {
+      expect(e, isA<ValkeyException>());
+      expect((e as ValkeyException).message,
+          equals('WRONGTYPE JSON element is not a string'));
+    }
+  });
 }
