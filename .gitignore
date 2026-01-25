@@ -16,3 +16,4 @@ docs/testenv/valkey/data
 # OpenSSL certificates for testing
 *.crt
 *.key
+*.pem
