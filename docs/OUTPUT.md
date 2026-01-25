@@ -23,16 +23,6 @@ No modules loaded.
 [2026-01-23T01:52:04.077250] Get Module List Example - INFO: Closing all cluster connections...
 ```
 
-### json_array_simple_example.dart
-```sh
-[2026-01-24T10:00:58.933517] JSON Array Simple Example - INFO: ✅ JSON module detected. Ready to go!
-[2026-01-24T10:00:58.937210] JSON Array Simple Example - INFO: New Length: [5]
-[2026-01-24T10:00:58.938262] JSON Array Simple Example - INFO: Index of X: [1]
-[2026-01-24T10:00:58.939248] JSON Array Simple Example - INFO: Popped Value: ["b"]
-[2026-01-24T10:00:58.941429] JSON Array Simple Example - INFO: Final Array: [a, X]
-[2026-01-24T10:00:58.941451] JSON Array Simple Example - INFO: Closing all cluster connections...
-```
-
 ### json_array_basic_example.dart
 ```sh
 [2026-01-24T10:35:01.703930] JSON Array Basic Example - INFO: ✅ JSON module detected. Ready to go!
@@ -46,6 +36,77 @@ No modules loaded.
 [2026-01-24T10:35:01.711088] JSON Array Basic Example - INFO: 6. ARRTRIM result: 2
 [2026-01-24T10:35:01.712149] JSON Array Basic Example - INFO: ✅ Final Data: [apple, mango]
 [2026-01-24T10:35:01.712179] JSON Array Basic Example - INFO: Closing all cluster connections...
+```
+
+### json_array_merge_example.dart
+`Redis v8.4.0`
+
+```sh
+[2026-01-25T15:32:13.424824] JSON Array Merge Example - INFO: Connecting to server...
+[2026-01-25T15:32:13.450850] JSON Array Merge Example - INFO: Connected.
+[2026-01-25T15:32:13.451016] JSON Array Merge Example - INFO: Server detected: redis (version 8.4.0)
+[2026-01-25T15:32:13.451031] JSON Array Merge Example - INFO: Setting initial JSON value with jsonSet...
+[2026-01-25T15:32:13.452852] JSON Array Merge Example - INFO: jsonSet completed.
+[2026-01-25T15:32:13.452867] JSON Array Merge Example - INFO: Value before jsonMerge (jsonGet):
+[2026-01-25T15:32:13.455707] JSON Array Merge Example - INFO: {price: 1000, stock: 20}
+[2026-01-25T15:32:13.455725] JSON Array Merge Example - INFO: 🚀 Calling jsonMerge...
+[2026-01-25T15:32:13.456758] JSON Array Merge Example - INFO: ✅ jsonMerge completed.
+[2026-01-25T15:32:13.456777] JSON Array Merge Example - INFO: Value after jsonMerge (jsonGet):
+[2026-01-25T15:32:13.457425] JSON Array Merge Example - INFO: {price: 1200, stock: 50}
+[2026-01-25T15:32:13.457450] JSON Array Merge Example - INFO: Value before jsonMergeForce (jsonGet):
+[2026-01-25T15:32:13.457958] JSON Array Merge Example - INFO: {price: 1200, stock: 50}
+[2026-01-25T15:32:13.457977] JSON Array Merge Example - INFO: 🚀 Calling jsonMergeForce...
+[2026-01-25T15:32:13.458571] JSON Array Merge Example - INFO: ✅ jsonMergeForce completed.
+[2026-01-25T15:32:13.458589] JSON Array Merge Example - INFO: Value after jsonMergeForce (jsonGet):
+[2026-01-25T15:32:13.459042] JSON Array Merge Example - INFO: {price: 1200, stock: 50}
+[2026-01-25T15:32:13.460648] JSON Array Merge Example - INFO: Client closed.
+```
+
+`Valkey v9.0.0`
+
+```sh
+[2026-01-25T15:31:49.567024] JSON Array Merge Example - INFO: Connecting to server...
+[2026-01-25T15:31:49.593256] JSON Array Merge Example - INFO: Connected.
+[2026-01-25T15:31:49.593418] JSON Array Merge Example - INFO: Server detected: valkey (version 9.0.0)
+[2026-01-25T15:31:49.593433] JSON Array Merge Example - INFO: Setting initial JSON value with jsonSet...
+[2026-01-25T15:31:49.595518] JSON Array Merge Example - INFO: jsonSet completed.
+[2026-01-25T15:31:49.595533] JSON Array Merge Example - INFO: Value before jsonMerge (jsonGet):
+[2026-01-25T15:31:49.598599] JSON Array Merge Example - INFO: {price: 1000, stock: 20}
+[2026-01-25T15:31:49.598617] JSON Array Merge Example - INFO: 🚀 Calling jsonMerge...
+[2026-01-25T15:31:49.599312] JSON Array Merge Example - INFO: ❌ jsonMerge error: Unsupported operation: jsonMerge is not supported on Valkey.
+[2026-01-25T15:31:49.599342] JSON Array Merge Example - INFO: Value after jsonMerge (jsonGet):
+[2026-01-25T15:31:49.600158] JSON Array Merge Example - INFO: {price: 1000, stock: 20}
+[2026-01-25T15:31:49.600172] JSON Array Merge Example - INFO: Value before jsonMergeForce (jsonGet):
+[2026-01-25T15:31:49.600566] JSON Array Merge Example - INFO: {price: 1000, stock: 20}
+[2026-01-25T15:31:49.600579] JSON Array Merge Example - INFO: 🚀 Calling jsonMergeForce...
+[2026-01-25T15:31:49.601416] JSON Array Merge Example - INFO: ❌ jsonMergeForce error: ValkeyServerException(ERR): ERR unknown command 'JSON.MERGE', with args beginning with: 'product:1' '$' '{"price":1200,"stock":50}' 
+[2026-01-25T15:31:49.601432] JSON Array Merge Example - INFO: Value after jsonMergeForce (jsonGet):
+[2026-01-25T15:31:49.601814] JSON Array Merge Example - INFO: {price: 1000, stock: 20}
+[2026-01-25T15:31:49.603324] JSON Array Merge Example - INFO: Client closed.
+```
+
+### json_array_price_multi_example.dart
+```sh
+[2026-01-25T11:28:41.571728] JSON Array Price and Multi Example - INFO: ✅ JSON module detected. Ready to go!
+[2026-01-25T11:28:41.578897] JSON Array Price and Multi Example - INFO: product:1 $.price = [1100]
+[2026-01-25T11:28:41.580039] JSON Array Price and Multi Example - INFO: product:2 $.price = [2000]
+[2026-01-25T11:28:41.580833] JSON Array Price and Multi Example - INFO: product:2 $.vat = [200]
+[2026-01-25T11:28:41.581647] JSON Array Price and Multi Example - INFO: product:2 $.price = [3000]
+[2026-01-25T11:28:41.582437] JSON Array Price and Multi Example - INFO: product:2 $.vat = [300]
+[2026-01-25T11:28:41.583466] JSON Array Price and Multi Example - INFO: product:2 $.vat = [600]
+[2026-01-25T11:28:41.584360] JSON Array Price and Multi Example - INFO: product:2 $.price = [6000]
+[2026-01-25T11:28:41.586671] JSON Array Price and Multi Example - INFO: [[{a: 1}], [{a: 2}]]
+[2026-01-25T11:28:41.586695] JSON Array Price and Multi Example - INFO: Closing all cluster connections...
+```
+
+### json_array_simple_example.dart
+```sh
+[2026-01-24T10:00:58.933517] JSON Array Simple Example - INFO: ✅ JSON module detected. Ready to go!
+[2026-01-24T10:00:58.937210] JSON Array Simple Example - INFO: New Length: [5]
+[2026-01-24T10:00:58.938262] JSON Array Simple Example - INFO: Index of X: [1]
+[2026-01-24T10:00:58.939248] JSON Array Simple Example - INFO: Popped Value: ["b"]
+[2026-01-24T10:00:58.941429] JSON Array Simple Example - INFO: Final Array: [a, X]
+[2026-01-24T10:00:58.941451] JSON Array Simple Example - INFO: Closing all cluster connections...
 ```
 
 ### json_basic_get_example.dart
