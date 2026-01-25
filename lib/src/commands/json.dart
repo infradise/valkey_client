@@ -79,6 +79,10 @@ mixin JsonCommands {
 
   set setAllowRedisOnlyJsonMerge(bool value);
 
+  // ===========================================================================
+  // JSON Module Checker
+  // ===========================================================================
+
   /// Returns a list of loaded modules and their details.
   ///
   /// This method parses the raw response from `MODULE LIST` into a structured
@@ -148,8 +152,9 @@ mixin JsonCommands {
   /// exists in the loaded module list.
   ///
   /// Returns `true` if the JSON module is detected, `false` otherwise.
-  @Deprecated('Will be removed in the future.')
-  Future<bool> isJsonModuleLoadedOld() async {
+  @Deprecated('Use [isJsonModuleLoaded] instead. '
+      'This method will be removed in v3.0.0.')
+  Future<bool> deprecatedIsJsonModuleLoaded() async {
     try {
       // Execute the MODULE LIST command
       final result = await execute(<String>['MODULE', 'LIST']);
@@ -181,7 +186,7 @@ mixin JsonCommands {
   }
 
   // ===========================================================================
-  // JSON Array Commands
+  // JSON Commands
   // ===========================================================================
 
   /// Helper to unwrap the result if it is a single-element list.
@@ -401,7 +406,24 @@ mixin JsonCommands {
     return int.tryParse(result.toString()) ?? 0;
   }
 
-  // TODO: jsonDebug
+  /// JSON.DEBUG MEMORY key [path]
+  ///
+  /// Reports the memory usage in bytes of a value.
+  /// Currently, this method primarily supports the 'MEMORY' subcommand.
+  ///
+  /// [key] The key to check.
+  /// [path] The JSON path. Defaults to root (`$`).
+  ///
+  /// Returns the memory usage in bytes (integer).
+  /// Returns a List of integers if path matches multiple values.
+  Future<dynamic> jsonDebug({
+    required String key,
+    String path = r'$',
+  }) async {
+    // We default to the 'MEMORY' subcommand as it is the standard use case.
+    final result = await execute(<String>['JSON.DEBUG', 'MEMORY', key, path]);
+    return _unwrapOne(result);
+  }
 
   /// JSON.DEL key [path]
   ///
@@ -435,6 +457,7 @@ mixin JsonCommands {
     // JSON.FORGET is just an alias for JSON.DEL
     final result = await execute(<String>['JSON.FORGET', key, path]);
 
+    // Ensure return type is int
     if (result is int) return result;
     return int.tryParse(result.toString()) ?? 0;
   }
@@ -723,6 +746,23 @@ mixin JsonCommands {
     return _unwrapOne(result);
   }
 
+  /// JSON.RESP key [path]
+  ///
+  /// Returns the JSON value at [path] in Redis Serialization Protocol (RESP).
+  /// This is useful for debugging the structure as Redis sees it.
+  ///
+  /// [key] The key to retrieve.
+  /// [path] The JSON path. Defaults to root (`$`).
+  ///
+  /// Returns the RESP representation (List, String, Int, etc.).
+  Future<dynamic> jsonResp({
+    required String key,
+    String path = r'$',
+  }) async {
+    final result = await execute(<String>['JSON.RESP', key, path]);
+    return _unwrapOne(result);
+  }
+
   /// JSON.SET key path value [NX | XX]
   ///
   /// Sets the JSON value at [path] in [key].
@@ -851,9 +891,42 @@ mixin JsonCommands {
     return _unwrapOne(result);
   }
 
-  // TODO: jsonResp
+  /// JSON.TOGGLE key [path]
+  ///
+  /// Toggles a boolean value stored at [path].
+  /// Converts `true` to `false` and `false` to `true`.
+  /// Numeric 0 is treated as false, and 1 as true.
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path. Defaults to root (`$`).
+  ///
+  /// Returns the new value (0 or 1) for each path.
+  /// Returns `null` if the value is not a boolean or number.
+  Future<dynamic> jsonToggle({
+    required String key,
+    String path = r'$',
+  }) async {
+    final result = await execute(<String>['JSON.TOGGLE', key, path]);
 
-  // TODO: jsonToggle
+    // Returns 0 (false) or 1 (true), or a list of them.
+    return _unwrapOne(result);
+  }
 
-  // TODO: jsonType
+  /// JSON.TYPE key [path]
+  ///
+  /// Reports the type of JSON value at [path].
+  ///
+  /// [key] The key to check.
+  /// [path] The JSON path. Defaults to root (`$`).
+  ///
+  /// Returns the type name as a String (e.g., 'string', 'integer',
+  /// 'boolean', 'array', 'object', 'null').
+  /// Returns `null` if the key or path does not exist.
+  Future<dynamic> jsonType({
+    required String key,
+    String path = r'$',
+  }) async {
+    final result = await execute(<String>['JSON.TYPE', key, path]);
+    return _unwrapOne(result);
+  }
 }
