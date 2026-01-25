@@ -29,9 +29,9 @@ The `valkey_client` is a high-performance, cluster-aware Dart client for Redis a
 All features are supported in the latest release.
 
 ### New in v2.0.0 and later
-  * **Generic Commands (v2.5.1+):** Added `scan` with `--match`
+  * **Generic Commands (v2.5.1+):** Added `scan`
   * **JSON Commands (v2.5.0+):** Introduced RedisJSON; ValkeyJSON - JSON-based document formats for storing structured payloads.
-    * v2.5.2: `jsonClear`, `jsonForget`, `jsonMget`, `jsonMset`, `jsonNumincrby`,`jsonNummultby`
+    * v2.5.2: `jsonClear`, `jsonForget`, `jsonMGet`, `jsonMSet`, `jsonNumIncrBy`,`jsonNumMultBy`, `jsonMergeForce`
     * v2.5.1: `jsonArrAppend`, `jsonArrIndex`, `jsonArrInsert`, `jsonArrLen`, `jsonArrPop`,`jsonArrTrim`
     * v2.5.0: `jsonGet`, `jsonSet`, `jsonDel`, `jsonMerge`
   * **Redis/Valkey Module Detector (v2.5.0+):** Introduced to get Redis and Valkey module list and information. (e.g., `json`, `search`, `ldap`, `bf`, etc.)
