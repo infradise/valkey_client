@@ -159,6 +159,22 @@ OR
 [2026-01-23T01:53:53.018552] JSON Set and Get Example - INFO: Closing all cluster connections...
 ```
 
+### object_string_example.dart
+```sh
+[2026-01-26T06:28:31.168686] Object and String Example - INFO: ✅ JSON module detected. Ready to go!
+[2026-01-26T06:28:31.169590] Object and String Example - INFO: --- 🚀 JSON Object & String Commands Example ---
+[2026-01-26T06:28:31.169610] Object and String Example - INFO: [Part 1] JSON Object Commands
+[2026-01-26T06:28:31.171694] Object and String Example - INFO: 1. Initialized object: {"user": "Alice", "meta": {...}}
+[2026-01-26T06:28:31.172480] Object and String Example - INFO: 2. Root Object Length: 2 (Expected: 2)
+[2026-01-26T06:28:31.173469] Object and String Example - INFO: 3. Meta Object Keys: [login_count, active] (Expected: [login_count, active])
+[2026-01-26T06:28:31.173590] Object and String Example - INFO: [Part 2] JSON String Commands
+[2026-01-26T06:28:31.174420] Object and String Example - INFO: 4. Initialized string: "Hello"
+[2026-01-26T06:28:31.174982] Object and String Example - INFO: 5. Initial String Length: 5 (Expected: 5)
+[2026-01-26T06:28:31.175436] Object and String Example - INFO: 6. Length after Append: 11 (Expected: 11)
+[2026-01-26T06:28:31.177782] Object and String Example - INFO: 7. Final String Content: "Hello World"
+[2026-01-26T06:28:31.177814] Object and String Example - INFO: Closing all cluster connections...
+```
+
 ## example
 
 ### atomic_counters_example.dart
