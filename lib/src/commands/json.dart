@@ -688,6 +688,41 @@ mixin JsonCommands {
     return unwrapped;
   }
 
+  /// JSON.OBJKEYS key [path]
+  ///
+  /// Returns the keys in the object at [path].
+  ///
+  /// [key] The key to check.
+  /// [path] The JSON path. Defaults to root (`$`).
+  ///
+  /// Returns a `List<dynamic>` containing the keys.
+  /// If [path] matches multiple objects, returns a List of Lists.
+  /// Returns `null` if the key or path does not exist, or the value is not
+  /// an object.
+  Future<dynamic> jsonObjKeys({
+    required String key,
+    String path = r'$',
+  }) async {
+    final result = await execute(<String>['JSON.OBJKEYS', key, path]);
+    return _unwrapOne(result);
+  }
+
+  /// JSON.OBJLEN key [path]
+  ///
+  /// Reports the number of keys in the JSON object at [path].
+  ///
+  /// [key] The key to check.
+  /// [path] The JSON path. Defaults to root (`$`).
+  ///
+  /// Returns an integer (length) or `null` if the value is not an object.
+  Future<dynamic> jsonObjLen({
+    required String key,
+    String path = r'$',
+  }) async {
+    final result = await execute(<String>['JSON.OBJLEN', key, path]);
+    return _unwrapOne(result);
+  }
+
   /// JSON.SET key path value [NX | XX]
   ///
   /// Sets the JSON value at [path] in [key].
@@ -775,7 +810,46 @@ mixin JsonCommands {
     await execute(cmd);
   }
 
-  // TODO: jsonObjLen
+  /// JSON.STRAPPEND key [path] value
+  ///
+  /// Appends the string [value] to the JSON string at [path].
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path. Defaults to root (`$`).
+  /// [value] The string to append.
+  ///
+  /// Returns the integer length of the new string.
+  /// Throws an error (or returns null depending on server) if the target is
+  /// not a string.
+  Future<dynamic> jsonStrAppend({
+    required String key,
+    String path = r'$',
+    required String value,
+  }) async {
+    // The value must be a JSON string, so we encode the raw string.
+    // e.g. input "foo" -> sends "\"foo\""
+    final encodedValue = jsonEncode(value);
+
+    final result =
+        await execute(<String>['JSON.STRAPPEND', key, path, encodedValue]);
+    return _unwrapOne(result);
+  }
+
+  /// JSON.STRLEN key [path]
+  ///
+  /// Reports the length of the JSON string at [path].
+  ///
+  /// [key] The key to check.
+  /// [path] The JSON path. Defaults to root (`$`).
+  ///
+  /// Returns an integer (length) or `null` if the target is not a string.
+  Future<dynamic> jsonStrLen({
+    required String key,
+    String path = r'$',
+  }) async {
+    final result = await execute(<String>['JSON.STRLEN', key, path]);
+    return _unwrapOne(result);
+  }
 
   // TODO: jsonResp
 
