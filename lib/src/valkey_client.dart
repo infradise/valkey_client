@@ -130,12 +130,16 @@ class ValkeyClient
   /// Redis  : Currently Redis only.
   /// Valkey : Currently not yet supported.
   ///          In the future, if Valkey supports this feature, set to true.
-  final bool _allowRedisOnlyJsonMerge = false;
+  bool _allowRedisOnlyJsonMerge = false;
 
   /// [Implementation of JsonCommands Interface]
   /// Exposes the private variable to the Mixin via a getter.
   @override
   bool get allowRedisOnlyJsonMerge => _allowRedisOnlyJsonMerge;
+
+  @override
+  set setAllowRedisOnlyJsonMerge(bool value) =>
+      _allowRedisOnlyJsonMerge = value;
 
   /// Sets the logging level for all ValkeyClient instances.
   ///

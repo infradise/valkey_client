@@ -16,6 +16,46 @@
 
 import 'dart:convert';
 
+class Config {
+  final bool allowRedisOnlyJsonMerge;
+  const Config({this.allowRedisOnlyJsonMerge = false});
+
+  Config copyWith({bool? allowRedisOnlyJsonMerge}) => Config(
+        allowRedisOnlyJsonMerge:
+            allowRedisOnlyJsonMerge ?? this.allowRedisOnlyJsonMerge,
+      );
+}
+
+// class ConfigUI extends ChangeNotifier {
+//   bool _allowRedisOnlyJsonMerge = false;
+//   bool get allowRedisOnlyJsonMerge => _allowRedisOnlyJsonMerge;
+
+//   set allowRedisOnlyJsonMerge(bool value) {
+//     if (_allowRedisOnlyJsonMerge == value) return;
+//     _allowRedisOnlyJsonMerge = value;
+//     notifyListeners();
+//   }
+// }
+
+// final config = Config();
+// config.addListener(() =>
+//   logger.info('Config changed: ${config.allowRedisOnlyJsonMerge}'));
+// config.allowRedisOnlyJsonMerge = true;
+
+/// A helper class for JSON.MSET command.
+/// Represents a single triplet of (key, path, value).
+class JsonMSetEntry {
+  final String key;
+  final String path;
+  final dynamic value;
+
+  const JsonMSetEntry({
+    required this.key,
+    required this.path,
+    required this.value,
+  });
+}
+
 /// Mixin to support Redis-JSON and Valkey-JSON commands.
 /// This mixin ensures compatibility with the existing `execute` method
 /// by converting all parameters to Strings before sending.
@@ -36,6 +76,8 @@ mixin JsonCommands {
   /// Configuration to determine if JSON.MERGE (Redis-only) is allowed.
   /// This getter must be implemented by the main client class.
   bool get allowRedisOnlyJsonMerge;
+
+  set setAllowRedisOnlyJsonMerge(bool value);
 
   /// Returns a list of loaded modules and their details.
   ///
@@ -339,7 +381,25 @@ mixin JsonCommands {
     return _unwrapOne(result); // Unwrap [int] -> int
   }
 
-  // TODO: jsonClear
+  /// JSON.CLEAR key [path]
+  ///
+  /// Clears the arrays or objects at [path].
+  /// Numeric values are set to 0.
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path. Defaults to root (`$`).
+  ///
+  /// Returns the number of containers cleared (integer).
+  Future<int> jsonClear({
+    required String key,
+    String path = r'$',
+  }) async {
+    final result = await execute(<String>['JSON.CLEAR', key, path]);
+
+    // Valkey/Redis returns the count as an integer
+    if (result is int) return result;
+    return int.tryParse(result.toString()) ?? 0;
+  }
 
   // TODO: jsonDebug
 
@@ -360,7 +420,24 @@ mixin JsonCommands {
     return int.tryParse(result.toString());
   }
 
-  // TODO: jsonForget
+  /// JSON.FORGET key [path]
+  ///
+  /// Deletes a value. This is an alias for JSON.DEL.
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path to delete. Defaults to root (`$`).
+  ///
+  /// Returns the number of paths deleted.
+  Future<int> jsonForget({
+    required String key,
+    String path = r'$',
+  }) async {
+    // JSON.FORGET is just an alias for JSON.DEL
+    final result = await execute(<String>['JSON.FORGET', key, path]);
+
+    if (result is int) return result;
+    return int.tryParse(result.toString()) ?? 0;
+  }
 
   /// JSON.GET key [path ...]
   ///
@@ -369,8 +446,8 @@ mixin JsonCommands {
   ///
   /// [key] The key to retrieve.
   /// [path] The JSON path. Defaults to root (`$`).
-  @Deprecated('Will be removed in the future.')
-  Future<dynamic> jsonGetOld({
+  @Deprecated('Use [JsonGet] instead. This method will be removed in v3.0.0.')
+  Future<dynamic> deprecatedJsonGet({
     required String key,
     String path = r'$',
   }) async {
@@ -465,8 +542,150 @@ mixin JsonCommands {
       // logger.warning('jsonMerge is Redis-only; skipped on Valkey.');
     }
 
+    setAllowRedisOnlyJsonMerge = false; // Here. Always (should be) false.
+
     final jsonData = jsonEncode(data);
     await execute(<String>['JSON.MERGE', key, path, jsonData]);
+  }
+
+  Future<void> jsonMergeForce({
+    required String key,
+    required String path,
+    required dynamic data,
+  }) async {
+    setAllowRedisOnlyJsonMerge = true;
+    return jsonMerge(key: key, path: path, data: data);
+  }
+
+  /// JSON.MGET key [key ...] path
+  ///
+  /// Returns the values at [path] from multiple [keys].
+  ///
+  /// [keys] A list of keys to retrieve.
+  /// [path] The JSON path.
+  ///
+  /// Returns a List of dynamic values. Each item is decoded from JSON.
+  /// If a key does not exist, the corresponding item will be null.
+  Future<List<dynamic>> jsonMGet({
+    required List<String> keys,
+    required String path,
+  }) async {
+    if (keys.isEmpty) {
+      throw ArgumentError('The list of keys cannot be empty.');
+    }
+
+    // Command format: JSON.MGET key1 key2 ... path
+    final cmd = <String>['JSON.MGET', ...keys, path];
+
+    final result = await execute(cmd);
+
+    if (result is List) {
+      // The result is a list of JSON strings (or nulls).
+      // We need to decode each string.
+      return result.map((item) {
+        if (item == null) return null;
+        try {
+          return jsonDecode(item.toString());
+        } catch (e) {
+          // Fallback if parsing fails
+          return item;
+        }
+      }).toList();
+    }
+
+    return [];
+  }
+
+  /// JSON.MSET key path value [key path value ...]
+  ///
+  /// Sets multiple JSON values at once.
+  ///
+  /// [entries] A list of [JsonMSetEntry] objects containing key, path, and
+  /// value.
+  ///
+  /// Example:
+  /// ```dart
+  /// await client.jsonMset(entries: [
+  ///   JsonMsetEntry(key: 'user:1', path: '$.name', value: 'Alice'),
+  ///   JsonMsetEntry(key: 'user:2', path: '$.name', value: 'Bob'),
+  /// ]);
+  /// ```
+  Future<void> jsonMSet({
+    required List<JsonMSetEntry> entries,
+  }) async {
+    if (entries.isEmpty) return;
+
+    final cmd = <String>['JSON.MSET'];
+
+    for (final entry in entries) {
+      cmd.add(entry.key);
+      cmd.add(entry.path);
+      cmd.add(jsonEncode(entry.value));
+    }
+
+    await execute(cmd);
+  }
+
+  /// JSON.NUMINCRBY key path value
+  ///
+  /// Increments the numeric value at [path] by [value].
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path.
+  /// [value] The number to increment by (can be int or double).
+  ///
+  /// Returns the new value.
+  Future<dynamic> jsonNumIncrBy({
+    required String key,
+    required String path,
+    required num value,
+  }) async {
+    final result = await execute(<String>[
+      'JSON.NUMINCRBY',
+      key,
+      path,
+      value.toString(),
+    ]);
+
+    // Result might be a string representing the number, or a list if
+    // path matched multiple.
+    // Use _unwrapOne to handle single results gracefully.
+    final unwrapped = _unwrapOne(result);
+
+    // If it's a JSON string representing a number, decode it.
+    if (unwrapped is String) {
+      return jsonDecode(unwrapped);
+    }
+    return unwrapped;
+  }
+
+  /// JSON.NUMMULTBY key path value
+  ///
+  /// Multiplies the numeric value at [path] by [value].
+  ///
+  /// [key] The key to modify.
+  /// [path] The JSON path.
+  /// [value] The number to multiply by (can be int or double).
+  ///
+  /// Returns the new value.
+  Future<dynamic> jsonNumMultBy({
+    required String key,
+    required String path,
+    required num value,
+  }) async {
+    final result = await execute(<String>[
+      'JSON.NUMMULTBY',
+      key,
+      path,
+      value.toString(),
+    ]);
+
+    final unwrapped = _unwrapOne(result);
+
+    if (unwrapped is String) {
+      return jsonDecode(unwrapped);
+    }
+    return unwrapped;
   }
 
   /// JSON.SET key path value [NX | XX]
@@ -479,8 +698,8 @@ mixin JsonCommands {
   /// [jsonEncode].
   /// [nx] If true, set the value only if it does not exist.
   /// [xx] If true, set the value only if it already exists.
-  @Deprecated('Will be removed in the future.')
-  Future<void> jsonSetOld({
+  @Deprecated('Use [JsonSet] instead. This method will be removed in v3.0.0.')
+  Future<void> deprecatedJsonSet({
     required String key,
     required String path,
     required dynamic data,
