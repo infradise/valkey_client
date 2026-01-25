@@ -1,7 +1,18 @@
-## Supported Module Commands for JSON
+## Supported JSON Commands (Redis and Valkey)
 
-### Valkey JSON (aka. valkey-json)
+### Commands Supported Only by Redis JSON
+```sh
+JSON.MERGE
+```
 
+### Commands Supported Only by Valkey JSON (aka. valkey-json)
+```
+JSON.DEBUG DEPTH
+JSON.DEBUG FIELDS
+JSON.DEBUG HELP
+```
+
+### JSON Commands Supported by Both Redis and Valkey
 ```sh
 JSON.ARRAPPEND
 JSON.ARRINDEX
@@ -11,6 +22,7 @@ JSON.ARRPOP
 JSON.ARRTRIM
 JSON.CLEAR
 JSON.DEBUG
+JSON.DEBUG MEMORY 
 JSON.DEL
 JSON.FORGET
 JSON.GET
@@ -26,12 +38,4 @@ JSON.STRAPPEND
 JSON.STRLEN
 JSON.TOGGLE
 JSON.TYPE
-```
-
-### Commands for Redis JSON
-
-Valkey JSON, plus
-
-```
-JSON.MERGE
 ```
