@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.5.3
+* **JSON Commands**: Introduced Redis JSON and Valkey JSON (aka. valkey-json)
+    * `jsonObjKeys`, `jsonObjLen`, `jsonStrAppend`, `jsonStrLen`
+
 ## 2.5.2
 * **JSON Commands**: Introduced Redis JSON and Valkey JSON (aka. valkey-json)
     * `jsonClear`, `jsonForget`, `jsonMGet`, `jsonMSet`, `jsonNumIncrBy`,`jsonNumMultBy`, `jsonMergeForce`
