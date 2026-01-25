@@ -244,12 +244,12 @@ Future<void> main() async {
 
     test('HGET should retrieve the correct value', () async {
       await client.hset('test:hash:get', 'field', 'hello');
-      final response = await client.hget('test:hash:get', 'field');
+      final response = await client.hGet('test:hash:get', 'field');
       expect(response, 'hello');
     });
 
     test('HGET on a non-existent field should return null', () async {
-      final response = await client.hget('test:hash:get', 'non_existent_field');
+      final response = await client.hGet('test:hash:get', 'non_existent_field');
       expect(response, isNull);
     });
 

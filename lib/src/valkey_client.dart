@@ -1797,11 +1797,15 @@ class ValkeyClient
 
   // --- HASH (v0.5.0) ---
   @override
-  Future<String?> hget(String key, String field) async {
+  Future<String?> hGet(String key, String field) async {
     final response = await execute(['HGET', key, field]);
     // Returns a Bulk String ($) or Null ($-1)
     return response as String?;
   }
+
+  @override
+  @Deprecated('Use [hGet] instead. This method will be removed in v3.0.0.')
+  Future<String?> hget(String key, String field) async => hGet(key, field);
 
   @override
   Future<int> hset(String key, String field, String value) async {

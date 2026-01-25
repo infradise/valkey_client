@@ -63,7 +63,7 @@ Future<void> runCommandExamples(ValkeyClientBase client) async {
     await client.hset('user:1', 'project', 'valkey_client');
 
     print('Sending: HGET user:1 name');
-    final hgetResponse = await client.hget('user:1', 'name');
+    final hgetResponse = await client.hGet('user:1', 'name');
     print('Received: $hgetResponse'); // Should be "Valkyrie"
 
     print('Sending: HGETALL user:1');
