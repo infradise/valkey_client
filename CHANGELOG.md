@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.5.4
+* **JSON Commands**: Introduced Redis JSON and Valkey JSON (aka. valkey-json)
+    * `jsonDebug`, `jsonResp`, `jsonToggle`, `jsonType`
+
 ## 2.5.3
 * **JSON Commands**: Introduced Redis JSON and Valkey JSON (aka. valkey-json)
     * `jsonObjKeys`, `jsonObjLen`, `jsonStrAppend`, `jsonStrLen`
