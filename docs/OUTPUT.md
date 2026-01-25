@@ -122,6 +122,17 @@ OR
 [2026-01-23T01:53:36.111841] JSON Basic Get Example - INFO: Closing all cluster connections...
 ```
 
+### json_obj_str_simple_example.dart
+```sh
+[2026-01-26T05:58:44.899724] JSON Obj and Str Example - INFO: ✅ JSON module detected. Ready to go!
+[2026-01-26T05:58:44.903726] JSON Obj and Str Example - INFO: Keys: [name, age]
+[2026-01-26T05:58:44.904326] JSON Obj and Str Example - INFO: Obj Len: 2
+[2026-01-26T05:58:44.905651] JSON Obj and Str Example - INFO: New Str Len: 11
+[2026-01-26T05:58:44.906150] JSON Obj and Str Example - INFO: Str Len: 11
+[2026-01-26T05:58:44.908283] JSON Obj and Str Example - INFO: Content: Hello World
+[2026-01-26T05:58:44.908315] JSON Obj and Str Example - INFO: Closing all cluster connections...
+```
+
 ### json_set_and_get_example.dart
 ```sh
 [2026-01-23T01:44:22.536583] JSON Set and Get Example - INFO: ✅ JSON module detected. Ready to go!
