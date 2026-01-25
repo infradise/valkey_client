@@ -122,6 +122,18 @@ OR
 [2026-01-23T01:53:36.111841] JSON Basic Get Example - INFO: Closing all cluster connections...
 ```
 
+### json_debug_type_simple_example.dart
+```sh
+[2026-01-26T07:12:48.359045] JSON Debug Type Simple Example - INFO: ✅ JSON module detected. Ready to go!
+[2026-01-26T07:12:48.359944] JSON Debug Type Simple Example - INFO: --- 🚀 JSON Debug/Type/Toggle Examples ---
+[2026-01-26T07:12:48.362817] JSON Debug Type Simple Example - INFO: Type (root): object
+[2026-01-26T07:12:48.363536] JSON Debug Type Simple Example - INFO: Type (name): string
+[2026-01-26T07:12:48.364160] JSON Debug Type Simple Example - INFO: Toggled isActive: 0
+[2026-01-26T07:12:48.364759] JSON Debug Type Simple Example - INFO: Memory Usage: 104 bytes
+[2026-01-26T07:12:48.365544] JSON Debug Type Simple Example - INFO: RESP Dump: [{, [isActive, false], [name, Valkey], [count, 10]]
+[2026-01-26T07:12:48.365565] JSON Debug Type Simple Example - INFO: Closing all cluster connections...
+```
+
 ### json_obj_str_simple_example.dart
 ```sh
 [2026-01-26T05:58:44.899724] JSON Obj and Str Example - INFO: ✅ JSON module detected. Ready to go!
