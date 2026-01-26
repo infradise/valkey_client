@@ -2,6 +2,26 @@
 
 ## example/valkey_json
 
+### enhanced_paths_example.dart
+```sh
+[2026-01-26T23:23:36.349208] Get Enhanced Paths Example - INFO: ✅ JSON module detected. Ready to go!
+[2026-01-26T23:23:36.350238] Get Enhanced Paths Example - INFO: --- JSON Enhanced Path Commands Example ---
+[2026-01-26T23:23:36.350254] Get Enhanced Paths Example - INFO: 🚀 [Part 1] Array Enhanced Operations
+[2026-01-26T23:23:36.352680] Get Enhanced Paths Example - INFO: 1. Initialized: {"a": [1], "b": {"c": [2]}, "d": "not_array"}
+[2026-01-26T23:23:36.354860] Get Enhanced Paths Example - INFO: 2. ArrAppend Result: [2, 2, null, null]
+[2026-01-26T23:23:36.356007] Get Enhanced Paths Example - INFO: 3. ArrInsert Result: [3, 3]
+[2026-01-26T23:23:36.356685] Get Enhanced Paths Example - INFO: 4. ArrIndex Result : [0, 0]
+[2026-01-26T23:23:36.357244] Get Enhanced Paths Example - INFO: 5. ArrLen Result   : [3, 3]
+[2026-01-26T23:23:36.360060] Get Enhanced Paths Example - INFO: 6. ArrPop Result   : [3, 3]
+[2026-01-26T23:23:36.360734] Get Enhanced Paths Example - INFO: 7. ArrTrim Result  : [1, 1]
+[2026-01-26T23:23:36.360749] Get Enhanced Paths Example - INFO: 🚀 [Part 2] Object Enhanced Operations
+[2026-01-26T23:23:36.362556] Get Enhanced Paths Example - INFO: 9. ObjKeys Result  : [[name, role], [created, active], []]
+[2026-01-26T23:23:36.362573] Get Enhanced Paths Example - INFO: 🚀 [Part 3] String Enhanced Operations
+[2026-01-26T23:23:36.364224] Get Enhanced Paths Example - INFO: 11. StrAppend Result: [11, 10, null]
+[2026-01-26T23:23:36.365135] Get Enhanced Paths Example - INFO: 12. StrLen Result   : [11, 10]
+[2026-01-26T23:23:36.365150] Get Enhanced Paths Example - INFO: Closing all cluster connections...
+```
+
 ### get_module_list_example.dart
 ```sh
 📦 Loaded Modules:
