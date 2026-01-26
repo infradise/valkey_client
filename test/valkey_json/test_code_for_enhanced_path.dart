@@ -50,59 +50,75 @@ void main() async {
     printPrettyModuleList(modules);
   });
 
-  // TODO: Test for commands with enhancedPaths
+  // Test for commands with enhancedPaths
 
-  // test('jsonArrAppendEnhanced - append to multiple arrays', () async {
-  //   await client.jsonSet(
-  //       key: 'doc:arrAppendEnh',
-  //       path: '.',
-  //       value: '{"a":[1], "b":{"c":[2]}, "d":"not_array"}');
-  //   final result = await client.jsonArrAppendEnhanced(
-  //     key: 'doc:arrAppendEnh',
-  //     enhancedPaths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
-  //     value: '3', // JSON encoded value
-  //   );
-  //   expect(result, equals([2, 2, null, null]));
-  //   final finalDoc = await client.jsonGet(
-  //     key: 'doc:arrAppendEnh', path: '.');
-  //   expect(finalDoc, contains('"a":[1,3]'));
-  //   expect(finalDoc, contains('"c":[2,3]'));
-  // });
+  test('jsonArrAppendEnhanced - append to multiple arrays', () async {
+    await client.jsonSet(
+        key: 'doc:arrAppendEnh',
+        path: '.',
+        data: '{"a":[1], "b":{"c":[2]}, "d":"not_array"}');
+    final result = await client.jsonArrAppendEnhanced(
+      key: 'doc:arrAppendEnh',
+      paths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
+      // (X) value: '3', // JSON encoded value
+      value: 3, // Expected Usage
+    );
+    expect(result, equals([2, 2, null, null]));
+    final finalDoc =
+        await client.jsonGet(key: 'doc:arrAppendEnh', path: '.') as Map;
+    // (X) expect(finalDoc, contains('"a":[1,3]'));
+    expect(finalDoc, containsPair('a', [1, 3])); // Expected Usage
 
-  // test('jsonArrIndexEnhanced - find in multiple arrays', () async {
-  //   await client.jsonSet(
-  //     key: 'doc:arrIndexEnh',
-  //     path: '.',
-  //     value: '{"a":[1,2,3], "b":{"c":[3,4,5]}, "d":"not_array"}',
-  //   );
-  //   final result = await client.jsonArrIndexEnhanced(
-  //     key: 'doc:arrIndexEnh',
-  //     enhancedPaths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
-  //     value: '3', // JSON encoded value
-  //     start: null,
-  //     end: null,
-  //   );
-  //   expect(result, equals([2, 0, null, null]));
-  // });
+    // (X) expect(finalDoc, contains('"c":[2,3]'));
+    //
+    final b = finalDoc['b'] as Map<String, dynamic>;
+    expect(b['c'], equals([2, 3])); // Expected Usage
+    expect(finalDoc,
+        containsPair('b', containsPair('c', [2, 3]))); // Expected Usage
+    // Expected Usage
+    expect(finalDoc.containsKey('b'), isTrue);
+    expect(b, isA<Map>());
+    expect((b as Map).containsKey('c'), isTrue);
+    expect((b as Map)['c'], equals([2, 3]));
+  });
+
+  test('jsonArrIndexEnhanced - find in multiple arrays', () async {
+    await client.jsonSet(
+      key: 'doc:arrIndexEnh',
+      path: '.',
+      data: '{"a":[1,2,3], "b":{"c":[3,4,5]}, "d":"not_array"}',
+    );
+    final result = await client.jsonArrIndexEnhanced(
+      key: 'doc:arrIndexEnh',
+      paths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
+      // (X) value: '3', // JSON encoded value
+      value: 3, // Expected Usage
+      start: null,
+      stop: null,
+    );
+    expect(result, equals([2, 0, null, null]));
+  });
 
   // test('jsonArrInsertEnhanced - insert into multiple arrays', () async {
   //   await client.jsonSet(
   //       key: 'doc:arrInsertEnh',
   //       path: '.',
-  //       value: '{"a":[1,3], "b":{"c":[4,6]}, "d":"not_array"}');
+  //       data: '{"a":[1,3], "b":{"c":[4,6]}, "d":"not_array"}');
   //   final result = await client.jsonArrInsertEnhanced(
   //     key: 'doc:arrInsertEnh',
-  //     enhancedPaths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
+  //     paths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
   //     index: 1,
   //     values: ['2', '5'], // JSON encoded values
   //   );
-  //   // Note: JSON.ARRINSERT inserts all values at the specified index for each matched path.
-  //   // The command takes multiple values to insert, but the enhanced path applies to each path individually.
-  //   // So, for '$.a', it inserts '2' and '5' at index 1. For '$.b.c', it inserts '2' and '5' at index 1.
+  //   // Note: JSON.ARRINSERT inserts all values at the specified index for
+  //   // each matched path.
+  //   // The command takes multiple values to insert, but the enhanced path
+  //   // applies to each path individually.
+  //   // So, for '$.a', it inserts '2' and '5' at index 1. For '$.b.c', it
+  //   // inserts '2' and '5' at index 1.
   //   // The return is the new length of *each* array.
   //   expect(result, equals([4, 4, null, null])); // [1,2,5,3] and [4,2,5,6]
-  //   final finalDoc = await client.jsonGet(
-  //     key: 'doc:arrInsertEnh', path: '.');
+  //   final finalDoc = await client.jsonGet(key: 'doc:arrInsertEnh', path: '.');
   //   expect(finalDoc, contains('"a":[1,2,5,3]'));
   //   expect(finalDoc, contains('"c":[4,2,5,6]'));
   // });
@@ -111,10 +127,10 @@ void main() async {
   //   await client.jsonSet(
   //       key: 'doc:arrLenEnh',
   //       path: '.',
-  //       value: '{"a":[1,2,3], "b":{"c":[4,5]}, "d":"not_array"}');
+  //       data: '{"a":[1,2,3], "b":{"c":[4,5]}, "d":"not_array"}');
   //   final result = await client.jsonArrLenEnhanced(
   //     key: 'doc:arrLenEnh',
-  //     enhancedPaths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
+  //     paths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
   //   );
   //   expect(result, equals([3, 2, null, null]));
   // });
@@ -123,11 +139,11 @@ void main() async {
   //   await client.jsonSet(
   //     key: 'doc:arrPopEnh',
   //     path: '.',
-  //     value: '{"a":[1,2,3], "b":{"c":[4,5,6]}, "d":"not_array", "e":[]}',
+  //     data: '{"a":[1,2,3], "b":{"c":[4,5,6]}, "d":"not_array", "e":[]}',
   //   );
   //   final result = await client.jsonArrPopEnhanced(
   //     key: 'doc:arrPopEnh',
-  //     enhancedPaths: [r'$.a', r'$.b.c', r'$.d', r'$.e', r'$.nonexistent'],
+  //     paths: [r'$.a', r'$.b.c', r'$.d', r'$.e', r'$.nonexistent'],
   //     index: 1,
   //   );
   //   expect(result, equals(['2', '5', null, null, null]));
@@ -140,11 +156,11 @@ void main() async {
   //   await client.jsonSet(
   //     key: 'doc:arrTrimEnh',
   //     path: '.',
-  //     value: '{"a":[1,2,3,4], "b":{"c":[5,6,7,8]}, "d":"not_array"}',
+  //     data: '{"a":[1,2,3,4], "b":{"c":[5,6,7,8]}, "d":"not_array"}',
   //   );
   //   final result = await client.jsonArrTrimEnhanced(
   //     key: 'doc:arrTrimEnh',
-  //     enhancedPaths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
+  //     paths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
   //     start: 1,
   //     stop: 2,
   //   );
@@ -158,11 +174,11 @@ void main() async {
   //   await client.jsonSet(
   //     key: 'doc:objKeysEnh',
   //     path: '.',
-  //     value: '{"obj1":{"a":1,"b":2}, "arr":[1,2], "obj2":{"c":3,"d":4}}',
+  //     data: '{"obj1":{"a":1,"b":2}, "arr":[1,2], "obj2":{"c":3,"d":4}}',
   //   );
-  //   final result = await client.jsonObjkeysEnhanced(
+  //   final result = await client.jsonObjKeysEnhanced(
   //     key: 'doc:objKeysEnh',
-  //     enhancedPaths: [r'$.obj1', r'$.obj2', r'$.arr', r'$.nonexistent'],
+  //     paths: [r'$.obj1', r'$.obj2', r'$.arr', r'$.nonexistent'],
   //   );
   //   expect(result, isNotNull);
   //   expect(result!.length, 4);
@@ -176,10 +192,10 @@ void main() async {
   //   await client.jsonSet(
   //       key: 'doc:strAppendEnh',
   //       path: '.',
-  //       value: '{"s1":"hello", "s2":"world", "arr":[1,2]}');
-  //   final result = await client.jsonStrappendEnhanced(
+  //       data: '{"s1":"hello", "s2":"world", "arr":[1,2]}');
+  //   final result = await client.jsonStrAppendEnhanced(
   //     key: 'doc:strAppendEnh',
-  //     enhancedPaths: [r'$.s1', r'$.s2', r'$.arr', r'$.nonexistent'],
+  //     paths: [r'$.s1', r'$.s2', r'$.arr', r'$.nonexistent'],
   //     value: '"_suffix"', // JSON encoded string
   //   );
   //   expect(
@@ -190,8 +206,7 @@ void main() async {
   //         null,
   //         null
   //       ])); // "hello_suffix", "world_suffix" (length of "value" is 8)
-  //   final finalDoc = await client.jsonGet(
-  //     key: 'doc:strAppendEnh', path: '.');
+  //   final finalDoc = await client.jsonGet(key: 'doc:strAppendEnh', path: '.');
   //   expect(finalDoc, contains('"s1":"hello_suffix"'));
   //   expect(finalDoc, contains('"s2":"world_suffix"'));
   // });
@@ -200,10 +215,10 @@ void main() async {
   //   await client.jsonSet(
   //       key: 'doc:strLenEnh',
   //       path: '.',
-  //       value: '{"s1":"hello", "s2":"world123", "arr":[1,2]}');
-  //   final result = await client.jsonStrlenEnhanced(
+  //       data: '{"s1":"hello", "s2":"world123", "arr":[1,2]}');
+  //   final result = await client.jsonStrLenEnhanced(
   //     key: 'doc:strLenEnh',
-  //     enhancedPaths: [r'$.s1', r'$.s2', r'$.arr', r'$.nonexistent'],
+  //     paths: [r'$.s1', r'$.s2', r'$.arr', r'$.nonexistent'],
   //   );
   //   expect(result, equals([5, 8, null, null]));
   // });
@@ -211,7 +226,7 @@ void main() async {
   // test('jsonArrAppendEnhanced - key does not exist', () async {
   //   final result = await client.jsonArrAppendEnhanced(
   //     key: 'nonexistent:arrAppendEnh',
-  //     enhancedPaths: [r'$.a'],
+  //     paths: [r'$.a'],
   //     value: '1',
   //   );
   //   expect(result, isNull);
@@ -220,10 +235,10 @@ void main() async {
   // test('jsonArrIndexEnhanced - key does not exist', () async {
   //   final result = await client.jsonArrIndexEnhanced(
   //     key: 'nonexistent:arrIndexEnh',
-  //     enhancedPaths: [r'$.a'],
+  //     paths: [r'$.a'],
   //     value: '1',
   //     start: null,
-  //     end: null,
+  //     stop: null,
   //   );
   //   expect(result, isNull);
   // });
@@ -231,7 +246,7 @@ void main() async {
   // test('jsonArrInsertEnhanced - key does not exist', () async {
   //   final result = await client.jsonArrInsertEnhanced(
   //     key: 'nonexistent:arrInsertEnh',
-  //     enhancedPaths: [r'$.a'],
+  //     paths: [r'$.a'],
   //     index: 0,
   //     values: ['1'],
   //   );
@@ -239,21 +254,21 @@ void main() async {
   // });
 
   // test('jsonArrLenEnhanced - key does not exist', () async {
-  //   final result = await client.jsonArrLenEnhanced(
-  //       key: 'nonexistent:arrLenEnh', enhancedPaths: [r'$.a']);
+  //   final result = await client
+  //       .jsonArrLenEnhanced(key: 'nonexistent:arrLenEnh', paths: [r'$.a']);
   //   expect(result, isNull);
   // });
 
   // test('jsonArrPopEnhanced - key does not exist', () async {
   //   final result = await client.jsonArrPopEnhanced(
-  //       key: 'nonexistent:arrPopEnh', enhancedPaths: [r'$.a'], index: 0);
+  //       key: 'nonexistent:arrPopEnh', paths: [r'$.a'], index: 0);
   //   expect(result, isNull);
   // });
 
   // test('jsonArrTrimEnhanced - key does not exist', () async {
   //   final result = await client.jsonArrTrimEnhanced(
   //     key: 'nonexistent:arrTrimEnh',
-  //     enhancedPaths: [r'$.a'],
+  //     paths: [r'$.a'],
   //     start: 0,
   //     stop: 0,
   //   );
@@ -261,23 +276,23 @@ void main() async {
   // });
 
   // test('jsonObjKeysEnhanced - key does not exist', () async {
-  //   final result = await client.jsonObjkeysEnhanced(
-  //       key: 'nonexistent:objKeysEnh', enhancedPaths: [r'$.a']);
+  //   final result = await client
+  //       .jsonObjKeysEnhanced(key: 'nonexistent:objKeysEnh', paths: [r'$.a']);
   //   expect(result, isNull);
   // });
 
   // test('jsonStrappendEnhanced - key does not exist', () async {
-  //   final result = await client.jsonStrappendEnhanced(
+  //   final result = await client.jsonStrAppendEnhanced(
   //     key: 'nonexistent:strAppendEnh',
-  //     enhancedPaths: [r'$.a'],
+  //     paths: [r'$.a'],
   //     value: '"suffix"',
   //   );
   //   expect(result, isNull);
   // });
 
   // test('jsonStrLenEnhanced - key does not exist', () async {
-  //   final result = await client.jsonStrlenEnhanced(
-  //       key: 'nonexistent:strLenEnh', enhancedPaths: [r'$.a']);
+  //   final result = await client
+  //       .jsonStrLenEnhanced(key: 'nonexistent:strLenEnh', paths: [r'$.a']);
   //   expect(result, isNull);
   // });
 }
