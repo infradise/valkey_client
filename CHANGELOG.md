@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.5.5
+* **JSON Enhanced Commands**: Batch Operations
+    * `jsonArrAppendEnhanced`, `jsonArrIndexEnhanced`, `jsonArrInsertEnhanced`, `jsonArrLenEnhanced`, `jsonArrPopEnhanced`, `jsonArrTrimEnhanced`, `jsonObjKeysEnhanced`, `jsonStrAppendEnhanced`, `jsonStrLenEnhanced`
+
 ## 2.5.4
 * **JSON Commands**: Introduced Redis JSON and Valkey JSON (aka. valkey-json)
     * `jsonDebug`, `jsonResp`, `jsonToggle`, `jsonType`
