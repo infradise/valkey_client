@@ -66,6 +66,7 @@ void main() async {
     expect(result, equals([2, 2, null, null]));
     final finalDoc =
         await client.jsonGet(key: 'doc:arrAppendEnh', path: '.') as Map;
+
     // (X) expect(finalDoc, contains('"a":[1,3]'));
     expect(finalDoc, containsPair('a', [1, 3])); // Expected Usage
 
@@ -99,58 +100,71 @@ void main() async {
     expect(result, equals([2, 0, null, null]));
   });
 
-  // test('jsonArrInsertEnhanced - insert into multiple arrays', () async {
-  //   await client.jsonSet(
-  //       key: 'doc:arrInsertEnh',
-  //       path: '.',
-  //       data: '{"a":[1,3], "b":{"c":[4,6]}, "d":"not_array"}');
-  //   final result = await client.jsonArrInsertEnhanced(
-  //     key: 'doc:arrInsertEnh',
-  //     paths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
-  //     index: 1,
-  //     values: ['2', '5'], // JSON encoded values
-  //   );
-  //   // Note: JSON.ARRINSERT inserts all values at the specified index for
-  //   // each matched path.
-  //   // The command takes multiple values to insert, but the enhanced path
-  //   // applies to each path individually.
-  //   // So, for '$.a', it inserts '2' and '5' at index 1. For '$.b.c', it
-  //   // inserts '2' and '5' at index 1.
-  //   // The return is the new length of *each* array.
-  //   expect(result, equals([4, 4, null, null])); // [1,2,5,3] and [4,2,5,6]
-  //   final finalDoc = await client.jsonGet(key: 'doc:arrInsertEnh', path: '.');
-  //   expect(finalDoc, contains('"a":[1,2,5,3]'));
-  //   expect(finalDoc, contains('"c":[4,2,5,6]'));
-  // });
+  test('jsonArrInsertEnhanced - insert into multiple arrays', () async {
+    await client.jsonSet(
+        key: 'doc:arrInsertEnh',
+        path: '.',
+        data: '{"a":[1,3], "b":{"c":[4,6]}, "d":"not_array"}');
+    final result = await client.jsonArrInsertEnhanced(
+      key: 'doc:arrInsertEnh',
+      paths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
+      index: 1,
+      // (X) values: ['2', '5'], // JSON encoded values
+      values: [2, 5], // Expected Usage
+    );
+    // Note: JSON.ARRINSERT inserts all values at the specified index for
+    // each matched path.
+    // The command takes multiple values to insert, but the enhanced path
+    // applies to each path individually.
+    // So, for '$.a', it inserts '2' and '5' at index 1. For '$.b.c', it
+    // inserts '2' and '5' at index 1.
+    // The return is the new length of *each* array.
+    expect(result, equals([4, 4, null, null])); // [1,2,5,3] and [4,2,5,6]
+    final finalDoc = await client.jsonGet(key: 'doc:arrInsertEnh', path: '.');
 
-  // test('jsonArrLenEnhanced - get lengths of multiple arrays', () async {
-  //   await client.jsonSet(
-  //       key: 'doc:arrLenEnh',
-  //       path: '.',
-  //       data: '{"a":[1,2,3], "b":{"c":[4,5]}, "d":"not_array"}');
-  //   final result = await client.jsonArrLenEnhanced(
-  //     key: 'doc:arrLenEnh',
-  //     paths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
-  //   );
-  //   expect(result, equals([3, 2, null, null]));
-  // });
+    // (X) expect(finalDoc, contains('"a":[1,2,5,3]'));
+    expect(finalDoc, containsPair('a', [1, 2, 5, 3])); // Expected Usage
 
-  // test('jsonArrPopEnhanced - pop from multiple arrays', () async {
-  //   await client.jsonSet(
-  //     key: 'doc:arrPopEnh',
-  //     path: '.',
-  //     data: '{"a":[1,2,3], "b":{"c":[4,5,6]}, "d":"not_array", "e":[]}',
-  //   );
-  //   final result = await client.jsonArrPopEnhanced(
-  //     key: 'doc:arrPopEnh',
-  //     paths: [r'$.a', r'$.b.c', r'$.d', r'$.e', r'$.nonexistent'],
-  //     index: 1,
-  //   );
-  //   expect(result, equals(['2', '5', null, null, null]));
-  //   final finalDoc = await client.jsonGet(key: 'doc:arrPopEnh', path: '.');
-  //   expect(finalDoc, contains('"a":[1,3]'));
-  //   expect(finalDoc, contains('"c":[4,6]'));
-  // });
+    // (X) expect(finalDoc, contains('"c":[4,2,5,6]'));
+    expect(finalDoc,
+        containsPair('b', containsPair('c', [4, 2, 5, 6]))); // Expected Usage
+  });
+
+  test('jsonArrLenEnhanced - get lengths of multiple arrays', () async {
+    await client.jsonSet(
+        key: 'doc:arrLenEnh',
+        path: '.',
+        data: '{"a":[1,2,3], "b":{"c":[4,5]}, "d":"not_array"}');
+    final result = await client.jsonArrLenEnhanced(
+      key: 'doc:arrLenEnh',
+      paths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
+    );
+    expect(result, equals([3, 2, null, null]));
+  });
+
+  test('jsonArrPopEnhanced - pop from multiple arrays', () async {
+    await client.jsonSet(
+      key: 'doc:arrPopEnh',
+      path: '.',
+      data: '{"a":[1,2,3], "b":{"c":[4,5,6]}, "d":"not_array", "e":[]}',
+    );
+    final result = await client.jsonArrPopEnhanced(
+      key: 'doc:arrPopEnh',
+      paths: [r'$.a', r'$.b.c', r'$.d', r'$.e', r'$.nonexistent'],
+      index: 1,
+    );
+    // (X) expect(result, equals(['2', '5', null, null, null]));
+    expect(result, equals([2, 5, null, null, <List>[]])); // Expected Usage
+
+    final finalDoc = await client.jsonGet(key: 'doc:arrPopEnh', path: '.');
+
+    // (X) expect(finalDoc, contains('"a":[1,3]'));
+    expect(finalDoc, containsPair('a', [1, 3])); // Expected Usage
+
+    // (X) expect(finalDoc, contains('"c":[4,6]'));
+    expect(finalDoc,
+        containsPair('b', containsPair('c', [4, 6]))); // Expected Usage
+  });
 
   // test('jsonArrTrimEnhanced - trim multiple arrays', () async {
   //   await client.jsonSet(
