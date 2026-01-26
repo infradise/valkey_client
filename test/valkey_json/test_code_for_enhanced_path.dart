@@ -166,64 +166,80 @@ void main() async {
         containsPair('b', containsPair('c', [4, 6]))); // Expected Usage
   });
 
-  // test('jsonArrTrimEnhanced - trim multiple arrays', () async {
-  //   await client.jsonSet(
-  //     key: 'doc:arrTrimEnh',
-  //     path: '.',
-  //     data: '{"a":[1,2,3,4], "b":{"c":[5,6,7,8]}, "d":"not_array"}',
-  //   );
-  //   final result = await client.jsonArrTrimEnhanced(
-  //     key: 'doc:arrTrimEnh',
-  //     paths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
-  //     start: 1,
-  //     stop: 2,
-  //   );
-  //   expect(result, equals([2, 2, null, null]));
-  //   final finalDoc = await client.jsonGet(key: 'doc:arrTrimEnh', path: '.');
-  //   expect(finalDoc, contains('"a":[2,3]'));
-  //   expect(finalDoc, contains('"c":[6,7]'));
-  // });
+  test('jsonArrTrimEnhanced - trim multiple arrays', () async {
+    await client.jsonSet(
+      key: 'doc:arrTrimEnh',
+      path: '.',
+      data: '{"a":[1,2,3,4], "b":{"c":[5,6,7,8]}, "d":"not_array"}',
+    );
+    final result = await client.jsonArrTrimEnhanced(
+      key: 'doc:arrTrimEnh',
+      paths: [r'$.a', r'$.b.c', r'$.d', r'$.nonexistent'],
+      start: 1,
+      stop: 2,
+    );
+    expect(result, equals([2, 2, null, null]));
+    final finalDoc = await client.jsonGet(key: 'doc:arrTrimEnh', path: '.');
 
-  // test('jsonObjKeysEnhanced - get keys from multiple objects', () async {
-  //   await client.jsonSet(
-  //     key: 'doc:objKeysEnh',
-  //     path: '.',
-  //     data: '{"obj1":{"a":1,"b":2}, "arr":[1,2], "obj2":{"c":3,"d":4}}',
-  //   );
-  //   final result = await client.jsonObjKeysEnhanced(
-  //     key: 'doc:objKeysEnh',
-  //     paths: [r'$.obj1', r'$.obj2', r'$.arr', r'$.nonexistent'],
-  //   );
-  //   expect(result, isNotNull);
-  //   expect(result!.length, 4);
-  //   expect(result[0], containsAll(['a', 'b']));
-  //   expect(result[1], containsAll(['c', 'd']));
-  //   expect(result[2], isNull); // $.arr is not an object
-  //   expect(result[3], isNull); // $.nonexistent
-  // });
+    // (X) expect(finalDoc, contains('"a":[2,3]'));
+    expect(finalDoc, containsPair('a', [2, 3])); // Expected Usage
 
-  // test('jsonStrAppendEnhanced - append to multiple strings', () async {
-  //   await client.jsonSet(
-  //       key: 'doc:strAppendEnh',
-  //       path: '.',
-  //       data: '{"s1":"hello", "s2":"world", "arr":[1,2]}');
-  //   final result = await client.jsonStrAppendEnhanced(
-  //     key: 'doc:strAppendEnh',
-  //     paths: [r'$.s1', r'$.s2', r'$.arr', r'$.nonexistent'],
-  //     value: '"_suffix"', // JSON encoded string
-  //   );
-  //   expect(
-  //       result,
-  //       equals([
-  //         13,
-  //         13,
-  //         null,
-  //         null
-  //       ])); // "hello_suffix", "world_suffix" (length of "value" is 8)
-  //   final finalDoc = await client.jsonGet(key: 'doc:strAppendEnh', path: '.');
-  //   expect(finalDoc, contains('"s1":"hello_suffix"'));
-  //   expect(finalDoc, contains('"s2":"world_suffix"'));
-  // });
+    // (X) expect(finalDoc, contains('"c":[6,7]'));
+    expect(finalDoc,
+        containsPair('b', containsPair('c', [6, 7]))); // Expected Usage
+  });
+
+  test('jsonObjKeysEnhanced - get keys from multiple objects', () async {
+    await client.jsonSet(
+      key: 'doc:objKeysEnh',
+      path: '.',
+      data: '{"obj1":{"a":1,"b":2}, "arr":[1,2], "obj2":{"c":3,"d":4}}',
+    );
+    final result = await client.jsonObjKeysEnhanced(
+      key: 'doc:objKeysEnh',
+      paths: [r'$.obj1', r'$.obj2', r'$.arr', r'$.nonexistent'],
+    );
+    expect(result, isNotNull);
+    expect(result!.length, 4);
+    expect(result[0], containsAll(['a', 'b']));
+    expect(result[1], containsAll(['c', 'd']));
+
+    // (X) expect(result[2], isNull); // $.arr is not an object
+    expect(result[2], isEmpty); // Expected Usage
+
+    // (X) expect(result[3], isNull); // $.nonexistent
+    expect(result[3], isEmpty); // Expected Usage
+  });
+
+  test('jsonStrAppendEnhanced - append to multiple strings', () async {
+    await client.jsonSet(
+        key: 'doc:strAppendEnh',
+        path: '.',
+        data: '{"s1":"hello", "s2":"world", "arr":[1,2]}');
+    final result = await client.jsonStrAppendEnhanced(
+      key: 'doc:strAppendEnh',
+      paths: [r'$.s1', r'$.s2', r'$.arr', r'$.nonexistent'],
+      // (X) value: '"_suffix"', // JSON encoded string
+      value: '_suffix', // Expected Usage (length: 7)
+    );
+    expect(
+        result,
+        equals([
+          // (X) 13,
+          12, // Expected Usage (5 + 7 = 12)
+          // (X) 13,
+          12, // Expected Usage (5 + 7 = 12)
+          null,
+          null
+        ])); // "hello_suffix", "world_suffix" (length of "value" is 8)
+    final finalDoc = await client.jsonGet(key: 'doc:strAppendEnh', path: '.');
+
+    // (X) expect(finalDoc, contains('"s1":"hello_suffix"'));
+    expect(finalDoc, containsPair('s1', 'hello_suffix'));
+
+    // (X) expect(finalDoc, contains('"s2":"world_suffix"'));
+    expect(finalDoc, containsPair('s2', 'world_suffix'));
+  });
 
   // test('jsonStrLenEnhanced - get lengths of multiple strings', () async {
   //   await client.jsonSet(
