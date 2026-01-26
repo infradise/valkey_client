@@ -25,3 +25,6 @@ lib/src/utils/module_printer_deprecated.dart
 .crt
 .key
 .pem
+
+## CI
+docker-compose.ci.yaml
