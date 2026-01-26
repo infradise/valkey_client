@@ -1049,11 +1049,30 @@ mixin JsonCommands {
   /// JSON.ARRLEN (Enhanced)
   ///
   /// Returns lengths of arrays at the specified [paths].
+  ///
+  /// [returnNull]
+  /// If true, return `null` when there is no useful data (e.g., key
+  /// does not exist or all requested paths are missing / not arrays).
+  /// If false (default), return a `List<int?>` with one entry per
+  /// requested path; entries for missing or non-array paths are `null`
+  /// (for example, '[ null ]', i.e., a list containing a single null element)
+  /// When `paths` is empty the method returns an empty list `[]`.
   Future<List<int?>?> jsonArrLenEnhanced({
     required String key,
     required List<String> paths,
+    bool returnNull = false,
   }) async {
     if (paths.isEmpty) return [];
+
+    if (returnNull) {
+      // Check key existence first
+      final existsResult = await execute(<String>['EXISTS', key]);
+      final exists = _unwrapOne(existsResult);
+      if (exists is int && exists == 0) {
+        // e.g., key does not exist -> return null here (or throw alternativly)
+        return null;
+      }
+    }
 
     final futures = <Future<dynamic>>[];
 
