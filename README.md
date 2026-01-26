@@ -31,6 +31,7 @@ All features are supported in the latest release.
 ### New in v2.0.0 and later
   * **Generic Commands (v2.5.1+):** Added `scan`
   * **JSON Commands (v2.5.0+):** Introduced RedisJSON; ValkeyJSON - JSON-based document formats for storing structured payloads.
+    * v2.5.5: `jsonArrAppendEnhanced`, `jsonArrIndexEnhanced`, `jsonArrInsertEnhanced`, `jsonArrLenEnhanced`, `jsonArrPopEnhanced`, `jsonArrTrimEnhanced`, `jsonObjKeysEnhanced`, `jsonStrAppendEnhanced`, `jsonStrLenEnhanced`
     * v2.5.4: `jsonDebug`, `jsonResp`, `jsonToggle`, `jsonType`
     * v2.5.3: `jsonObjKeys`, `jsonObjLen`, `jsonStrAppend`, `jsonStrLen`
     * v2.5.2: `jsonClear`, `jsonForget`, `jsonMGet`, `jsonMSet`, `jsonNumIncrBy`,`jsonNumMultBy`, `jsonMergeForce`
