@@ -929,4 +929,294 @@ mixin JsonCommands {
     final result = await execute(<String>['JSON.TYPE', key, path]);
     return _unwrapOne(result);
   }
+
+  // ===========================================================================
+  // JSON Enhanced Commands (Batch Operations)
+  // ===========================================================================
+
+  /// JSON.ARRAPPEND (Enhanced)
+  ///
+  /// Appends [value] to arrays at the specified [paths].
+  ///
+  /// [key] The key to modify.
+  /// [paths] A list of JSON paths to apply the operation to.
+  /// [value] The value to append.
+  ///
+  /// Returns a list of new array lengths.
+  /// Returns `null` for a specific path if it does not exist or
+  /// is not an array.
+  Future<List<int?>?> jsonArrAppendEnhanced({
+    required String key,
+    required List<String> paths,
+    required dynamic value,
+  }) async {
+    // Return null immediately if no paths provided, similar to original logic
+    if (paths.isEmpty) return [];
+
+    final encodedValue = jsonEncode(value);
+    final futures = <Future<dynamic>>[];
+
+    for (final path in paths) {
+      futures.add(execute(<String>['JSON.ARRAPPEND', key, path, encodedValue]));
+    }
+
+    final results = await Future.wait(futures);
+
+    return results.map<int?>((result) {
+      // JSON.ARRAPPEND usually returns an integer (single match) or list of
+      // integers (multi match).
+      // We unwrap single-element lists to keep the return type simple.
+      final unwrapped = _unwrapOne(result);
+      if (unwrapped is int) return unwrapped;
+      return null;
+    }).toList();
+  }
+
+  /// JSON.ARRINDEX (Enhanced)
+  ///
+  /// Finds the index of [value] in arrays at the specified [paths].
+  ///
+  /// Returns a list of indices (-1 if not found), or `null` for
+  /// non-array paths.
+  Future<List<int?>?> jsonArrIndexEnhanced({
+    required String key,
+    required List<String> paths,
+    required dynamic value,
+    int? start,
+    int? stop,
+  }) async {
+    if (paths.isEmpty) return [];
+
+    final encodedValue = jsonEncode(value);
+    final futures = <Future<dynamic>>[];
+
+    for (final path in paths) {
+      final cmd = <String>['JSON.ARRINDEX', key, path, encodedValue];
+      if (start != null) {
+        cmd.add(start.toString());
+        if (stop != null) {
+          cmd.add(stop.toString());
+        }
+      }
+      futures.add(execute(cmd));
+    }
+
+    final results = await Future.wait(futures);
+
+    return results.map<int?>((result) {
+      final unwrapped = _unwrapOne(result);
+      if (unwrapped is int) return unwrapped;
+      return null;
+    }).toList();
+  }
+
+  /// JSON.ARRINSERT (Enhanced)
+  ///
+  /// Inserts [values] into arrays at the specified [paths] at [index].
+  ///
+  /// Returns a list of new array lengths, or `null` for non-array paths.
+  Future<List<int?>?> jsonArrInsertEnhanced({
+    required String key,
+    required List<String> paths,
+    required int index,
+    required List<dynamic> values,
+  }) async {
+    if (paths.isEmpty) return [];
+
+    final encodedValues = values.map(jsonEncode).toList();
+    final futures = <Future<dynamic>>[];
+
+    for (final path in paths) {
+      final cmd = <String>[
+        'JSON.ARRINSERT',
+        key,
+        path,
+        index.toString(),
+        ...encodedValues
+      ];
+      futures.add(execute(cmd));
+    }
+
+    final results = await Future.wait(futures);
+
+    return results.map<int?>((result) {
+      final unwrapped = _unwrapOne(result);
+      if (unwrapped is int) return unwrapped;
+      return null;
+    }).toList();
+  }
+
+  /// JSON.ARRLEN (Enhanced)
+  ///
+  /// Returns lengths of arrays at the specified [paths].
+  Future<List<int?>?> jsonArrLenEnhanced({
+    required String key,
+    required List<String> paths,
+  }) async {
+    if (paths.isEmpty) return [];
+
+    final futures = <Future<dynamic>>[];
+
+    for (final path in paths) {
+      futures.add(execute(<String>['JSON.ARRLEN', key, path]));
+    }
+
+    final results = await Future.wait(futures);
+
+    return results.map<int?>((result) {
+      final unwrapped = _unwrapOne(result);
+      if (unwrapped is int) return unwrapped;
+      return null;
+    }).toList();
+  }
+
+  /// JSON.ARRPOP (Enhanced)
+  ///
+  /// Removes and returns elements from arrays at the specified [paths].
+  ///
+  /// Returns a list of popped JSON values (as strings/objects), or `null` for non-array paths.
+  Future<List<dynamic>?> jsonArrPopEnhanced({
+    required String key,
+    required List<String> paths,
+    int? index,
+  }) async {
+    if (paths.isEmpty) return [];
+
+    final futures = <Future<dynamic>>[];
+
+    for (final path in paths) {
+      final cmd = <String>['JSON.ARRPOP', key, path];
+      if (index != null) {
+        cmd.add(index.toString());
+      }
+      futures.add(execute(cmd));
+    }
+
+    final results = await Future.wait(futures);
+
+    return results.map((result) {
+      // Reuse logic: Unwrap -> Decode if string
+      final unwrapped = _unwrapOne(result);
+      if (unwrapped is String) {
+        try {
+          return jsonDecode(unwrapped);
+        } catch (_) {
+          return unwrapped;
+        }
+      }
+      return unwrapped;
+    }).toList();
+  }
+
+  /// JSON.ARRTRIM (Enhanced)
+  ///
+  /// Trims arrays at the specified [paths].
+  ///
+  /// Returns a list of new array lengths.
+  Future<List<int?>?> jsonArrTrimEnhanced({
+    required String key,
+    required List<String> paths,
+    required int start,
+    required int stop,
+  }) async {
+    if (paths.isEmpty) return [];
+
+    final futures = <Future<dynamic>>[];
+
+    for (final path in paths) {
+      futures.add(execute(<String>[
+        'JSON.ARRTRIM',
+        key,
+        path,
+        start.toString(),
+        stop.toString()
+      ]));
+    }
+
+    final results = await Future.wait(futures);
+
+    return results.map<int?>((result) {
+      final unwrapped = _unwrapOne(result);
+      if (unwrapped is int) return unwrapped;
+      return null;
+    }).toList();
+  }
+
+  /// JSON.OBJKEYS (Enhanced)
+  ///
+  /// Returns keys of objects at the specified [paths].
+  ///
+  /// Returns a list of key lists (`List<List<dynamic>>`).
+  Future<List<List<dynamic>?>?> jsonObjKeysEnhanced({
+    required String key,
+    required List<String> paths,
+  }) async {
+    if (paths.isEmpty) return [];
+
+    final futures = <Future<dynamic>>[];
+
+    for (final path in paths) {
+      futures.add(execute(<String>['JSON.OBJKEYS', key, path]));
+    }
+
+    final results = await Future.wait(futures);
+
+    return results.map<List<dynamic>?>((result) {
+      final unwrapped = _unwrapOne(result);
+      if (unwrapped is List) return unwrapped;
+      return null;
+    }).toList();
+  }
+
+  /// JSON.STRAPPEND (Enhanced)
+  ///
+  /// Appends [value] to string values at the specified [paths].
+  ///
+  /// Returns a list of new string lengths.
+  Future<List<int?>?> jsonStrAppendEnhanced({
+    required String key,
+    required List<String> paths,
+    required String value,
+  }) async {
+    if (paths.isEmpty) return [];
+
+    final encodedValue = jsonEncode(value);
+    final futures = <Future<dynamic>>[];
+
+    for (final path in paths) {
+      futures.add(execute(<String>['JSON.STRAPPEND', key, path, encodedValue]));
+    }
+
+    final results = await Future.wait(futures);
+
+    return results.map<int?>((result) {
+      final unwrapped = _unwrapOne(result);
+      if (unwrapped is int) return unwrapped;
+      return null;
+    }).toList();
+  }
+
+  /// JSON.STRLEN (Enhanced)
+  ///
+  /// Returns lengths of string values at the specified [paths].
+  Future<List<int?>?> jsonStrLenEnhanced({
+    required String key,
+    required List<String> paths,
+  }) async {
+    if (paths.isEmpty) return [];
+
+    final futures = <Future<dynamic>>[];
+
+    for (final path in paths) {
+      futures.add(execute(<String>['JSON.STRLEN', key, path]));
+    }
+
+    final results = await Future.wait(futures);
+
+    return results.map<int?>((result) {
+      final unwrapped = _unwrapOne(result);
+      if (unwrapped is int) return unwrapped;
+      return null;
+    }).toList();
+  }
 }
