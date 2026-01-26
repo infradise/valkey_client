@@ -241,17 +241,17 @@ void main() async {
     expect(finalDoc, containsPair('s2', 'world_suffix'));
   });
 
-  // test('jsonStrLenEnhanced - get lengths of multiple strings', () async {
-  //   await client.jsonSet(
-  //       key: 'doc:strLenEnh',
-  //       path: '.',
-  //       data: '{"s1":"hello", "s2":"world123", "arr":[1,2]}');
-  //   final result = await client.jsonStrLenEnhanced(
-  //     key: 'doc:strLenEnh',
-  //     paths: [r'$.s1', r'$.s2', r'$.arr', r'$.nonexistent'],
-  //   );
-  //   expect(result, equals([5, 8, null, null]));
-  // });
+  test('jsonStrLenEnhanced - get lengths of multiple strings', () async {
+    await client.jsonSet(
+        key: 'doc:strLenEnh',
+        path: '.',
+        data: '{"s1":"hello", "s2":"world123", "arr":[1,2]}');
+    final result = await client.jsonStrLenEnhanced(
+      key: 'doc:strLenEnh',
+      paths: [r'$.s1', r'$.s2', r'$.arr', r'$.nonexistent'],
+    );
+    expect(result, equals([5, 8, null, null]));
+  });
 
   // test('jsonArrAppendEnhanced - key does not exist', () async {
   //   final result = await client.jsonArrAppendEnhanced(
