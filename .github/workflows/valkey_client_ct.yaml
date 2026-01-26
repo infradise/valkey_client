@@ -1,0 +1,158 @@
+name: valkey_client CT
+
+on:
+  push:
+    branches: [ ct ]
+  # pull_request:
+  #   branches: [ "main" ]
+
+jobs:
+  test:
+    name: 🧪 Test ${{ matrix.engine }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - engine: redis
+            image_name: "redis:latest"
+            binary_name: "redis"
+            ssl_dir: "redis"
+          - engine: valkey
+            image_name: "valkey/valkey-bundle:latest"
+            binary_name: "valkey"
+            ssl_dir: "valkey"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        run: dart pub get
+
+      # ----------------------------------------------------------------
+      # 1. Generate SSL Certificates
+      # ----------------------------------------------------------------
+      - name: Generate SSL Certificates
+        run: |
+          mkdir -p docs/testenv/${{ matrix.ssl_dir }}/tests/tls
+
+          # Generate generic cert for testing
+          openssl req -x509 -newkey rsa:4096 \
+            -keyout docs/testenv/${{ matrix.ssl_dir }}/tests/tls/${{ matrix.binary_name }}.key \
+            -out docs/testenv/${{ matrix.ssl_dir }}/tests/tls/${{ matrix.binary_name }}.crt \
+            -days 365 -nodes -subj '/CN=localhost'
+
+          # Fix permissions
+          chmod 644 docs/testenv/${{ matrix.ssl_dir }}/tests/tls/*
+
+      # ----------------------------------------------------------------
+      # 2. Start Database Environment
+      # ----------------------------------------------------------------
+      - name: Start Database Environment
+        env:
+          CI_IMAGE_NAME: ${{ matrix.image_name }}
+          CI_BINARY_NAME: ${{ matrix.binary_name }}
+        run: |
+          echo "Starting Cluster..."
+          docker compose -f docker-compose.ci.yaml up -d
+
+          echo "Starting Standalone..."
+          docker run -d --name standalone-server -p 6379:6379 ${{ matrix.image_name }}
+
+          echo "Starting TLS Server..."
+          docker run -d --name ssl-server \
+            -v $(pwd)/docs/testenv/${{ matrix.ssl_dir }}/tests/tls:/tls \
+            -p 6380:6379 \
+            ${{ matrix.image_name }} \
+            --tls-port 6379 --port 0 \
+            --tls-cert-file /tls/${{ matrix.binary_name }}.crt \
+            --tls-key-file /tls/${{ matrix.binary_name }}.key \
+            --tls-ca-cert-file /tls/${{ matrix.binary_name }}.crt \
+            --tls-auth-clients no
+
+          echo "Starting mTLS Server..."
+          docker run -d --name mtls-server \
+            -v $(pwd)/docs/testenv/${{ matrix.ssl_dir }}/tests/tls:/tls \
+            -p 6381:6379 \
+            ${{ matrix.image_name }} \
+            --tls-port 6379 --port 0 \
+            --tls-cert-file /tls/${{ matrix.binary_name }}.crt \
+            --tls-key-file /tls/${{ matrix.binary_name }}.key \
+            --tls-ca-cert-file /tls/${{ matrix.binary_name }}.crt \
+            --tls-auth-clients yes
+
+      # ----------------------------------------------------------------
+      # 3. Healthcheck using Keyscope (Dogfooding)
+      # ----------------------------------------------------------------
+      - name: Wait for Services (Keyscope CLI)
+        run: |
+          # Define a helper function for retrying keyscope ping
+          check_service() {
+            local port=$1
+            local name=$2
+            echo "Checking $name on port $port..."
+
+            # Retry loop: Run keyscope ping and check if output contains "PONG"
+            # Using 'grep' ensures we validate the connection logic inside valkey_client
+            for i in {1..15}; do
+              OUTPUT=$(dart run tool/keyscope.dart ping --port $port --silent || true)
+              # OUTPUT=$(dart run tool/keyscope.dart ping --port $port || true)
+              if echo "$OUTPUT" | grep -q "PONG"; then
+                echo "✅ $name is ready!"
+                return 0
+              fi
+              echo "⏳ Waiting for $name... (Attempt $i/15)"
+              sleep 2
+            done
+
+            echo "❌ Failed to connect to $name on port $port"
+            exit 1
+          }
+
+          # Check Standalone
+          check_service 6379 "Standalone Server"
+
+          # Check Cluster (Check one node, usually enough if cluster-init finished)
+          check_service 7001 "Cluster Node 1"
+
+      # ----------------------------------------------------------------
+      # 4. Run Tests
+      # ----------------------------------------------------------------
+      - name: Run Unit Tests
+        run: dart test --exclude-tags example
+
+      - name: Run SSL Tests (TLS)
+        run: |
+          cd docs/testenv/${{ matrix.ssl_dir }}
+          dart test ../../../test/ssl_connection_test_single_tls.dart
+
+      - name: Run SSL Tests (mTLS)
+        run: |
+          cd docs/testenv/${{ matrix.ssl_dir }}
+          dart test ../../../test/ssl_connection_test_single_mtls.dart
+
+      - name: Run Additional SSL & Database Tests
+        run: |
+          cd docs/testenv/${{ matrix.ssl_dir }}
+          dart test ../../../test/ssl_connection_test_single_and_cluster.dart
+          dart test ../../../test/ssl_connection_test_single_ssl_and_mtls.dart
+          dart test database_selection_test.dart
+          dart test replica_read_test.dart
+
+      - name: Run Example Tests
+        run: dart test --tags example
+
+      # ----------------------------------------------------------------
+      # 5. Teardown
+      # ----------------------------------------------------------------
+      - name: Teardown
+        if: always()
+        run: |
+          docker compose -f docker-compose.ci.yaml down
+          docker stop standalone-server ssl-server || true
+          docker rm standalone-server ssl-server || true
+          docker rm -f standalone-server ssl-server mtls-server || true
