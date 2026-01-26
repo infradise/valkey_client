@@ -41,6 +41,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout specific paths (sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: infradise/keyscope
+          ref: main
+          path: keyscope
+          sparse-checkout: |
+            bin/keyscope.dart
+
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
@@ -114,8 +123,7 @@ jobs:
             # Retry loop: Run keyscope ping and check if output contains "PONG"
             # Using 'grep' ensures we validate the connection logic inside valkey_client
             for i in {1..15}; do
-              OUTPUT=$(dart run tool/keyscope.dart ping --port $port --silent || true)
-              # OUTPUT=$(dart run tool/keyscope.dart ping --port $port || true)
+              OUTPUT=$(dart run keyscope/bin/keyscope.dart ping --port $port --silent || true)
               if echo "$OUTPUT" | grep -q "PONG"; then
                 echo "✅ $name is ready!"
                 return 0
