@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.6.0
+## 3.0.0
 * **Modular Architecture**: Restructured monolithic command implementations into scalable, extension-based modules.
     * **JSON Commands**: Decomposed the monolithic `json.dart` into individual files per command (e.g., `jsonArrAppend`, `jsonGet`) for better scalability and maintainability.
     * **Transaction Commands**: Refactored transaction commands (`multi`, `exec`, `discard`) into independent extension files.
