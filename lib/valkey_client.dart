@@ -24,6 +24,7 @@ export 'src/cluster_info.dart';
 export 'src/commands/json/json_commands.dart'
     show Config, JsonCommands, JsonMSetEntry;
 export 'src/commands/json/json_extensions.dart';
+export 'src/commands/transactions/extensions.dart';
 // Export public exception classes (v1.0.0)
 export 'src/exceptions.dart';
 export 'src/logging.dart' show ValkeyLogLevel, ValkeyLogger;

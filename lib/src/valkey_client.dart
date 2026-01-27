@@ -32,6 +32,10 @@ import 'commands/generic.dart' show GenericCommands;
 import 'commands/json/json_commands.dart'
     show JsonCommands; // Redis JSON and Valkey JSON
 // Import the new exceptions file
+import 'commands/transactions/commands.dart' show TransactionsCommands;
+import 'commands/transactions/commands/discard.dart';
+import 'commands/transactions/commands/exec.dart';
+import 'commands/transactions/commands/multi.dart';
 import 'exceptions.dart';
 // Built-in Logger
 import 'logging.dart';
@@ -120,7 +124,7 @@ class _IncompleteDataException implements Exception {
 
 /// The main client implementation for communicating with a Valkey server.
 class ValkeyClient
-    with JsonCommands, GenericCommands
+    with JsonCommands, TransactionsCommands, GenericCommands
     implements ValkeyClientBase {
   static final _log = ValkeyLogger('ValkeyClient');
 
@@ -293,10 +297,11 @@ class ValkeyClient
 
   // Transaction State
   /// Flag indicating if the client is currently in a MULTI...EXEC block.
-  bool _isInTransaction = false;
+  // @override
+  // bool isInTransaction = false;
 
   /// Queue to hold commands during a MULTI...EXEC block.
-  final Queue<List<String>> _transactionQueue = Queue();
+  // final Queue<List<String>> _transactionQueue = Queue();
 
   // --- v1.6.0: Sharded Pub/Sub State ---
   Completer<void>? _ssubscribeReadyCompleter;
@@ -319,7 +324,7 @@ class ValkeyClient
     if (_isInPubSubMode) return true;
 
     // 2. Transaction Mode? (MULTI started but not EXEC/DISCARDed)
-    if (_isInTransaction) return true;
+    if (isInTransaction) return true;
 
     // 3. (Future) Blocking commands?
     // If we support BLPOP in the future, check blocking state here.
@@ -990,7 +995,7 @@ class ValkeyClient
         }
 
         // If we are in a transaction, most responses are just '+QUEUED'.
-        else if (_isInTransaction) {
+        else if (isInTransaction) {
           // Check if it's the response to MULTI, EXEC, or DISCARD itself
           // final lastQueuedCommand = _transactionQueue.isNotEmpty ?
           //   _transactionQueue.last[0].toUpperCase() : '';
@@ -1552,18 +1557,25 @@ class ValkeyClient
   Future<dynamic> _executeInternal(List<String> command) async {
     final cmdUpper = command.isNotEmpty ? command[0].toUpperCase() : '';
 
-    if (_isInTransaction &&
+    if (isInTransaction &&
         cmdUpper != 'EXEC' &&
         cmdUpper != 'DISCARD' &&
         cmdUpper != 'MULTI') {
       // _transactionQueue.add(command);
+
+      // queueCommandInternal(command);
+      // return 'QUEUED';
     }
+
     // Handle starting or ending a transaction
     if (cmdUpper == 'MULTI') {
-      _isInTransaction = true;
-      _transactionQueue.clear(); // Clear previous (if any)
+      // isInTransaction = true;
+      setTransactionStateInternal(true);
+      // _transactionQueue.clear(); // Clear previous (if any)
+      clearTransactionQueueInternal();
     } else if (cmdUpper == 'EXEC' || cmdUpper == 'DISCARD') {
-      _isInTransaction = false; // Transaction ends
+      // isInTransaction = false; // Transaction ends
+      setTransactionStateInternal(false);
     }
 
     // Identify ALL Pub/Sub management commands
@@ -2247,39 +2259,42 @@ class ValkeyClient
   // --- TRANSACTION (v0.11.0) ---
 
   @override
-  Future<String> multi() async {
-    // MULTI itself shouldn't be queued if already in transaction
-    if (_isInTransaction) {
-      throw Exception('Cannot call MULTI inside an existing transaction.');
-    }
-    final response = await execute(['MULTI']);
-    // Server should respond '+OK'
-    return response as String;
-  }
+  Future<String> multi() async => Multi(this).multi();
+  // Future<String> multi() async {
+  //   // MULTI itself shouldn't be queued if already in transaction
+  //   if (isInTransaction) {
+  //     throw Exception('Cannot call MULTI inside an existing transaction.');
+  //   }
+  //   final response = await execute(['MULTI']);
+  //   // Server should respond '+OK'
+  //   return response as String;
+  // }
 
   @override
-  Future<List<dynamic>?> exec() async {
-    if (!_isInTransaction) {
-      throw Exception('Cannot call EXEC without MULTI.');
-    }
-    final response = await execute(['EXEC']);
-    // Server responds with an Array (*) of responses
-    // or Null ($-1 or *-1) if transaction was aborted (e.g., WATCH)
-    if (response == null) {
-      return null;
-    }
-    return response as List<dynamic>;
-  }
+  Future<List<dynamic>?> exec() async => Exec(this).exec();
+  // Future<List<dynamic>?> exec() async {
+  //   if (!isInTransaction) {
+  //     throw Exception('Cannot call EXEC without MULTI.');
+  //   }
+  //   final response = await execute(['EXEC']);
+  //   // Server responds with an Array (*) of responses
+  //   // or Null ($-1 or *-1) if transaction was aborted (e.g., WATCH)
+  //   if (response == null) {
+  //     return null;
+  //   }
+  //   return response as List<dynamic>;
+  // }
 
   @override
-  Future<String> discard() async {
-    if (!_isInTransaction) {
-      throw Exception('Cannot call DISCARD without MULTI.');
-    }
-    final response = await execute(['DISCARD']);
-    // Server responds '+OK'
-    return response as String;
-  }
+  Future<String> discard() async => Discard(this).discard();
+  // Future<String> discard() async {
+  //   if (!isInTransaction) {
+  //     throw Exception('Cannot call DISCARD without MULTI.');
+  //   }
+  //   final response = await execute(['DISCARD']);
+  //   // Server responds '+OK'
+  //   return response as String;
+  // }
 
   // --- PUBSUB INTROSPECTION (v0.12.0) ---
 
