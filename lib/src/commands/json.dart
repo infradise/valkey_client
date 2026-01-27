@@ -942,7 +942,9 @@ mixin JsonCommands {
   /// [paths] A list of JSON paths to apply the operation to.
   /// [value] The value to append.
   ///
-  /// Returns a list of new array lengths.
+  /// Returns a list of new array lengths, or `null` if the [key] does not
+  /// exist.
+  /// The list contains `null` for paths that are not arrays.
   /// Returns `null` for a specific path if it does not exist or
   /// is not an array.
   Future<List<int?>?> jsonArrAppendEnhanced({
@@ -960,24 +962,31 @@ mixin JsonCommands {
       futures.add(execute(<String>['JSON.ARRAPPEND', key, path, encodedValue]));
     }
 
-    final results = await Future.wait(futures);
+    try {
+      final results = await Future.wait(futures);
 
-    return results.map<int?>((result) {
-      // JSON.ARRAPPEND usually returns an integer (single match) or list of
-      // integers (multi match).
-      // We unwrap single-element lists to keep the return type simple.
-      final unwrapped = _unwrapOne(result);
-      if (unwrapped is int) return unwrapped;
-      return null;
-    }).toList();
+      return results.map<int?>((result) {
+        // JSON.ARRAPPEND usually returns an integer (single match) or list of
+        // integers (multi match).
+        // We unwrap single-element lists to keep the return type simple.
+        final unwrapped = _unwrapOne(result);
+        if (unwrapped is int) return unwrapped;
+        return null;
+      }).toList();
+    } catch (e) {
+      if (e.toString().contains('NONEXISTENT')) return null;
+      rethrow;
+    }
   }
 
   /// JSON.ARRINDEX (Enhanced)
   ///
   /// Finds the index of [value] in arrays at the specified [paths].
   ///
-  /// Returns a list of indices (-1 if not found), or `null` for
-  /// non-array paths.
+  /// Returns a list of indices (-1 if not found), or `null` if the [key]
+  /// does not exist.
+  /// The list contains `null` for paths that are not arrays.
+  /// Returns `null` for non-array paths.
   Future<List<int?>?> jsonArrIndexEnhanced({
     required String key,
     required List<String> paths,
@@ -1001,20 +1010,37 @@ mixin JsonCommands {
       futures.add(execute(cmd));
     }
 
-    final results = await Future.wait(futures);
+    try {
+      final results = await Future.wait(futures);
 
-    return results.map<int?>((result) {
-      final unwrapped = _unwrapOne(result);
-      if (unwrapped is int) return unwrapped;
-      return null;
-    }).toList();
+      return results.map<int?>((result) {
+        final unwrapped = _unwrapOne(result);
+        if (unwrapped is int) return unwrapped;
+        return null;
+      }).toList();
+    } catch (e) {
+      if (e.toString().contains('NONEXISTENT')) return null;
+      rethrow;
+    }
   }
+
+  // Future<Null> isKeyExists(String key) async {
+  //     // Check key existence first
+  //     final existsResult = await execute(<String>['EXISTS', key]);
+  //     final exists = _unwrapOne(existsResult);
+  //     if (exists is int && exists == 0) {
+  //       // e.g., key does not exist -> return null here (or throw alternativly)
+  //       return null;
+  //     }
+  // }
 
   /// JSON.ARRINSERT (Enhanced)
   ///
   /// Inserts [values] into arrays at the specified [paths] at [index].
   ///
-  /// Returns a list of new array lengths, or `null` for non-array paths.
+  /// Returns a list of new array lengths, or `null` if the [key] does not
+  /// exist.
+  /// The list contains `null` for paths that are not arrays.
   Future<List<int?>?> jsonArrInsertEnhanced({
     required String key,
     required List<String> paths,
@@ -1037,20 +1063,36 @@ mixin JsonCommands {
       futures.add(execute(cmd));
     }
 
-    final results = await Future.wait(futures);
+    try {
+      // Execute all commands in parallel
+      final results = await Future.wait(futures);
 
-    return results.map<int?>((result) {
-      final unwrapped = _unwrapOne(result);
-      if (unwrapped is int) return unwrapped;
-      return null;
-    }).toList();
+      return results.map<int?>((result) {
+        final unwrapped = _unwrapOne(result);
+        if (unwrapped is int) return unwrapped;
+        return null;
+      }).toList();
+    } catch (e) {
+      // [Graceful Handling]
+      // If the key does not exist (NONEXISTENT), return null instead of
+      // throwing an exception.
+      // This allows the caller to handle the "missing key" scenario gracefully.
+      if (e.toString().contains('NONEXISTENT')) {
+        return null;
+      }
+      // Rethrow other errors (e.g., syntax errors, connection issues)
+      rethrow;
+    }
   }
 
   /// JSON.ARRLEN (Enhanced)
   ///
   /// Returns lengths of arrays at the specified [paths].
   ///
-  /// [returnNull]
+  /// Returns a list of lengths, or `null` if the [key] does not exist.
+  /// The list contains `null` for paths that are not arrays.
+  ///
+  /// * About null return
   /// If true, return `null` when there is no useful data (e.g., key
   /// does not exist or all requested paths are missing / not arrays).
   /// If false (default), return a `List<int?>` with one entry per
@@ -1060,19 +1102,8 @@ mixin JsonCommands {
   Future<List<int?>?> jsonArrLenEnhanced({
     required String key,
     required List<String> paths,
-    bool returnNull = false,
   }) async {
     if (paths.isEmpty) return [];
-
-    if (returnNull) {
-      // Check key existence first
-      final existsResult = await execute(<String>['EXISTS', key]);
-      final exists = _unwrapOne(existsResult);
-      if (exists is int && exists == 0) {
-        // e.g., key does not exist -> return null here (or throw alternativly)
-        return null;
-      }
-    }
 
     final futures = <Future<dynamic>>[];
 
@@ -1080,20 +1111,27 @@ mixin JsonCommands {
       futures.add(execute(<String>['JSON.ARRLEN', key, path]));
     }
 
-    final results = await Future.wait(futures);
+    try {
+      final results = await Future.wait(futures);
 
-    return results.map<int?>((result) {
-      final unwrapped = _unwrapOne(result);
-      if (unwrapped is int) return unwrapped;
-      return null;
-    }).toList();
+      return results.map<int?>((result) {
+        final unwrapped = _unwrapOne(result);
+        if (unwrapped is int) return unwrapped;
+        return null;
+      }).toList();
+    } catch (e) {
+      if (e.toString().contains('NONEXISTENT')) return null;
+      rethrow;
+    }
   }
 
   /// JSON.ARRPOP (Enhanced)
   ///
   /// Removes and returns elements from arrays at the specified [paths].
   ///
-  /// Returns a list of popped JSON values (as strings/objects), or `null` for non-array paths.
+  /// Returns a list of popped JSON values (as strings/objects), or `null` if the [key] does not exist.
+  /// The list contains `null` for paths that are not arrays.
+  /// Returns `null` for non-array paths.
   Future<List<dynamic>?> jsonArrPopEnhanced({
     required String key,
     required List<String> paths,
@@ -1111,27 +1149,36 @@ mixin JsonCommands {
       futures.add(execute(cmd));
     }
 
-    final results = await Future.wait(futures);
+    try {
+      final results = await Future.wait(futures);
 
-    return results.map((result) {
-      // Reuse logic: Unwrap -> Decode if string
-      final unwrapped = _unwrapOne(result);
-      if (unwrapped is String) {
-        try {
-          return jsonDecode(unwrapped);
-        } catch (_) {
-          return unwrapped;
+      return results.map((result) {
+        // Unwrap -> Decode if string
+        final unwrapped = _unwrapOne(result);
+        // JSON.ARRPOP returns the popped value as a JSON string (Bulk String).
+        // We try to decode it to a Dart object for convenience.
+        if (unwrapped is String) {
+          try {
+            return jsonDecode(unwrapped);
+          } catch (_) {
+            return unwrapped;
+          }
         }
-      }
-      return unwrapped;
-    }).toList();
+        return unwrapped;
+      }).toList();
+    } catch (e) {
+      if (e.toString().contains('NONEXISTENT')) return null;
+      rethrow;
+    }
   }
 
   /// JSON.ARRTRIM (Enhanced)
   ///
   /// Trims arrays at the specified [paths].
   ///
-  /// Returns a list of new array lengths.
+  /// Returns a list of new array lengths, or `null` if the [key] does not
+  /// exist.
+  /// The list contains `null` for paths that are not arrays.
   Future<List<int?>?> jsonArrTrimEnhanced({
     required String key,
     required List<String> paths,
@@ -1152,13 +1199,18 @@ mixin JsonCommands {
       ]));
     }
 
-    final results = await Future.wait(futures);
+    try {
+      final results = await Future.wait(futures);
 
-    return results.map<int?>((result) {
-      final unwrapped = _unwrapOne(result);
-      if (unwrapped is int) return unwrapped;
-      return null;
-    }).toList();
+      return results.map<int?>((result) {
+        final unwrapped = _unwrapOne(result);
+        if (unwrapped is int) return unwrapped;
+        return null;
+      }).toList();
+    } catch (e) {
+      if (e.toString().contains('NONEXISTENT')) return null;
+      rethrow;
+    }
   }
 
   /// JSON.OBJKEYS (Enhanced)
@@ -1178,20 +1230,27 @@ mixin JsonCommands {
       futures.add(execute(<String>['JSON.OBJKEYS', key, path]));
     }
 
-    final results = await Future.wait(futures);
+    try {
+      final results = await Future.wait(futures);
 
-    return results.map<List<dynamic>?>((result) {
-      final unwrapped = _unwrapOne(result);
-      if (unwrapped is List) return unwrapped;
-      return null;
-    }).toList();
+      return results.map<List<dynamic>?>((result) {
+        final unwrapped = _unwrapOne(result);
+        if (unwrapped is List) return unwrapped;
+        return null;
+      }).toList();
+    } catch (e) {
+      if (e.toString().contains('NONEXISTENT')) return null;
+      rethrow;
+    }
   }
 
   /// JSON.STRAPPEND (Enhanced)
   ///
   /// Appends [value] to string values at the specified [paths].
   ///
-  /// Returns a list of new string lengths.
+  /// Returns a list of new string lengths, or `null` if the [key] does not
+  /// exist.
+  /// The list contains `null` for paths that are not strings.
   Future<List<int?>?> jsonStrAppendEnhanced({
     required String key,
     required List<String> paths,
@@ -1206,18 +1265,26 @@ mixin JsonCommands {
       futures.add(execute(<String>['JSON.STRAPPEND', key, path, encodedValue]));
     }
 
-    final results = await Future.wait(futures);
+    try {
+      final results = await Future.wait(futures);
 
-    return results.map<int?>((result) {
-      final unwrapped = _unwrapOne(result);
-      if (unwrapped is int) return unwrapped;
-      return null;
-    }).toList();
+      return results.map<int?>((result) {
+        final unwrapped = _unwrapOne(result);
+        if (unwrapped is int) return unwrapped;
+        return null;
+      }).toList();
+    } catch (e) {
+      if (e.toString().contains('NONEXISTENT')) return null;
+      rethrow;
+    }
   }
 
   /// JSON.STRLEN (Enhanced)
   ///
   /// Returns lengths of string values at the specified [paths].
+  ///
+  /// Returns a list of lengths, or `null` if the [key] does not exist.
+  /// The list contains `null` for paths that are not strings.
   Future<List<int?>?> jsonStrLenEnhanced({
     required String key,
     required List<String> paths,
@@ -1230,12 +1297,17 @@ mixin JsonCommands {
       futures.add(execute(<String>['JSON.STRLEN', key, path]));
     }
 
-    final results = await Future.wait(futures);
+    try {
+      final results = await Future.wait(futures);
 
-    return results.map<int?>((result) {
-      final unwrapped = _unwrapOne(result);
-      if (unwrapped is int) return unwrapped;
-      return null;
-    }).toList();
+      return results.map<int?>((result) {
+        final unwrapped = _unwrapOne(result);
+        if (unwrapped is int) return unwrapped;
+        return null;
+      }).toList();
+    } catch (e) {
+      if (e.toString().contains('NONEXISTENT')) return null;
+      rethrow;
+    }
   }
 }
