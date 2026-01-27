@@ -1,9 +1,11 @@
 # Changelog
 
 ## 2.6.0
-* **Refactor**: Internal Architecture
-    * Completely restructured the JSON command implementation from a monolithic file into a modular, extension-based architecture.
-    * Decomposed `json.dart` into individual files per command (e.g., `json/commands/json_arr_append.dart`) for better scalability and maintainability.
+* **Modular Architecture**: Restructured monolithic command implementations into scalable, extension-based modules.
+    * **JSON Commands**: Decomposed the monolithic `json.dart` into individual files per command (e.g., `jsonArrAppend`, `jsonGet`) for better scalability and maintainability.
+    * **Transaction Commands**: Refactored transaction commands (`multi`, `exec`, `discard`) into independent extension files.
+        * Migrated transaction state (`isInTransaction`) and queue management logic to the `TransactionsCommands` mixin for better encapsulation.
+        * `ValkeyClient` methods now internally delegate logic to the new extensions (`Multi`, `Exec`, `Discard`), ensuring full backward compatibility and interface compliance.
 
 ## 2.5.5
 * **JSON Enhanced Commands**: Batch Operations
