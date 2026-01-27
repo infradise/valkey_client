@@ -29,7 +29,8 @@ import '../valkey_pool.dart' show ValkeyPool;
 import 'cluster_slots_parser.dart' show parseClusterSlotsResponse;
 // Redis/Valkey Commands
 import 'commands/generic.dart' show GenericCommands;
-import 'commands/json.dart' show JsonCommands; // Redis JSON and Valkey JSON
+import 'commands/json/json_commands.dart'
+    show JsonCommands; // Redis JSON and Valkey JSON
 // Import the new exceptions file
 import 'exceptions.dart';
 // Built-in Logger

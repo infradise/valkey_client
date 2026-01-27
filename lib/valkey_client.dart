@@ -21,7 +21,9 @@ library;
 // Export cluster info data classes (v1.2.0)
 export 'src/cluster_info.dart';
 // Helpers for jsonMSet
-export 'src/commands/json.dart' show Config, JsonMSetEntry;
+export 'src/commands/json/json_commands.dart'
+    show Config, JsonCommands, JsonMSetEntry;
+export 'src/commands/json/json_extensions.dart';
 // Export public exception classes (v1.0.0)
 export 'src/exceptions.dart';
 export 'src/logging.dart' show ValkeyLogLevel, ValkeyLogger;
