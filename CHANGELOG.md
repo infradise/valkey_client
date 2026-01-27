@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.0
+* **Refactor**: Internal Architecture
+    * Completely restructured the JSON command implementation from a monolithic file into a modular, extension-based architecture.
+    * Decomposed `json.dart` into individual files per command (e.g., `json/commands/json_arr_append.dart`) for better scalability and maintainability.
+
 ## 2.5.5
 * **JSON Enhanced Commands**: Batch Operations
     * `jsonArrAppendEnhanced`, `jsonArrIndexEnhanced`, `jsonArrInsertEnhanced`, `jsonArrLenEnhanced`, `jsonArrPopEnhanced`, `jsonArrTrimEnhanced`, `jsonObjKeysEnhanced`, `jsonStrAppendEnhanced`, `jsonStrLenEnhanced`
