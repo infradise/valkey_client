@@ -253,76 +253,88 @@ void main() async {
     expect(result, equals([5, 8, null, null]));
   });
 
-  // test('jsonArrAppendEnhanced - key does not exist', () async {
-  //   final result = await client.jsonArrAppendEnhanced(
-  //     key: 'nonexistent:arrAppendEnh',
-  //     paths: [r'$.a'],
-  //     value: '1',
-  //   );
-  //   expect(result, isNull);
-  // });
+  test('jsonArrAppendEnhanced - key does not exist', () async {
+    final result = await client.jsonArrAppendEnhanced(
+      key: 'nonexistent:arrAppendEnh',
+      paths: [r'$.a'],
+      // (X) value: '1',
+      value: 1, // Expected Usage
+    );
+    expect(result, isNull);
+  });
 
-  // test('jsonArrIndexEnhanced - key does not exist', () async {
-  //   final result = await client.jsonArrIndexEnhanced(
-  //     key: 'nonexistent:arrIndexEnh',
-  //     paths: [r'$.a'],
-  //     value: '1',
-  //     start: null,
-  //     stop: null,
-  //   );
-  //   expect(result, isNull);
-  // });
+  test('jsonArrIndexEnhanced - key does not exist', () async {
+    final result = await client.jsonArrIndexEnhanced(
+      key: 'nonexistent:arrIndexEnh',
+      paths: [r'$.a'],
+      // (X) value: '1',
+      value: 1, // Expected Usage
+      start: null,
+      stop: null,
+    );
+    expect(result, isNull);
+  });
 
-  // test('jsonArrInsertEnhanced - key does not exist', () async {
-  //   final result = await client.jsonArrInsertEnhanced(
-  //     key: 'nonexistent:arrInsertEnh',
-  //     paths: [r'$.a'],
-  //     index: 0,
-  //     values: ['1'],
-  //   );
-  //   expect(result, isNull);
-  // });
+  test('jsonArrInsertEnhanced - key does not exist', () async {
+    final result = await client.jsonArrInsertEnhanced(
+      key: 'nonexistent:arrInsertEnh',
+      paths: [r'$.a'],
+      index: 0,
+      // (X) values: ['1'],
+      values: [1], // Expected Usage
+    );
+    expect(result, isNull);
+  });
 
-  // test('jsonArrLenEnhanced - key does not exist', () async {
-  //   final result = await client
-  //       .jsonArrLenEnhanced(key: 'nonexistent:arrLenEnh', paths: [r'$.a']);
-  //   expect(result, isNull);
-  // });
+  test('jsonArrLenEnhanced - key does not exist', () async {
+    final result = await client.jsonArrLenEnhanced(
+      key: 'nonexistent:arrLenEnh',
+      paths: [r'$.a'],
+    );
+    // (X) expect(result, isNull);
+    expect(result, [null]); // Expected Usage
+  });
 
-  // test('jsonArrPopEnhanced - key does not exist', () async {
-  //   final result = await client.jsonArrPopEnhanced(
-  //       key: 'nonexistent:arrPopEnh', paths: [r'$.a'], index: 0);
-  //   expect(result, isNull);
-  // });
+  test('jsonArrPopEnhanced - key does not exist', () async {
+    final result = await client.jsonArrPopEnhanced(
+      key: 'nonexistent:arrPopEnh',
+      paths: [r'$.a'],
+      index: 0,
+    );
+    expect(result, isNull);
+  });
 
-  // test('jsonArrTrimEnhanced - key does not exist', () async {
-  //   final result = await client.jsonArrTrimEnhanced(
-  //     key: 'nonexistent:arrTrimEnh',
-  //     paths: [r'$.a'],
-  //     start: 0,
-  //     stop: 0,
-  //   );
-  //   expect(result, isNull);
-  // });
+  test('jsonArrTrimEnhanced - key does not exist', () async {
+    final result = await client.jsonArrTrimEnhanced(
+      key: 'nonexistent:arrTrimEnh',
+      paths: [r'$.a'],
+      start: 0,
+      stop: 0,
+    );
+    expect(result, isNull);
+  });
 
-  // test('jsonObjKeysEnhanced - key does not exist', () async {
-  //   final result = await client
-  //       .jsonObjKeysEnhanced(key: 'nonexistent:objKeysEnh', paths: [r'$.a']);
-  //   expect(result, isNull);
-  // });
+  test('jsonObjKeysEnhanced - key does not exist', () async {
+    final result = await client
+        .jsonObjKeysEnhanced(key: 'nonexistent:objKeysEnh', paths: [r'$.a']);
+    // (X) expect(result, isNull);
+    expect(result, [null]); // Expected Usage
+  });
 
-  // test('jsonStrappendEnhanced - key does not exist', () async {
-  //   final result = await client.jsonStrAppendEnhanced(
-  //     key: 'nonexistent:strAppendEnh',
-  //     paths: [r'$.a'],
-  //     value: '"suffix"',
-  //   );
-  //   expect(result, isNull);
-  // });
+  test('jsonStrAppendEnhanced - key does not exist', () async {
+    final result = await client.jsonStrAppendEnhanced(
+      key: 'nonexistent:strAppendEnh',
+      paths: [r'$.a'],
+      // (X) value: '"suffix"',
+      value: 'suffix',
+    );
+    expect(result, isNull);
+  });
 
-  // test('jsonStrLenEnhanced - key does not exist', () async {
-  //   final result = await client
-  //       .jsonStrLenEnhanced(key: 'nonexistent:strLenEnh', paths: [r'$.a']);
-  //   expect(result, isNull);
-  // });
+  test('jsonStrLenEnhanced - key does not exist', () async {
+    final result = await client
+        .jsonStrLenEnhanced(key: 'nonexistent:strLenEnh', paths: [r'$.a']);
+    // (X) expect(result, isNull);
+    expect(result, [null]); // Expected Usage
+  });
 }
