@@ -15,7 +15,7 @@
  */
 
 import '../json_commands.dart';
-import '../utils/json_helpers.dart' show JsonHelpers;
+import '../utils/helpers.dart' show JsonHelpers;
 
 extension JsonStrLenEnhanced on JsonCommands {
   /// JSON.STRLEN (Enhanced)

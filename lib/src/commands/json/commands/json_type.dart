@@ -15,7 +15,7 @@
  */
 
 import '../json_commands.dart';
-import '../utils/json_helpers.dart' show JsonHelpers;
+import '../utils/helpers.dart' show JsonHelpers;
 
 extension JsonType on JsonCommands {
   /// JSON.TYPE key [path]

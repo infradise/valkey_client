@@ -17,7 +17,7 @@
 import 'dart:convert' show jsonEncode;
 
 import '../json_commands.dart';
-import '../utils/json_helpers.dart' show JsonHelpers;
+import '../utils/helpers.dart' show JsonHelpers;
 
 extension JsonArrInsert on JsonCommands {
   /// JSON.ARRINSERT key path index value [value ...]

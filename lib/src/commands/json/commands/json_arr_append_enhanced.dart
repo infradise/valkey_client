@@ -17,7 +17,7 @@
 import 'dart:convert' show jsonEncode;
 
 import '../json_commands.dart' show JsonCommands;
-import '../utils/json_helpers.dart';
+import '../utils/helpers.dart';
 
 extension JsonArrAppendEnhanced on JsonCommands {
   /// JSON.ARRAPPEND (Enhanced)

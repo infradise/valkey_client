@@ -17,7 +17,7 @@
 import 'dart:convert' show jsonDecode;
 
 import '../json_commands.dart';
-import '../utils/json_helpers.dart' show JsonHelpers;
+import '../utils/helpers.dart' show JsonHelpers;
 
 extension JsonNumIncrBy on JsonCommands {
   /// JSON.NUMINCRBY key path value

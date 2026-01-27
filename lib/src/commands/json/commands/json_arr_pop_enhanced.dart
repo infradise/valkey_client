@@ -17,7 +17,7 @@
 import 'dart:convert' show jsonDecode;
 
 import '../json_commands.dart';
-import '../utils/json_helpers.dart' show JsonHelpers;
+import '../utils/helpers.dart' show JsonHelpers;
 
 extension JsonArrPopEnhanced on JsonCommands {
   /// JSON.ARRPOP (Enhanced)
