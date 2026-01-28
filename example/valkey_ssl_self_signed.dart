@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import 'dart:io';
+import 'dart:io' show X509Certificate;
+
 import 'package:valkey_client/valkey_client.dart';
 
 // ---------------------------------------------------------
