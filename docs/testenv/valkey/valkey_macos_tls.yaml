@@ -21,7 +21,7 @@ services:
       --cluster-announce-port 7101
       --cluster-announce-bus-port 17101
     volumes:
-      - ./data/7101:/data
+      - ./tls-data/7101:/data
       - ./tests/tls:/tls:ro
 
   valkey-7102:
@@ -45,7 +45,7 @@ services:
       --cluster-announce-port 7102
       --cluster-announce-bus-port 17102
     volumes:
-      - ./data/7002:/data
+      - ./tls-data/7102:/data
       - ./tests/tls:/tls:ro
 
   valkey-7103:
@@ -69,7 +69,7 @@ services:
       --cluster-announce-port 7103
       --cluster-announce-bus-port 17103
     volumes:
-      - ./data/7103:/data
+      - ./tls-data/7103:/data
       - ./tests/tls:/tls:ro
 
   # --- Replica Nodes (7104‑7106) ---
@@ -94,7 +94,7 @@ services:
       --cluster-announce-port 7104
       --cluster-announce-bus-port 17104
     volumes:
-      - ./data/7104:/data
+      - ./tls-data/7104:/data
       - ./tests/tls:/tls:ro
 
   valkey-7105:
@@ -118,7 +118,7 @@ services:
       --cluster-announce-port 7105
       --cluster-announce-bus-port 7105
     volumes:
-      - ./data/7105:/data
+      - ./tls-data/7105:/data
       - ./tests/tls:/tls:ro
 
   valkey-7106:
@@ -142,13 +142,13 @@ services:
       --cluster-announce-port 7106
       --cluster-announce-bus-port 17106
     volumes:
-      - ./data/7106:/data
+      - ./tls-data/7106:/data
       - ./tests/tls:/tls:ro
 
   # --- Cluster Initializer ---
-  cluster-init:
+  valkey-cluster-tls-init:
     image: valkey/valkey:latest
-    container_name: valkey-cluster-init
+    container_name: valkey-cluster-tls-init
     depends_on:
       - valkey-7101
       - valkey-7102

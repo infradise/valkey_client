@@ -126,7 +126,7 @@ services:
       - ./data/7006:/data
 
   # --- Cluster Initializer ---
-  cluster-init:
+  valkey-cluster-init:
     image: valkey/valkey:latest
     container_name: valkey-cluster-init
     depends_on:
