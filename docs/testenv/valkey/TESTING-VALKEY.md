@@ -22,9 +22,19 @@ docker run --name my-valkey -p 6379:6379 valkey/valkey:8.1.0
 ```
 
 ## Cluster environment
+
+## Non-SSL
 ```sh
-docker compose -f valkey_macos.yaml up --force-recreate
+docker compose -f valkey_macos.yaml -p valkey-cluster-nonssl up --force-recreate
+# -d: background
 ```
+
+### SSL(TLS/mTLS)
+```sh
+docker compose -f valkey_macos_tls.yaml -p valkey-cluster-ssl up --force-recreate
+# -d: background
+```
+
 
 ## OpenSSL
 
