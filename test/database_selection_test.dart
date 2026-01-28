@@ -70,9 +70,11 @@ void main() {
 
       try {
         await client.connect();
-        fail('Should have thrown ValkeyClientException');
+        // fail('Should have thrown ValkeyClientException');
+        fail('Should have thrown ValkeyConnectionException');
       } catch (e) {
-        expect(e, isA<ValkeyClientException>());
+        // expect(e, isA<ValkeyClientException>());
+        expect(e, isA<ValkeyConnectionException>());
         expect(e.toString(), contains('out of range'));
       } finally {
         await client.close();

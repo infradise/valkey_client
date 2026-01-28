@@ -37,12 +37,7 @@ void main() {
 
       // Cluster II - Failover, Redirection
       if (entity.path.endsWith('cluster_redirection_example.dart') ||
-          entity.path.endsWith('cluster_failover_stress_test.dart') ||
-          // Auth: SSL/TLS
-          entity.path.endsWith('cluster_ssl_cloud.dart') ||
-          entity.path.endsWith('cluster_ssl_self_signed.dart') ||
-          entity.path.endsWith('valkey_ssl_cloud.dart') ||
-          entity.path.endsWith('valkey_ssl_self_signed.dart')) {
+          entity.path.endsWith('cluster_failover_stress_test.dart')) {
         // tags.add('skip_example');
         continue;
       }
