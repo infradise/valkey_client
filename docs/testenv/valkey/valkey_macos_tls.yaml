@@ -1,0 +1,196 @@
+services:
+  # --- Master Nodes (7101~7106) ---
+  valkey-7101:
+    image: valkey/valkey:latest
+    container_name: valkey-7101
+    ports:
+      - "7101:7101"
+      - "17101:17101"
+    command: >
+      valkey-server --port 0 --tls-port 7101
+      --tls-cert-file /tls/valkey.crt
+      --tls-key-file /tls/valkey.key
+      --tls-ca-cert-file /tls/valkey.crt
+      --tls-auth-clients no
+      --tls-cluster yes
+      --tls-replication yes
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 192.168.65.254
+      --cluster-announce-port 7101
+      --cluster-announce-bus-port 17101
+    volumes:
+      - ./data/7101:/data
+      - ./tests/tls:/tls:ro
+
+  valkey-7102:
+    image: valkey/valkey:latest
+    container_name: valkey-7102
+    ports:
+      - "7102:7102"
+      - "17102:17102"
+    command: >
+      valkey-server --port 0 --tls-port 7102
+      --tls-cert-file /tls/valkey.crt
+      --tls-key-file /tls/valkey.key
+      --tls-ca-cert-file /tls/valkey.crt
+      --tls-auth-clients no
+      --tls-cluster yes
+      --tls-replication yes
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 192.168.65.254
+      --cluster-announce-port 7102
+      --cluster-announce-bus-port 17102
+    volumes:
+      - ./data/7002:/data
+      - ./tests/tls:/tls:ro
+
+  valkey-7103:
+    image: valkey/valkey:latest
+    container_name: valkey-7103
+    ports:
+      - "7103:7103"
+      - "17103:17103"
+    command: >
+      valkey-server --port 0 --tls-port 7103
+      --tls-cert-file /tls/valkey.crt
+      --tls-key-file /tls/valkey.key
+      --tls-ca-cert-file /tls/valkey.crt
+      --tls-auth-clients no
+      --tls-cluster yes
+      --tls-replication yes
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 192.168.65.254
+      --cluster-announce-port 7103
+      --cluster-announce-bus-port 17103
+    volumes:
+      - ./data/7103:/data
+      - ./tests/tls:/tls:ro
+
+  # --- Replica Nodes (7104‑7106) ---
+  valkey-7104:
+    image: valkey/valkey:latest
+    container_name: valkey-7104
+    ports:
+      - "7104:7104"
+      - "17104:17104"
+    command: >
+      valkey-server --port 0 --tls-port 7104
+      --tls-cert-file /tls/valkey.crt
+      --tls-key-file /tls/valkey.key
+      --tls-ca-cert-file /tls/valkey.crt
+      --tls-auth-clients no
+      --tls-cluster yes
+      --tls-replication yes
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 192.168.65.254
+      --cluster-announce-port 7104
+      --cluster-announce-bus-port 17104
+    volumes:
+      - ./data/7104:/data
+      - ./tests/tls:/tls:ro
+
+  valkey-7105:
+    image: valkey/valkey:latest
+    container_name: valkey-7105
+    ports:
+      - "7105:7105"
+      - "17105:17105"
+    command: >
+      valkey-server --port 0 --tls-port 7105
+      --tls-cert-file /tls/valkey.crt
+      --tls-key-file /tls/valkey.key
+      --tls-ca-cert-file /tls/valkey.crt
+      --tls-auth-clients no
+      --tls-cluster yes
+      --tls-replication yes
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 192.168.65.254
+      --cluster-announce-port 7105
+      --cluster-announce-bus-port 7105
+    volumes:
+      - ./data/7105:/data
+      - ./tests/tls:/tls:ro
+
+  valkey-7106:
+    image: valkey/valkey:latest
+    container_name: valkey-7106
+    ports:
+      - "7106:7106"
+      - "17106:17106"
+    command: >
+      valkey-server --port 0 --tls-port 7106
+      --tls-cert-file /tls/valkey.crt
+      --tls-key-file /tls/valkey.key
+      --tls-ca-cert-file /tls/valkey.crt
+      --tls-auth-clients no
+      --tls-cluster yes
+      --tls-replication yes
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 192.168.65.254
+      --cluster-announce-port 7106
+      --cluster-announce-bus-port 17106
+    volumes:
+      - ./data/7106:/data
+      - ./tests/tls:/tls:ro
+
+  # --- Cluster Initializer ---
+  cluster-init:
+    image: valkey/valkey:latest
+    container_name: valkey-cluster-init
+    depends_on:
+      - valkey-7101
+      - valkey-7102
+      - valkey-7103
+      - valkey-7104
+      - valkey-7105
+      - valkey-7106
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo "Waiting for all 6 cluster nodes to be ready..."
+        for port in 7101 7102 7103 7104 7105 7106; do
+          until valkey-cli -h 192.168.65.254 -p $${port} ping > /dev/null 2>&1; do
+            echo "Node at 192.168.65.254:$${port} not ready yet; retrying..."
+            sleep 1
+          done
+          echo "Node at 192.168.65.254:$${port} is ready!"
+        done
+
+        echo "All nodes are up. Creating cluster…"
+        sleep 2
+
+        echo "yes" | valkey-cli --tls \
+          --cert /tls/valkey.crt \
+          --key /tls/valkey.key \
+          --cacert /tls/valkey.crt \
+          --cluster create \
+          192.168.65.254:7101 \
+          192.168.65.254:7102 \
+          192.168.65.254:7103 \
+          192.168.65.254:7104 \
+          192.168.65.254:7105 \
+          192.168.65.254:7106 \
+          --cluster-replicas 1
+
+        echo "Cluster creation command sent. Waiting for cluster to be stable..."
+        sleep 3
+
+        until valkey-cli --cluster check 192.168.65.254:7101 2>&1 | grep -q '\[OK\] All 16384 slots covered.'; do
+          echo "Cluster not stable yet; retrying in 2s..."
+          sleep 2
+        done
+
+        echo "✅ Cluster is stable and all slots covered!"
