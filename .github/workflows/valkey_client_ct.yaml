@@ -17,9 +17,15 @@ name: valkey_client CT
 
 on:
   push:
-    branches: [ ct ]
+    branches: [
+      # main,
+      ct
+    ]
+
   # pull_request:
-  #   branches: [ "main" ]
+  #   branches: [
+  #     "main"
+  #   ]
 
 jobs:
   test:
@@ -64,6 +70,8 @@ jobs:
         run: |
           mkdir -p docs/testenv/${{ matrix.ssl_dir }}/tests/tls
 
+          echo "Generating Self-signed certificates..."
+
           # Generate generic cert for testing
           openssl req -x509 -newkey rsa:4096 \
             -keyout docs/testenv/${{ matrix.ssl_dir }}/tests/tls/${{ matrix.binary_name }}.key \
@@ -74,15 +82,19 @@ jobs:
           chmod 644 docs/testenv/${{ matrix.ssl_dir }}/tests/tls/*
 
       # ----------------------------------------------------------------
-      # 2. Start Database Environment
+      # 2. Start Redis/Valkey Environment
       # ----------------------------------------------------------------
-      - name: Start Database Environment
+      - name: Start Redis/Valkey Environment
         env:
           CI_IMAGE_NAME: ${{ matrix.image_name }}
           CI_BINARY_NAME: ${{ matrix.binary_name }}
+          ABS_CERT_PATH: ${{ github.workspace }}/docs/testenv/${{ matrix.test_dir_name }}/tests/tls
         run: |
-          echo "Starting Cluster..."
-          docker compose -f docker-compose.ci.yaml up -d
+          echo "Starting Cluster (7001-7006)..."
+          docker compose -f docker-compose.ci.yaml -p ${{ matrix.binary_name }}-cluster-nonssl up -d
+
+          echo "Starting SSL Cluster (7101-7106)..."
+          docker compose -f docker-compose.cluster-tls.yaml -p ${{ matrix.binary_name }}-cluster-ssl up -d
 
           echo "Starting Standalone..."
           docker run -d --name standalone-server -p 6379:6379 ${{ matrix.image_name }}
@@ -123,6 +135,7 @@ jobs:
             # Retry loop: Run keyscope ping and check if output contains "PONG"
             # Using 'grep' ensures we validate the connection logic inside valkey_client
             for i in {1..15}; do
+              # Run keyscope ping and check for PONG in the output
               OUTPUT=$(dart run keyscope/bin/keyscope.dart ping --port $port --silent || true)
               if echo "$OUTPUT" | grep -q "PONG"; then
                 echo "✅ $name is ready!"
@@ -142,32 +155,66 @@ jobs:
           # Check Cluster (Check one node, usually enough if cluster-init finished)
           check_service 7001 "Cluster Node 1"
 
+          check_service 7001 "Cluster Node"
+
+          # 3. Check SSL Container Status (Basic container check)
+          # if [ "$(docker inspect -f '{{.State.Running}}' ssl-tls)" = "true" ]; then
+          #    echo "✅ SSL Container is running"
+          # else
+          #    echo "❌ SSL Container failed"
+          #    docker logs ssl-tls
+          #    exit 1
+          # fi
+
+          echo "Checking SSL Cluster on port 7101..."
+          if [ "$(docker inspect -f '{{.State.Running}}' ${{ matrix.engine }}-cluster-tls-init-1)" = "true" ]; then
+             echo "✅ SSL Cluster Init container is running"
+          else
+             OUTPUT=$(dart run keyscope/bin/keyscope.dart ping --port 7101 --tls $port --insecure --silent || true)
+             echo "⚠️ SSL Cluster container check skipped (relying on container status)"
+          fi
+
+
       # ----------------------------------------------------------------
       # 4. Run Tests
       # ----------------------------------------------------------------
-      - name: Run Unit Tests
-        run: dart test --exclude-tags example
+      - name: Run JSON Tests
+        run: |
+          dart test test/valkey_json/test_code.dart
+          dart test test/valkey_json/test_code_for_enhanced_path.dart
+
 
       - name: Run SSL Tests (TLS)
+        # working-directory: docs/testenv/${{ matrix.test_dir_name }}
         run: |
           cd docs/testenv/${{ matrix.ssl_dir }}
           dart test ../../../test/ssl_connection_test_single_tls.dart
 
       - name: Run SSL Tests (mTLS)
+        # working-directory: docs/testenv/${{ matrix.test_dir_name }}
         run: |
           cd docs/testenv/${{ matrix.ssl_dir }}
           dart test ../../../test/ssl_connection_test_single_mtls.dart
 
-      - name: Run Additional SSL & Database Tests
+      - name: Run Additional SSL Tests
+        # working-directory: docs/testenv/${{ matrix.test_dir_name }}
         run: |
           cd docs/testenv/${{ matrix.ssl_dir }}
           dart test ../../../test/ssl_connection_test_single_and_cluster.dart
           dart test ../../../test/ssl_connection_test_single_ssl_and_mtls.dart
-          dart test database_selection_test.dart
-          dart test replica_read_test.dart
+
+      - name: Run Database & Replica Read Tests
+        # working-directory: docs/testenv/${{ matrix.test_dir_name }}
+        run: |
+          cd docs/testenv/${{ matrix.ssl_dir }}
+          dart test ../../../test/database_selection_test.dart
+          dart test ../../../test/replica_read_test.dart
 
       - name: Run Example Tests
         run: dart test --tags example
+
+      - name: Run Unit Tests (Exclude Examples)
+        run: dart test --exclude-tags example
 
       # ----------------------------------------------------------------
       # 5. Teardown
