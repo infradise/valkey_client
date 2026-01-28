@@ -1,0 +1,134 @@
+services:
+  # --- SSL Cluster Nodes (Ports 7101~7106) ---
+  # Key changes:
+  # 1. Mount certificates volume
+  # 2. Use --tls-port instead of --port
+  # 3. Enable --tls-cluster and --tls-replication
+
+  node-tls-7101: &tls_cluster_node
+    image: ${CI_IMAGE_NAME}
+    ports: ["7101:7101", "17101:17101"]
+    volumes:
+      - ${ABS_CERT_PATH}:/tls:ro
+    command: >
+      ${CI_BINARY_NAME}-server --port 0
+      --tls-port 7101
+      --tls-cert-file /tls/${CI_BINARY_NAME}.crt
+      --tls-key-file /tls/${CI_BINARY_NAME}.key
+      --tls-ca-cert-file /tls/${CI_BINARY_NAME}.crt
+      --tls-auth-clients no
+      --tls-cluster yes
+      --tls-replication yes
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 127.0.0.1
+      --cluster-announce-port 7101
+      --cluster-announce-bus-port 17101
+    container_name: "${COMPOSE_PROJECT_NAME}_7101"
+
+  node-tls-7102:
+    <<: *tls_cluster_node
+    ports: ["7102:7102", "17102:17102"]
+    command: >
+      ${CI_BINARY_NAME}-server --port 0
+      --tls-port 7102
+      --tls-cert-file /tls/${CI_BINARY_NAME}.crt
+      --tls-key-file /tls/${CI_BINARY_NAME}.key
+      --tls-ca-cert-file /tls/${CI_BINARY_NAME}.crt
+      --tls-auth-clients no
+      --tls-cluster yes
+      --tls-replication yes
+      --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000
+      --cluster-announce-ip 127.0.0.1 --cluster-announce-port 7102 --cluster-announce-bus-port 17102
+    container_name: "${COMPOSE_PROJECT_NAME}_7102"
+
+  node-tls-7103:
+    <<: *tls_cluster_node
+    ports: ["7103:7103", "17103:17103"]
+    command: >
+      ${CI_BINARY_NAME}-server --port 0
+      --tls-port 7103
+      --tls-cert-file /tls/${CI_BINARY_NAME}.crt
+      --tls-key-file /tls/${CI_BINARY_NAME}.key
+      --tls-ca-cert-file /tls/${CI_BINARY_NAME}.crt
+      --tls-auth-clients no
+      --tls-cluster yes
+      --tls-replication yes
+      --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000
+      --cluster-announce-ip 127.0.0.1 --cluster-announce-port 7103 --cluster-announce-bus-port 17103
+    container_name: "${COMPOSE_PROJECT_NAME}_7103"
+
+  node-tls-7104:
+    <<: *tls_cluster_node
+    ports: ["7104:7104", "17104:17104"]
+    command: >
+      ${CI_BINARY_NAME}-server --port 0
+      --tls-port 7104
+      --tls-cert-file /tls/${CI_BINARY_NAME}.crt
+      --tls-key-file /tls/${CI_BINARY_NAME}.key
+      --tls-ca-cert-file /tls/${CI_BINARY_NAME}.crt
+      --tls-auth-clients no
+      --tls-cluster yes
+      --tls-replication yes
+      --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000
+      --cluster-announce-ip 127.0.0.1 --cluster-announce-port 7104 --cluster-announce-bus-port 17104
+    container_name: "${COMPOSE_PROJECT_NAME}_7104"
+
+  node-tls-7105:
+    <<: *tls_cluster_node
+    ports: ["7105:7105", "17105:17105"]
+    command: >
+      ${CI_BINARY_NAME}-server --port 0
+      --tls-port 7105
+      --tls-cert-file /tls/${CI_BINARY_NAME}.crt
+      --tls-key-file /tls/${CI_BINARY_NAME}.key
+      --tls-ca-cert-file /tls/${CI_BINARY_NAME}.crt
+      --tls-auth-clients no
+      --tls-cluster yes
+      --tls-replication yes
+      --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000
+      --cluster-announce-ip 127.0.0.1 --cluster-announce-port 7105 --cluster-announce-bus-port 17105
+    container_name: "${COMPOSE_PROJECT_NAME}_7105"
+
+  node-tls-7106:
+    <<: *tls_cluster_node
+    ports: ["7106:7106", "17106:17106"]
+    command: >
+      ${CI_BINARY_NAME}-server --port 0
+      --tls-port 7106
+      --tls-cert-file /tls/${CI_BINARY_NAME}.crt
+      --tls-key-file /tls/${CI_BINARY_NAME}.key
+      --tls-ca-cert-file /tls/${CI_BINARY_NAME}.crt
+      --tls-auth-clients no
+      --tls-cluster yes
+      --tls-replication yes
+      --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000
+      --cluster-announce-ip 127.0.0.1 --cluster-announce-port 7106 --cluster-announce-bus-port 17106
+    container_name: "${COMPOSE_PROJECT_NAME}_7106"
+
+  # --- SSL Cluster Initializer ---
+  cluster-tls-init:
+    image: ${CI_IMAGE_NAME}
+    depends_on: [node-tls-7101, node-tls-7102, node-tls-7103, node-tls-7104, node-tls-7105, node-tls-7106]
+    volumes:
+      - ${ABS_CERT_PATH}:/tls:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo "Waiting for SSL nodes to start..."
+        sleep 5
+
+        # Use --tls and cert flags for the CLI as well
+        echo "yes" | ${CI_BINARY_NAME}-cli --tls \
+          --cert /tls/${CI_BINARY_NAME}.crt \
+          --key /tls/${CI_BINARY_NAME}.key \
+          --cacert /tls/${CI_BINARY_NAME}.crt \
+          --cluster create \
+          127.0.0.1:7101 127.0.0.1:7102 127.0.0.1:7103 \
+          127.0.0.1:7104 127.0.0.1:7105 127.0.0.1:7106 \
+          --cluster-replicas 1
+
+        echo "SSL Cluster created. Sleeping loop."
+        tail -f /dev/null
