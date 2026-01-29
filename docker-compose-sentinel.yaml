@@ -1,0 +1,42 @@
+services:
+  # Master Node
+  sentinel-master-7201: &sentinel_node
+    image: ${CI_IMAGE_NAME}
+    ports: ["7201:7201", "17201:17201"]
+    volumes:
+      - ${ABS_CERT_PATH}:/tls:ro
+    command: >
+      ${CI_BINARY_NAME}-server
+      --port 7201
+      --protected-mode no
+    container_name: "${COMPOSE_PROJECT_NAME}_7201"
+
+  # Replica 1
+  sentinel-replica-7202:
+    <<: *sentinel_node
+    ports: ["7202:7202", "17202:17202"]
+    command: >
+      ${CI_BINARY_NAME}-server
+      --port 7202
+      --replicaof sentinel-master-7201 7201
+      --protected-mode no
+      --replica-announce-ip 127.0.0.1
+      --replica-announce-port 7202
+    container_name: "${COMPOSE_PROJECT_NAME}_7202"
+    depends_on:
+      - sentinel-master-7201
+
+  # Replica 2
+  sentinel-replica-7203:
+    <<: *sentinel_node
+    ports: ["7203:7203", "17203:17203"]
+    command: >
+      ${CI_BINARY_NAME}-server
+      --port 7203
+      --replicaof sentinel-master-7201 7201
+      --protected-mode no
+      --replica-announce-ip 127.0.0.1
+      --replica-announce-port 7203
+    container_name: "${COMPOSE_PROJECT_NAME}_7203"
+    depends_on:
+      - sentinel-master-7201
