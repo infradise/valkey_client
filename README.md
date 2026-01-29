@@ -1,8 +1,11 @@
-[![pub package](https://img.shields.io/pub/v/valkey_client.svg)](https://pub.dev/packages/valkey_client)
-
 # valkey_client ⚡
 
-The `valkey_client` is a high-performance, cluster-aware Dart client for Redis and Valkey.
+[![pub package](https://img.shields.io/pub/v/valkey_client.svg)](https://pub.dev/packages/valkey_client)
+[![CT](https://github.com/infradise/valkey_client/actions/workflows/valkey_client_ct.yaml/badge.svg)](https://github.com/infradise/valkey_client/actions/workflows/valkey_client_ct.yaml)
+
+### Dart client for Redis and Valkey
+
+The **valkey_client** is a high-performance, cluster-aware Dart client for Redis and Valkey.
 
 ## Overview
 - Data format: RedisJSON; ValkeyJSON
