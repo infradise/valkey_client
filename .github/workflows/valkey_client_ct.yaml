@@ -13,19 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-name: valkey_client CT
+name: CT
 
 on:
   push:
-    branches: [
-      # main,
-      ct
-    ]
+    branches: [ main ]
+    # paths:
+    #   - 'example/**/*.dart'
+    #   - 'lib/**/*.dart'
+    #   - 'test/**/*.dart'
+    #   - 'docker-compose-cluster-tls.yaml'
+    #   - 'docker-compose-cluster.yaml'
+    #   - 'docker-compose-sentinel.yaml'
+    #   - 'dart_test.yaml'
+    #   - 'pubspec.yaml'
+    #   - 'analysis_options.yaml'
+    #   - '.github/workflows/valkey_client_ct.yaml'
 
   # pull_request:
-  #   branches: [
-  #     "main"
-  #   ]
 
 jobs:
   test:
@@ -45,7 +50,7 @@ jobs:
             ssl_dir: "valkey"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Checkout specific paths (sparse)
         uses: actions/checkout@v4
