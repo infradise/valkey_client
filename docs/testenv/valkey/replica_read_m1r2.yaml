@@ -1,41 +1,40 @@
-# version: ''
-# the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
-
 services:
-  # Master Node (Port 6379)
   valkey-master:
     image: valkey/valkey:latest
     container_name: valkey-master
     ports:
-      - "6379:6379"
-    command: ["valkey-server", "--protected-mode", "no"]
+      - "7201:7201"
+    command: >
+      valkey-server
+      --port 7201
+      --protected-mode no
 
-  # Replica 1 (Port 6380)
   valkey-replica-1:
     image: valkey/valkey:latest
     container_name: valkey-replica-1
     ports:
-      - "6380:6379"
+      - "7202:7202"
     command: >
       valkey-server
-      --replicaof valkey-master 6379
+      --port 7202
+      --replicaof valkey-master 7201
       --protected-mode no
       --replica-announce-ip 127.0.0.1
-      --replica-announce-port 6380
+      --replica-announce-port 7202
     depends_on:
       - valkey-master
 
-  # Replica 2 (Port 6381)
   valkey-replica-2:
     image: valkey/valkey:latest
     container_name: valkey-replica-2
     ports:
-      - "6381:6379"
+      - "7203:7203"
     command: >
       valkey-server
-      --replicaof valkey-master 6379
+      --port 7203
+      --replicaof valkey-master 7201
       --protected-mode no
       --replica-announce-ip 127.0.0.1
-      --replica-announce-port 6381
+      --replica-announce-port 7203
     depends_on:
       - valkey-master

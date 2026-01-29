@@ -21,6 +21,12 @@ docker run --name my-valkey -p 6379:6379 valkey/valkey:8.1.0
 # from [Docker image](https://hub.docker.com/r/valkey/valkey/)
 ```
 
+## Sentinel environment
+
+```
+docker compose -f replica_read_m1r2.yaml -p valkey-sentinel-nonssl up --force-recreate
+```
+
 ## Cluster environment
 
 ## Non-SSL
@@ -62,7 +68,7 @@ docker run --name valkey-ssl-tls \
 ```sh
 docker run --name valkey-ssl-mtls \
   -v $(pwd)/tests/tls:/tls \
-  -p 6380:6379 \
+  -p 6381:6379 \
   valkey/valkey:latest \
   --tls-port 6379 \
   --port 0 \
