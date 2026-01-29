@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+@Tags(['cluster'])
+library;
+
 import 'package:test/test.dart';
 import 'package:valkey_client/valkey_client.dart';
 // import 'package:valkey_client/src/cluster_hash.dart'; // Need getHashSlot

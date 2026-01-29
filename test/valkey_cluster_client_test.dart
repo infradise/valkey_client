@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+@Tags(['cluster'])
+library;
+
 import 'dart:async';
 import 'package:test/test.dart';
 import 'package:valkey_client/valkey_client.dart';

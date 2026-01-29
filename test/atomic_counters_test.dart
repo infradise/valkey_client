@@ -30,7 +30,9 @@ void main() async {
   });
 
   test('Atomic Counters should work correctly', () async {
-    const key = 'counter:test';
+    final uniqueId = DateTime.now().microsecondsSinceEpoch;
+    final key = 'counter:test:$uniqueId';
+
     await client.del(key); // Init
 
     // 1. INCR
