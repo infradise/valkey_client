@@ -25,7 +25,7 @@ void main() {
   // Assumes Docker Compose setup is running:
   // Master: 6379, Replica1: 6380, Replica2: 6381
   const masterHost = '127.0.0.1';
-  const masterPort = 6379;
+  const masterPort = 7201;
 
   group('v2.2.0 Replica Read & Load Balancing', () {
     test('Should discover replicas and read data from them', () async {

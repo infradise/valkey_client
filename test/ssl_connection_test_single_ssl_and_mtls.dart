@@ -25,7 +25,8 @@ void main() {
   group('SSL/TLS Connection Tests', () {
     // Configuration for the local Docker environment
     const host = '127.0.0.1';
-    const sslPort = 6380; // Mapped to container's 6379 (TLS)
+    const tlsPort = 6380; // Mapped to container's TLS port
+    const mTlsPort = 6381; // Mapped to container's mTLS port
 
     // Certificate paths (relative to the package root)
     // Ensure you have run the OpenSSL generation commands in 'tests/tls/'
@@ -38,7 +39,7 @@ void main() {
         () async {
       final client = ValkeyClient(
         host: host,
-        port: sslPort,
+        port: tlsPort,
         useSsl: true,
         // For development/testing with self-signed certs, we must explicitly allow them.
         onBadCertificate: (cert) => true,
@@ -56,7 +57,7 @@ void main() {
       } catch (e) {
         // Gracefully fail if the SSL container is not running
         if (e is SocketException || e is ValkeyConnectionException) {
-          print('⚠️ SKIPPING TEST: SSL Server not reachable at $host:$sslPort');
+          print('⚠️ SKIPPING TEST: SSL Server not reachable at $host:$tlsPort');
           return;
         }
         rethrow;
@@ -82,7 +83,7 @@ void main() {
 
       final client = ValkeyClient(
         host: host,
-        port: sslPort,
+        port: mTlsPort,
         useSsl: true,
         // Inject the context containing the client cert
         sslContext: context,
@@ -102,7 +103,7 @@ void main() {
       } catch (e) {
         if (e is SocketException || e is ValkeyConnectionException) {
           print(
-              '⚠️ SKIPPING mTLS TEST: Server not reachable at $host:$sslPort');
+              '⚠️ SKIPPING mTLS TEST: Server not reachable at $host:$mTlsPort');
           return;
         }
         rethrow;

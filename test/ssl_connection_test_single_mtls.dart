@@ -25,7 +25,7 @@ void main() {
   group('SSL/TLS Connection Tests', () {
     // Note: To run this test, you need a Valkey/Redis instance running with TLS.
     const host = '127.0.0.1';
-    const sslPort = 6380;
+    const sslPort = 6381;
 
     test('Should connect using mTLS (Client Certificate)', () async {
       // 1. Create SecurityContext for mTLS

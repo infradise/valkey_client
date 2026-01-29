@@ -65,7 +65,8 @@ void main() {
       // should fail
       final client = ValkeyClient(
         host: host,
-        port: 6379, // Standard non-SSL port
+        // port: 6379, // Standard non-SSL port
+        port: 6380, // TODO: change to 6379
         useSsl: true,
         commandTimeout: const Duration(seconds: 1),
       );
