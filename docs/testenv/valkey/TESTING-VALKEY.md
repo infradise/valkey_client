@@ -1,11 +1,13 @@
 # Testing for Valkey
 
+- All cases are done (3 mandatories)
+
 ## Standalone/Sentinel environments
 ```sh
 docker run --name my-valkey -p 6379:6379 valkey/valkey:latest
 ```
 
-## JSON environment
+## JSON environment (mandatory)
 
 Valkey JSON, Valkey Bloom, Valkey Search, LDAP
 
@@ -21,7 +23,7 @@ docker run --name my-valkey -p 6379:6379 valkey/valkey:8.1.0
 # from [Docker image](https://hub.docker.com/r/valkey/valkey/)
 ```
 
-## Sentinel environment
+## Sentinel environment (mandatory)
 
 ```
 docker compose -f replica_read_m1r2.yaml -p valkey-sentinel-nonssl up --force-recreate
@@ -29,7 +31,7 @@ docker compose -f replica_read_m1r2.yaml -p valkey-sentinel-nonssl up --force-re
 
 ## Cluster environment
 
-## Non-SSL
+## Non-SSL (mandatory)
 ```sh
 docker compose -f valkey_macos.yaml -p valkey-cluster-nonssl up --force-recreate
 # -d: background
