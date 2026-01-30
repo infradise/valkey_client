@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.1.0
+* **Modular Architecture**
+    * **New HASH Commands**: individual files per command for better scalability and maintainability.
+        * `hDel`, `hExists`, `hExpire`, `hExpireAt`, `hExpireTime`, `hGet`, `hGetAll`, `hGetEx`, `hIncrBy`, `hIncrByFloat`, `hKeys`, `hLen`, `hMGet`, `hMSet`, `hPersist`, `hPExpire`, `hPExpireAt`, `hPExpireTime`, `hPTtl`, `hRandField`
+    * **Existing HASH Commands**: Refactored transaction commands (`hset`, `hget`, `hgetall`) into independent extension files.
+        * `ValkeyClient` methods now internally delegate logic to the new extensions (`HSet`, `HGet`, `HGetAll`), ensuring full backward compatibility and interface compliance.
+
 ## 3.0.0
 * **Modular Architecture**: Restructured monolithic command implementations into scalable, extension-based modules.
     * **JSON Commands**: Decomposed the monolithic `json.dart` into individual files per command (e.g., `jsonArrAppend`, `jsonGet`) for better scalability and maintainability.
