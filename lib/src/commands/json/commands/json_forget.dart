@@ -16,7 +16,7 @@
 
 import '../commands.dart' show JsonCommands;
 
-extension JsonForget on JsonCommands {
+extension JsonForgetCommand on JsonCommands {
   /// JSON.FORGET key [path]
   ///
   /// Deletes a value. This is an alias for JSON.DEL.

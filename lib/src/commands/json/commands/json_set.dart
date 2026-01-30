@@ -18,7 +18,7 @@ import 'dart:convert' show jsonDecode, jsonEncode;
 
 import '../commands.dart' show JsonCommands;
 
-extension JsonSet on JsonCommands {
+extension JsonSetCommand on JsonCommands {
   /// JSON.SET key path value [NX | XX]
   ///
   /// Sets the JSON value at [path] in [key].

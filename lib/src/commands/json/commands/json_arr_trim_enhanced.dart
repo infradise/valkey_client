@@ -17,7 +17,7 @@
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonArrTrimEnhanced on JsonCommands {
+extension JsonArrTrimEnhancedCommand on JsonCommands {
   /// JSON.ARRTRIM (Enhanced)
   ///
   /// Trims arrays at the specified [paths].

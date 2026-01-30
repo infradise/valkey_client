@@ -16,7 +16,7 @@
 
 import '../commands.dart' show JsonCommands;
 
-extension JsonDel on JsonCommands {
+extension JsonDelCommand on JsonCommands {
   /// JSON.DEL key [path]
   ///
   /// Deletes a value.

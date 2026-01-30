@@ -23,7 +23,7 @@ export 'extensions.dart';
 /// Mixin to support Redis-JSON and Valkey-JSON commands.
 /// This mixin ensures compatibility with the existing `execute` method
 /// by converting all parameters to Strings before sending.
-mixin TransactionsCommands {
+mixin TransactionCommands {
   // [Interface Definition]
   // The class using this mixin must implement these methods and getters.
 

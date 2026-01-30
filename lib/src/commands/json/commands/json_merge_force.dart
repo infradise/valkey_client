@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import '../commands.dart' show JsonCommands, JsonMerge;
+import '../commands.dart' show JsonCommands, JsonMergeCommand;
 
-extension JsonMergeForce on JsonCommands {
+extension JsonMergeForceCommand on JsonCommands {
   Future<void> jsonMergeForce({
     required String key,
     required String path,

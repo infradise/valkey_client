@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import '../commands.dart' show TransactionsCommands;
+import '../commands.dart' show TransactionCommands;
 // import '../utils/helpers.dart';
 
-extension Discard on TransactionsCommands {
+extension DiscardCommand on TransactionCommands {
   Future<String> discard() async {
     if (!isInTransaction) {
       throw Exception('Cannot call DISCARD without MULTI.');

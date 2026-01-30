@@ -19,7 +19,7 @@ import 'dart:convert' show jsonDecode;
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonNumIncrBy on JsonCommands {
+extension JsonNumIncrByCommand on JsonCommands {
   /// JSON.NUMINCRBY key path value
   ///
   /// Increments the numeric value at [path] by [value].

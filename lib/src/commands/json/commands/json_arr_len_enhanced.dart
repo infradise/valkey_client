@@ -17,7 +17,7 @@
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonArrLenEnhanced on JsonCommands {
+extension JsonArrLenEnhancedCommand on JsonCommands {
   /// JSON.ARRLEN (Enhanced)
   ///
   /// Returns lengths of arrays at the specified [paths].

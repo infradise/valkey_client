@@ -16,7 +16,7 @@
 
 import '../commands.dart' show JsonCommands;
 
-extension JsonClear on JsonCommands {
+extension JsonClearCommand on JsonCommands {
   /// JSON.CLEAR key [path]
   ///
   /// Clears the arrays or objects at [path].

@@ -17,7 +17,7 @@
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonDebug on JsonCommands {
+extension JsonDebugCommand on JsonCommands {
   /// JSON.DEBUG MEMORY key [path]
   ///
   /// Reports the memory usage in bytes of a value.

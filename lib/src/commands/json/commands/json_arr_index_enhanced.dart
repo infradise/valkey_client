@@ -19,7 +19,7 @@ import 'dart:convert' show jsonEncode;
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart';
 
-extension JsonArrIndexEnhanced on JsonCommands {
+extension JsonArrIndexEnhancedCommand on JsonCommands {
   /// JSON.ARRINDEX (Enhanced)
   ///
   /// Finds the index of [value] in arrays at the specified [paths].

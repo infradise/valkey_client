@@ -17,7 +17,7 @@
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonArrTrim on JsonCommands {
+extension JsonArrTrimCommand on JsonCommands {
   /// JSON.ARRTRIM key path start stop
   ///
   /// Trims the array so that it contains only the specified inclusive range of

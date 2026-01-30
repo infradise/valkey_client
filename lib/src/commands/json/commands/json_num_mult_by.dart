@@ -19,7 +19,7 @@ import 'dart:convert' show jsonDecode;
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonNumMultBy on JsonCommands {
+extension JsonNumMultByCommand on JsonCommands {
   /// JSON.NUMMULTBY key path value
   ///
   /// Multiplies the numeric value at [path] by [value].

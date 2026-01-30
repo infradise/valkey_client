@@ -19,7 +19,7 @@ import 'dart:convert' show jsonEncode;
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonArrIndex on JsonCommands {
+extension JsonArrIndexCommand on JsonCommands {
   /// JSON.ARRINDEX key path value [start [stop]]
   ///
   /// Searches for the first occurrence of [value] in the array.

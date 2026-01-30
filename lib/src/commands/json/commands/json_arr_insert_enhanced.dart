@@ -19,7 +19,7 @@ import 'dart:convert' show jsonEncode;
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonArrInsertEnhanced on JsonCommands {
+extension JsonArrInsertEnhancedCommand on JsonCommands {
   /// JSON.ARRINSERT (Enhanced)
   ///
   /// Inserts [values] into arrays at the specified [paths] at [index].

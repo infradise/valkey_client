@@ -19,7 +19,7 @@ import 'dart:convert' show jsonDecode;
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonArrPop on JsonCommands {
+extension JsonArrPopCommand on JsonCommands {
   /// JSON.ARRPOP key [path [index]]
   ///
   /// Removes and returns the element at [index] in the array.

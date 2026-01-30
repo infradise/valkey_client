@@ -18,7 +18,7 @@ import 'dart:convert' show jsonDecode;
 
 import '../commands.dart' show JsonCommands;
 
-extension JsonGet on JsonCommands {
+extension JsonGetCommand on JsonCommands {
   /// JSON.GET key [path ...]
   ///
   /// Return the value at [path] in JSON format.

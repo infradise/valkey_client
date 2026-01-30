@@ -17,7 +17,7 @@
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonObjLen on JsonCommands {
+extension JsonObjLenCommand on JsonCommands {
   /// JSON.OBJLEN key [path]
   ///
   /// Reports the number of keys in the JSON object at [path].

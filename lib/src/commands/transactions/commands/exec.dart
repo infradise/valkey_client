@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import '../commands.dart' show TransactionsCommands;
+import '../commands.dart' show TransactionCommands;
 
-extension Exec on TransactionsCommands {
+extension ExecCommand on TransactionCommands {
   Future<List<dynamic>?> exec() async {
     if (!isInTransaction) {
       throw Exception('Cannot call EXEC without MULTI.');

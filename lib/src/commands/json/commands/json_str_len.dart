@@ -17,7 +17,7 @@
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonStrLen on JsonCommands {
+extension JsonStrLenCommand on JsonCommands {
   /// JSON.STRLEN key [path]
   ///
   /// Reports the length of the JSON string at [path].

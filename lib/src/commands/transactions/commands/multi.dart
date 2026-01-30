@@ -15,9 +15,9 @@
  */
 
 // import '../../../annotations.dart';
-import '../commands.dart' show TransactionsCommands;
+import '../commands.dart' show TransactionCommands;
 
-extension Multi on TransactionsCommands {
+extension MultiCommand on TransactionCommands {
   Future<String> multi() async {
     // MULTI itself shouldn't be queued if already in transaction
     if (isInTransaction) {

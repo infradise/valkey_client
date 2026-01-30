@@ -32,10 +32,10 @@ import 'commands/generic.dart' show GenericCommands;
 import 'commands/json/commands.dart'
     show JsonCommands; // Redis JSON and Valkey JSON
 // Import the new exceptions file
-import 'commands/transactions/commands.dart' show TransactionsCommands;
-import 'commands/transactions/commands/discard.dart';
-import 'commands/transactions/commands/exec.dart';
-import 'commands/transactions/commands/multi.dart';
+import 'commands/transactions/commands.dart' show TransactionCommands;
+import 'commands/transactions/commands/discard.dart' show DiscardCommand;
+import 'commands/transactions/commands/exec.dart' show ExecCommand;
+import 'commands/transactions/commands/multi.dart' show MultiCommand;
 import 'exceptions.dart';
 // Built-in Logger
 import 'logging.dart';
@@ -124,7 +124,7 @@ class _IncompleteDataException implements Exception {
 
 /// The main client implementation for communicating with a Valkey server.
 class ValkeyClient
-    with JsonCommands, TransactionsCommands, GenericCommands
+    with JsonCommands, TransactionCommands, GenericCommands
     implements ValkeyClientBase {
   static final _log = ValkeyLogger('ValkeyClient');
 
@@ -2259,7 +2259,7 @@ class ValkeyClient
   // --- TRANSACTION (v0.11.0) ---
 
   @override
-  Future<String> multi() async => Multi(this).multi();
+  Future<String> multi() async => MultiCommand(this).multi();
   // Future<String> multi() async {
   //   // MULTI itself shouldn't be queued if already in transaction
   //   if (isInTransaction) {
@@ -2271,7 +2271,7 @@ class ValkeyClient
   // }
 
   @override
-  Future<List<dynamic>?> exec() async => Exec(this).exec();
+  Future<List<dynamic>?> exec() async => ExecCommand(this).exec();
   // Future<List<dynamic>?> exec() async {
   //   if (!isInTransaction) {
   //     throw Exception('Cannot call EXEC without MULTI.');
@@ -2286,7 +2286,7 @@ class ValkeyClient
   // }
 
   @override
-  Future<String> discard() async => Discard(this).discard();
+  Future<String> discard() async => DiscardCommand(this).discard();
   // Future<String> discard() async {
   //   if (!isInTransaction) {
   //     throw Exception('Cannot call DISCARD without MULTI.');

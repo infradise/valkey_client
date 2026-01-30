@@ -17,7 +17,7 @@
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonObjKeysEnhanced on JsonCommands {
+extension JsonObjKeysEnhancedCommand on JsonCommands {
   /// JSON.OBJKEYS (Enhanced)
   ///
   /// Returns keys of objects at the specified [paths].

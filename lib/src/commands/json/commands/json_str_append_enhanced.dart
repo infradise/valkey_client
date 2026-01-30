@@ -19,7 +19,7 @@ import 'dart:convert' show jsonEncode;
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonStrAppendEnhanced on JsonCommands {
+extension JsonStrAppendEnhancedCommand on JsonCommands {
   /// JSON.STRAPPEND (Enhanced)
   ///
   /// Appends [value] to string values at the specified [paths].

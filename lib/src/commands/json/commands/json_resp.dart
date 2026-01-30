@@ -17,7 +17,7 @@
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonResp on JsonCommands {
+extension JsonRespCommand on JsonCommands {
   /// JSON.RESP key [path]
   ///
   /// Returns the JSON value at [path] in Redis Serialization Protocol (RESP).

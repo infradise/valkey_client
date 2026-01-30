@@ -17,7 +17,7 @@
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonToggle on JsonCommands {
+extension JsonToggleCommand on JsonCommands {
   /// JSON.TOGGLE key [path]
   ///
   /// Toggles a boolean value stored at [path].

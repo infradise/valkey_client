@@ -17,7 +17,7 @@
 import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
-extension JsonType on JsonCommands {
+extension JsonTypeCommand on JsonCommands {
   /// JSON.TYPE key [path]
   ///
   /// Reports the type of JSON value at [path].

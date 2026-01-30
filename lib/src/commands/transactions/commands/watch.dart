@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import '../commands.dart' show TransactionsCommands;
+import '../commands.dart' show TransactionCommands;
 
-extension WatchCommand on TransactionsCommands {
+extension WatchCommand on TransactionCommands {
   /// WATCH key [key ...]
   ///
   /// Marks the given [keys] to be watched for conditional execution of
