@@ -30,11 +30,15 @@ import 'package:test/test.dart';
 
 void main() {
   final exampleDir = Directory('example');
-  for (var entity in exampleDir.listSync()) {
+
+  // Use recursive: true to include all subdirectories under `example`
+  for (var entity in exampleDir.listSync(recursive: true)) {
+    // Only consider Dart files
     if (entity is File && entity.path.endsWith('.dart')) {
       final tags = <String>['example'];
 
       // Cluster II - Failover, Redirection
+      // Skip these specific examples
       if (entity.path.endsWith('cluster_redirection_example.dart') ||
           entity.path.endsWith('cluster_failover_stress_test.dart')) {
         // tags.add('skip_example');
@@ -42,12 +46,14 @@ void main() {
       }
 
       // Cluster I, No-auth
+      // Run each Dart example as a separate test
       test('Run ${entity.path}', () async {
         final result = await Process.run(
           'dart',
           [entity.path],
         );
 
+        // Expect the process to exit with code 0, otherwise show stderr
         expect(result.exitCode, 0, reason: result.stderr.toString());
 
         // OR,
