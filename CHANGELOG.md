@@ -6,6 +6,8 @@
         * `hDel`, `hExists`, `hExpire`, `hExpireAt`, `hExpireTime`, `hGet`, `hGetAll`, `hGetEx`, `hIncrBy`, `hIncrByFloat`, `hKeys`, `hLen`, `hMGet`, `hMSet`, `hPersist`, `hPExpire`, `hPExpireAt`, `hPExpireTime`, `hPTtl`, `hRandField`, `hScan`, `hSet`, `hSetEx`, `hSetNx`, `hStrLen`, `hTtl`, `hVals`
     * **Existing HASH Commands**: Refactored transaction commands (`hset`, `hget`, `hgetall`) into independent extension files.
         * `ValkeyClient` methods now internally delegate logic to the new extensions (`HSet`, `HGet`, `HGetAll`), ensuring full backward compatibility and interface compliance.
+    * **New Transactions Commands**
+        * `watch`, `unwatch`
 
 ## 3.0.0
 * **Modular Architecture**: Restructured monolithic command implementations into scalable, extension-based modules.
