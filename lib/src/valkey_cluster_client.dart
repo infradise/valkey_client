@@ -491,7 +491,7 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
       _executeOnKey(key, (client) => client.hGet(key, field));
 
   @override
-  @Deprecated('Use [hGet] instead. This method will be removed in v3.0.0.')
+  @Deprecated('Use [hGet] instead. This method will be removed in v4.0.0.')
   Future<String?> hget(String key, String field) => hGet(key, field);
 
   @override

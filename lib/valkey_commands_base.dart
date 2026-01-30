@@ -54,7 +54,7 @@ abstract class ValkeyCommandsBase {
   /// Returns `null` if the field or key does not exist.
   /// Throws a [ValkeyServerException] if the key holds a non-hash value.
   Future<String?> hGet(String key, String field);
-  @Deprecated('Use [hGet] instead. This method will be removed in v3.0.0.')
+  @Deprecated('Use [hGet] instead. This method will be removed in v4.0.0.')
   Future<String?> hget(String key, String field);
 
   /// Sets [field] in the hash stored at [key] to [value].
