@@ -38,6 +38,7 @@ The **valkey_client** is a high-performance, cluster-aware Dart client for Redis
 | JSON                  | `jsonArrAppend`, `jsonArrAppendEnhanced`, `jsonArrIndex`, `jsonArrIndexEnhanced`, `jsonArrInsert`, `jsonArrInsertEnhanced`, `jsonArrLen`, `jsonArrLenEnhanced`, `jsonArrPop`,`jsonArrPopEnhanced`, `jsonArrTrim`, `jsonArrTrimEnhanced`, `jsonClear`, `jsonDebug`, `jsonDel`, `jsonForget`, `jsonGet`, `jsonMerge`, `jsonMergeForce`, `jsonMGet`, `jsonMSet`, `jsonNumIncrBy`, `jsonNumMultBy`, `jsonObjKeys`, `jsonObjKeysEnhanced`, `jsonObjLen`, `jsonResp`, `jsonSet`, `jsonStrAppend`, `jsonStrAppendEnhanced`, `jsonStrLen`, `jsonStrLenEnhanced`,  `jsonToggle`, `jsonType` |
 | Generic               | `scan` |
 | Lists (v3.2.0)        | `blMove`, `blmPop`, `blPop`, `brPop`, `brPopLPush`, `lIndex`, `lInsert`, `lLen`, `lMove`, `lmPop`, `lPop`, `lPos`, `lPush`, `lPushX`, `lRange`, `lRem`, `lSet`, `lTrim`, `rPop`, `rPopLPush`, `rPush`, `rPushX` |
+| Server (v3.2.0)       | `flushDb`, `flushAll` |
 
 ### Monolithic Architecture
 
