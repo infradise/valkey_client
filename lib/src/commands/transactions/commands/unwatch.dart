@@ -14,8 +14,19 @@
  * limitations under the License.
  */
 
-export 'commands/discard.dart';
-export 'commands/exec.dart';
-export 'commands/multi.dart';
-export 'commands/unwatch.dart';
-export 'commands/watch.dart';
+import '../commands.dart' show TransactionsCommands;
+
+extension UnwatchCommand on TransactionsCommands {
+  /// UNWATCH
+  ///
+  /// Flushes all the watched keys.
+  /// If you call EXEC or DISCARD, there's no need to manually call UNWATCH.
+  ///
+  /// Returns "OK" on success.
+  Future<String> unwatch() async {
+    final cmd = <String>['UNWATCH'];
+    final result = await execute(cmd);
+
+    return result.toString();
+  }
+}
