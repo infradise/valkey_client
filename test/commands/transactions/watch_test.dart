@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-@Tags(['transaction'])
-library;
+// @Tags(['transaction'])
+// library;
 
 import 'package:test/test.dart';
 import 'package:valkey_client/valkey_client.dart';
