@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export 'json_extensions.dart';
+export 'extensions.dart';
 
 class Config {
   final bool allowRedisOnlyJsonMerge;

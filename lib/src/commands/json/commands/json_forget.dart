@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import '../json_commands.dart';
+import '../commands.dart';
 
 extension JsonForget on JsonCommands {
   /// JSON.FORGET key [path]

@@ -21,9 +21,9 @@ library;
 // Export cluster info data classes (v1.2.0)
 export 'src/cluster_info.dart';
 // Helpers for jsonMSet
-export 'src/commands/json/json_commands.dart'
+export 'src/commands/json/commands.dart'
     show Config, JsonCommands, JsonMSetEntry;
-export 'src/commands/json/json_extensions.dart';
+export 'src/commands/json/extensions.dart';
 export 'src/commands/transactions/extensions.dart';
 // Export public exception classes (v1.0.0)
 export 'src/exceptions.dart';

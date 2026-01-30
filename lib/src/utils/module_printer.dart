@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import '../commands/json/json_commands.dart' show JsonCommands;
+import '../commands/json/commands.dart' show JsonCommands;
 
 /// Prints the parsed the module list in a formatted ASCII table.
 ///

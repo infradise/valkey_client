@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import '../json_commands.dart';
+import '../commands.dart';
 import '../utils/helpers.dart' show JsonHelpers;
 
 extension JsonResp on JsonCommands {

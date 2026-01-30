@@ -16,7 +16,7 @@
 
 import 'dart:convert' show jsonEncode;
 
-import '../json_commands.dart';
+import '../commands.dart';
 
 extension JsonMSet on JsonCommands {
   /// JSON.MSET key path value [key path value ...]
