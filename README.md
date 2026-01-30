@@ -29,22 +29,29 @@ The **valkey_client** is a high-performance, cluster-aware Dart client for Redis
 
 ## Supported APIs
 
+### Modular Architecture
+
+| Category              | APIs   |
+| --------------------- | ------ |
+| Hashes                | `hDel`, `hExists`, `hExpire`, `hExpireAt`, `hExpireTime`, `hGet`, `hGetAll`, `hGetEx`, `hIncrBy`, `hIncrByFloat`, `hKeys`, `hLen`, `hMGet`, `hMSet`, `hPersist`, `hPExpire`, `hPExpireAt`, `hPExpireTime`, `hPTtl`, `hRandField`, `hScan`, `hSet`, `hSetEx`, `hSetNx`, `hStrLen`, `hTtl`, `hVals` |
+| Transactions          | `multi`, `exec`, `discard` |
+| JSON                  | `jsonArrAppend`, `jsonArrAppendEnhanced`, `jsonArrIndex`, `jsonArrIndexEnhanced`, `jsonArrInsert`, `jsonArrInsertEnhanced`, `jsonArrLen`, `jsonArrLenEnhanced`, `jsonArrPop`,`jsonArrPopEnhanced`, `jsonArrTrim`, `jsonArrTrimEnhanced`, `jsonClear`, `jsonDebug`, `jsonDel`, `jsonForget`, `jsonGet`, `jsonMerge`, `jsonMergeForce`, `jsonMGet`, `jsonMSet`, `jsonNumIncrBy`, `jsonNumMultBy`, `jsonObjKeys`, `jsonObjKeysEnhanced`, `jsonObjLen`, `jsonResp`, `jsonSet`, `jsonStrAppend`, `jsonStrAppendEnhanced`, `jsonStrLen`, `jsonStrLenEnhanced`,  `jsonToggle`, `jsonType` |
+| Generic               | `scan` |
+
+### Monolithic Architecture
+
 | Category              | APIs   |
 | --------------------- | ------ |
 | Connection            | `ping`, `echo`, `close` |
 | Cluster               | `clusterSlots`, `asking` |
 | Strings               | `get`, `set`, `mGet`, `incr`, `decr`, `incrBy`, `decrBy` |
-| Hashes                | `hDel`, `hExists`, `hExpire`, `hExpireAt`, `hExpireTime`, `hGet`, `hGetAll`, `hGetEx`, `hIncrBy`, `hIncrByFloat`, `hKeys`, `hLen`, `hMGet`, `hMSet`, `hPersist`, `hPExpire`, `hPExpireAt`, `hPExpireTime`, `hPTtl`, `hRandField`, `hScan`, `hSet`, `hSetEx`, `hSetNx`, `hStrLen`, `hTtl`, `hVals` |
 | Lists                 | `lPush`, `rPush`, `lPop`, `rPop`, `lRange` |
 | Sets                  | `sAdd`, `sRem`, `sMembers` |
 | Sorted Sets           | `zAdd`, `zRem`, `zRange` |
 | Key Management        | `del`, `exists`, `expire`, `ttl` |
-| Transactions          | `multi`, `exec`, `discard` |
 | Full Pub/Sub          | `publish`, `subscribe`, `unsubscribe`, `pSubscribe`, `pUnsubscribe` |
 | Pub/Sub Introspection | `pubsubChannels`, `pubsubNumSub`, `pubsubNumPat` |
 | Sharded Pub/Sub       | `sPublish`, `sSubscribe`, `sUnsubscribe` |
-| JSON                  | `jsonArrAppend`, `jsonArrAppendEnhanced`, `jsonArrIndex`, `jsonArrIndexEnhanced`, `jsonArrInsert`, `jsonArrInsertEnhanced`, `jsonArrLen`, `jsonArrLenEnhanced`, `jsonArrPop`,`jsonArrPopEnhanced`, `jsonArrTrim`, `jsonArrTrimEnhanced`, `jsonClear`, `jsonDebug`, `jsonDel`, `jsonForget`, `jsonGet`, `jsonMerge`, `jsonMergeForce`, `jsonMGet`, `jsonMSet`, `jsonNumIncrBy`, `jsonNumMultBy`, `jsonObjKeys`, `jsonObjKeysEnhanced`, `jsonObjLen`, `jsonResp`, `jsonSet`, `jsonStrAppend`, `jsonStrAppendEnhanced`, `jsonStrLen`, `jsonStrLenEnhanced`,  `jsonToggle`, `jsonType` |
-| Generic               | `scan` |
 
 ## Features
 
