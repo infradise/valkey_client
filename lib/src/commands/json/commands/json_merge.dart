@@ -16,7 +16,7 @@
 
 import 'dart:convert' show jsonEncode;
 
-import '../commands.dart';
+import '../commands.dart' show JsonCommands;
 
 extension JsonMerge on JsonCommands {
   /// JSON.MERGE key path value

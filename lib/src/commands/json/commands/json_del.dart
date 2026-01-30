@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import '../commands.dart';
+import '../commands.dart' show JsonCommands;
 
 extension JsonDel on JsonCommands {
   /// JSON.DEL key [path]

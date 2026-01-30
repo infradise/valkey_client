@@ -16,7 +16,7 @@
 
 import 'dart:convert' show jsonDecode;
 
-import '../commands.dart';
+import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
 extension JsonNumMultBy on JsonCommands {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import '../commands.dart';
+import '../commands.dart' show JsonCommands;
 import '../utils/helpers.dart' show JsonHelpers;
 
 extension JsonArrTrim on JsonCommands {

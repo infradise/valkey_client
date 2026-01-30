@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import '../commands.dart';
+import '../commands.dart' show JsonCommands;
 
 extension JsonClear on JsonCommands {
   /// JSON.CLEAR key [path]
