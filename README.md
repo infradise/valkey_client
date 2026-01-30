@@ -27,18 +27,28 @@ The **valkey_client** is a high-performance, cluster-aware Dart client for Redis
 3. Looking for a GUI built with `valkey_client`? Try [Keyscope](https://pub.dev/packages/keyscope)
 4. Need real‑time watch for Redis/Valkey pods and services across multiple K8s clusters? Try [Visualkube Jet](https://jet.visualkube.com)
 
+## Supported APIs
+
+| Category              | APIs   |
+| --------------------- | ------ |
+| Connection            | `ping`, `echo`, `close` |
+| Cluster               | `clusterSlots`, `asking` |
+| Strings               | `get`, `set`, `mGet`, `incr`, `decr`, `incrBy`, `decrBy` |
+| Hashes                | `hDel`, `hExists`, `hExpire`, `hExpireAt`, `hExpireTime`, `hGet`, `hGetAll`, `hGetEx`, `hIncrBy`, `hIncrByFloat`, `hKeys`, `hLen`, `hMGet`, `hMSet`, `hPersist`, `hPExpire`, `hPExpireAt`, `hPExpireTime`, `hPTtl`, `hRandField`, `hScan`, `hSet`, `hSetEx`, `hSetNx`, `hStrLen`, `hTtl`, `hVals` |
+| Lists                 | `lPush`, `rPush`, `lPop`, `rPop`, `lRange` |
+| Sets                  | `sAdd`, `sRem`, `sMembers` |
+| Sorted Sets           | `zAdd`, `zRem`, `zRange` |
+| Key Management        | `del`, `exists`, `expire`, `ttl` |
+| Transactions          | `multi`, `exec`, `discard` |
+| Full Pub/Sub          | `publish`, `subscribe`, `unsubscribe`, `pSubscribe`, `pUnsubscribe` |
+| Pub/Sub Introspection | `pubsubChannels`, `pubsubNumSub`, `pubsubNumPat` |
+| Sharded Pub/Sub       | `sPublish`, `sSubscribe`, `sUnsubscribe` |
+| JSON                  | `jsonArrAppend`, `jsonArrAppendEnhanced`, `jsonArrIndex`, `jsonArrIndexEnhanced`, `jsonArrInsert`, `jsonArrInsertEnhanced`, `jsonArrLen`, `jsonArrLenEnhanced`, `jsonArrPop`,`jsonArrPopEnhanced`, `jsonArrTrim`, `jsonArrTrimEnhanced`, `jsonClear`, `jsonDebug`, `jsonDel`, `jsonForget`, `jsonGet`, `jsonMerge`, `jsonMergeForce`, `jsonMGet`, `jsonMSet`, `jsonNumIncrBy`, `jsonNumMultBy`, `jsonObjKeys`, `jsonObjKeysEnhanced`, `jsonObjLen`, `jsonResp`, `jsonSet`, `jsonStrAppend`, `jsonStrAppendEnhanced`, `jsonStrLen`, `jsonStrLenEnhanced`,  `jsonToggle`, `jsonType` |
+| Generic               | `scan` |
+
 ## Features
 
-* **HASH Commands:**
-  * `hDel`, `hExists`, `hExpire`, `hExpireAt`, `hExpireTime`, `hGet`, `hGetAll`, `hGetEx`, `hIncrBy`, `hIncrByFloat`, `hKeys`, `hLen`, `hMGet`, `hMSet`, `hPersist`, `hPExpire`, `hPExpireAt`, `hPExpireTime`, `hPTtl`, `hRandField`, `hScan`, `hSet`, `hSetEx`, `hSetNx`, `hStrLen`, `hTtl`, `hVals`
-* **Generic Commands:** Added `scan`
-* **JSON Commands:** Introduced RedisJSON; ValkeyJSON - JSON-based document formats for storing structured payloads.
-  * `jsonArrAppendEnhanced`, `jsonArrIndexEnhanced`, `jsonArrInsertEnhanced`, `jsonArrLenEnhanced`, `jsonArrPopEnhanced`, `jsonArrTrimEnhanced`, `jsonObjKeysEnhanced`, `jsonStrAppendEnhanced`, `jsonStrLenEnhanced`
-  * `jsonDebug`, `jsonResp`, `jsonToggle`, `jsonType`
-  * `jsonObjKeys`, `jsonObjLen`, `jsonStrAppend`, `jsonStrLen`
-  * `jsonClear`, `jsonForget`, `jsonMGet`, `jsonMSet`, `jsonNumIncrBy`,`jsonNumMultBy`, `jsonMergeForce`
-  * `jsonArrAppend`, `jsonArrIndex`, `jsonArrInsert`, `jsonArrLen`, `jsonArrPop`,`jsonArrTrim`
-  * `jsonGet`, `jsonSet`, `jsonDel`, `jsonMerge`
+* **Commands/Operations/Data Types:** See the `Supported APIs` section above.
 * **Redis/Valkey Module Detector:** Introduced to get Redis and Valkey module list and information. (e.g., `json`, `search`, `ldap`, `bf`, etc.)
 * **JSON Module Checker:** Introduced to check JSON module names in advance before running logic.
 * **Scalable Replica Reads:** Boost read performance by offloading read-only commands (e.g., `GET`, `EXISTS`) to replica nodes. Supports `ReadPreference` settings (`master`, `preferReplica`, `replicaOnly`) to control traffic flow.
