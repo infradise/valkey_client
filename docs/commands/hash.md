@@ -32,7 +32,7 @@ limitations under the License.
 | HKEYS        | [HKEYS](https://redis.io/docs/latest/commands/hkeys/)               | [HKEYS](https://valkey.io/commands/hkeys/)              |
 | HLEN         | [HLEN](https://redis.io/docs/latest/commands/hlen/)                 | [HLEN](https://valkey.io/commands/hlen/)                |
 | HMGET        | [HMGET](https://redis.io/docs/latest/commands/hmget/)               | [HMGET](https://valkey.io/commands/hmget/)              |
-| HMSET        | [HMSET](https://redis.io/docs/latest/commands/hmset/)               | [HMSET](https://valkey.io/commands/hmset/)              |
+| HMSET        | ~~[HMSET](https://redis.io/docs/latest/commands/hmset/)~~           | [HMSET](https://valkey.io/commands/hmset/)              |
 | HPERSIST     | [HPERSIST](https://redis.io/docs/latest/commands/hpersist/)         | [HPERSIST](https://valkey.io/commands/hpersist/)        |
 | HPEXPIRE     | [HPEXPIRE](https://redis.io/docs/latest/commands/hpexpire/)         | [HPEXPIRE](https://valkey.io/commands/hpexpire/)        |
 | HPEXPIREAT   | [HPEXPIREAT](https://redis.io/docs/latest/commands/hpexpireat/)     | [HPEXPIREAT](https://valkey.io/commands/hpexpireat/)    |
