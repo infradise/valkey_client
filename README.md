@@ -33,7 +33,7 @@ The **valkey_client** is a high-performance, cluster-aware Dart client for Redis
 
 | Category              | APIs   |
 | --------------------- | ------ |
-| Hashes                | `hDel`, `hExists`, `hExpire`, `hExpireAt`, `hExpireTime`, `hGet`, `hGetAll`, `hGetEx`, `hIncrBy`, `hIncrByFloat`, `hKeys`, `hLen`, `hMGet`, `hMSet`, `hPersist`, `hPExpire`, `hPExpireAt`, `hPExpireTime`, `hPTtl`, `hRandField`, `hScan`, `hSet`, `hSetEx`, `hSetNx`, `hStrLen`, `hTtl`, `hVals` |
+| Hashes                | `hDel`, `hExists`, `hExpire`, `hExpireAt`, `hExpireTime`, `hGet`, `hGetAll`, `hGetDel`, `hGetEx`, `hIncrBy`, `hIncrByFloat`, `hKeys`, `hLen`, `hMGet`, `hMSet`, `hPersist`, `hPExpire`, `hPExpireAt`, `hPExpireTime`, `hPTtl`, `hRandField`, `hScan`, `hSet`, `hSetEx`, `hSetNx`, `hStrLen`, `hTtl`, `hVals` |
 | Transactions          | `multi`, `exec`, `discard`, `unwatch`, `watch` |
 | JSON                  | `jsonArrAppend`, `jsonArrAppendEnhanced`, `jsonArrIndex`, `jsonArrIndexEnhanced`, `jsonArrInsert`, `jsonArrInsertEnhanced`, `jsonArrLen`, `jsonArrLenEnhanced`, `jsonArrPop`,`jsonArrPopEnhanced`, `jsonArrTrim`, `jsonArrTrimEnhanced`, `jsonClear`, `jsonDebug`, `jsonDel`, `jsonForget`, `jsonGet`, `jsonMerge`, `jsonMergeForce`, `jsonMGet`, `jsonMSet`, `jsonNumIncrBy`, `jsonNumMultBy`, `jsonObjKeys`, `jsonObjKeysEnhanced`, `jsonObjLen`, `jsonResp`, `jsonSet`, `jsonStrAppend`, `jsonStrAppendEnhanced`, `jsonStrLen`, `jsonStrLenEnhanced`,  `jsonToggle`, `jsonType` |
 | Generic               | `scan` |
