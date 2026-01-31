@@ -4,6 +4,7 @@
 
 ## Standalone/Sentinel environments
 ```sh
+# Valkey 9.0.0
 docker run --name my-valkey -p 6379:6379 valkey/valkey:latest
 ```
 
@@ -12,8 +13,8 @@ docker run --name my-valkey -p 6379:6379 valkey/valkey:latest
 Valkey JSON, Valkey Bloom, Valkey Search, LDAP
 
 ```sh
-# Valkey 9.0.0
-docker run --name valkey-json-test -p 6379:6379 valkey/valkey-bundle:latest
+# When we need to change 6379 to 6380
+docker run --name my-valkey-json -p 6380:6380 valkey/valkey-bundle:latest --port 6380
 ```
 
 OR
