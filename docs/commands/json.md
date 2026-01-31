@@ -34,7 +34,7 @@ limitations under the License.
 | ~~`jsonDebug`~~                 | [JSON.DEBUG](https://redis.io/docs/latest/commands/json.debug/)               | [JSON.DEBUG](https://valkey.io/commands/json.debug/)                       |
 | `jsonDebugDepth`                |                                                                               | [JSON.DEBUG DEPTH](https://valkey.io/commands/json.debug/)                 |
 | `jsonDebugFields`               |                                                                               | [JSON.DEBUG FIELDS](https://valkey.io/commands/json.debug/)                |
-| `jsonDebugHelp`                 | [JSON.DEBUG HELP](https://redis.io/docs/latest/commands/json.debug-memory/)   | [JSON.DEBUG HELP](https://valkey.io/commands/json.debug/)                  |
+| `jsonDebugHelp`                 | [JSON.DEBUG HELP](https://redis.io/docs/latest/commands/json.debug-help/)     | [JSON.DEBUG HELP](https://valkey.io/commands/json.debug/)                  |
 | `jsonDebugKeyTableCheck`        |                                                                               | [JSON.DEBUG KEYTABLE-CHECK](https://valkey.io/commands/json.debug/)        |
 | `jsonDebugKeyTableCorrupt`      |                                                                               | [JSON.DEBUG KEYTABLE-CORRUPT](https://valkey.io/commands/json.debug/)      |
 | `jsonDebugKeyTableDistribution` |                                                                               | [JSON.DEBUG KEYTABLE-DISTRIBUTION](https://valkey.io/commands/json.debug/) |
