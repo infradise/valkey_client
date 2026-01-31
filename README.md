@@ -29,31 +29,21 @@ The **valkey_client** is a high-performance, cluster-aware Dart client for Redis
 
 ## Supported APIs
 
-### Modular Architecture
-
-| Category              | APIs   |
-| --------------------- | ------ |
-| Hashes                | `hDel`, `hExists`, `hExpire`, `hExpireAt`, `hExpireTime`, `hGet`, `hGetAll`, `hGetDel`, `hGetEx`, `hIncrBy`, `hIncrByFloat`, `hKeys`, `hLen`, `hMGet`, `hMSet`, `hPersist`, `hPExpire`, `hPExpireAt`, `hPExpireTime`, `hPTtl`, `hRandField`, `hScan`, `hSet`, `hSetEx`, `hSetNx`, `hStrLen`, `hTtl`, `hVals` |
-| Transactions          | `multi`, `exec`, `discard`, `unwatch`, `watch` |
-| JSON                  | `jsonArrAppend`, `jsonArrAppendEnhanced`, `jsonArrIndex`, `jsonArrIndexEnhanced`, `jsonArrInsert`, `jsonArrInsertEnhanced`, `jsonArrLen`, `jsonArrLenEnhanced`, `jsonArrPop`,`jsonArrPopEnhanced`, `jsonArrTrim`, `jsonArrTrimEnhanced`, `jsonClear`, `jsonDebug`, `jsonDebugDepth`, `jsonDebugFields`, `jsonDebugHelp`, `jsonDebugKeyTableCheck`, `jsonDebugKeyTableCorrupt`, `jsonDebugKeyTableDistribution`, `jsonDebugMaxDepthKey`, `jsonDebugMaxSizeKey`, `jsonDebugMemory`, `jsonDebugTestSharedApi`, `jsonDel`, `jsonForget`, `jsonGet`, `jsonMerge`, `jsonMergeForce`, `jsonMGet`, `jsonMSet`, `jsonNumIncrBy`, `jsonNumMultBy`, `jsonObjKeys`, `jsonObjKeysEnhanced`, `jsonObjLen`, `jsonResp`, `jsonSet`, `jsonStrAppend`, `jsonStrAppendEnhanced`, `jsonStrLen`, `jsonStrLenEnhanced`,  `jsonToggle`, `jsonType` |
-| Generic               | `scan` |
-| Lists (v3.2.0)        | `blMove`, `blmPop`, `blPop`, `brPop`, `brPopLPush`, `lIndex`, `lInsert`, `lLen`, `lMove`, `lmPop`, `lPop`, `lPos`, `lPush`, `lPushX`, `lRange`, `lRem`, `lSet`, `lTrim`, `rPop`, `rPopLPush`, `rPush`, `rPushX` |
-| Server (v3.2.0)       | `flushDb`, `flushAll` |
-
-### Monolithic Architecture
-
-| Category              | APIs   |
-| --------------------- | ------ |
-| Connection            | `ping`, `echo`, `close` |
-| Cluster               | `clusterSlots`, `asking` |
-| Strings               | `get`, `set`, `mGet`, `incr`, `decr`, `incrBy`, `decrBy` |
-| Lists                 | `lPush`, `rPush`, `lPop`, `rPop`, `lRange` |
-| Sets                  | `sAdd`, `sRem`, `sMembers` |
-| Sorted Sets           | `zAdd`, `zRem`, `zRange` |
-| Key Management        | `del`, `exists`, `expire`, `ttl` |
-| Full Pub/Sub          | `publish`, `subscribe`, `unsubscribe`, `pSubscribe`, `pUnsubscribe` |
-| Pub/Sub Introspection | `pubsubChannels`, `pubsubNumSub`, `pubsubNumPat` |
-| Sharded Pub/Sub       | `sPublish`, `sSubscribe`, `sUnsubscribe` |
+- [Hash](https://github.com/infradise/valkey_client/blob/main/docs/commands/hash.md)
+- [JSON](https://github.com/infradise/valkey_client/blob/main/docs/commands/json.md)
+- [Pubsub](https://github.com/infradise/valkey_client/blob/main/docs/commands/pubsub.md) 
+- [Transaction](https://github.com/infradise/valkey_client/blob/main/docs/commands/transaction.md)
+- [Generic](https://github.com/infradise/valkey_client/blob/main/docs/commands/generic.md)
+- As of v3.2.0
+  - [List](https://github.com/infradise/valkey_client/blob/main/docs/commands/list.md)
+  - Server: `flushDb`, `flushAll`
+- More
+  - Connection: `ping`, `echo`, `close`
+  - Cluster: `clusterSlots`, `asking`
+  - Strings: `get`, `set`, `mget`, `incr`, `decr`, `incrBy`, `decrBy`
+  - Sets: `sadd`, `srem`, `smembers`
+  - Sorted Sets: `zadd`, `zrem`, `zrange`
+  - Lists: `lpush`, `rpush`, `lpop`, `rpop`, `lrange`
 
 ## Features
 
