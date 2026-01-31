@@ -8,6 +8,8 @@
         * `ValkeyClient` methods now internally delegate logic to the new extensions (`HSet`, `HGet`, `HGetAll`), ensuring full backward compatibility and interface compliance.
     * **New Transactions Commands**
         * `watch`, `unwatch`
+    * **New JSON Debug subcommands**
+        * `jsonDebugDepth`, `jsonDebugFields`, `jsonDebugHelp`, `jsonDebugKeyTableCheck`, `jsonDebugKeyTableCorrupt`, `jsonDebugKeyTableDistribution`, `jsonDebugMaxDepthKey`, `jsonDebugMaxSizeKey`, `jsonDebugMemory`, `jsonDebugTestSharedApi`
 
 ## 3.0.0
 * **Modular Architecture**: Restructured monolithic command implementations into scalable, extension-based modules.
