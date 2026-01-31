@@ -21,6 +21,7 @@ export 'commands/h_expire_at.dart';
 export 'commands/h_expire_time.dart';
 export 'commands/h_get.dart';
 export 'commands/h_get_all.dart';
+export 'commands/h_get_del.dart';
 export 'commands/h_get_ex.dart';
 export 'commands/h_incr_by.dart';
 export 'commands/h_incr_by_float.dart';

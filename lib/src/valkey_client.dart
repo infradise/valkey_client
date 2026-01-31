@@ -27,15 +27,25 @@ import '../valkey_client_base.dart';
 import '../valkey_pool.dart' show ValkeyPool;
 // Import the top-level function from the parser file
 import 'cluster_slots_parser.dart' show parseClusterSlotsResponse;
+// ------------------------------------------------------------------------
+// 1. Import `Commands` below.
+// 2. Add `Commands` to `ValkeyClient class with`.
+// 3. Export `Commands` in `lib/valkey_client.dart`.
+// ------------------------------------------------------------------------
 // Redis/Valkey Commands
 import 'commands/generic.dart' show GenericCommands;
+import 'commands/hash/commands.dart' show HashCommands;
+import 'commands/hash/commands/h_get.dart' show HGetCommand;
+import 'commands/hash/commands/h_get_all.dart' show HGetAllCommand;
+import 'commands/hash/commands/h_set.dart' show HSetCommand;
 import 'commands/json/commands.dart'
     show JsonCommands; // Redis JSON and Valkey JSON
-// Import the new exceptions file
+import 'commands/list/commands.dart' show ListCommands;
 import 'commands/transactions/commands.dart' show TransactionCommands;
 import 'commands/transactions/commands/discard.dart' show DiscardCommand;
 import 'commands/transactions/commands/exec.dart' show ExecCommand;
 import 'commands/transactions/commands/multi.dart' show MultiCommand;
+// Import the new exceptions file
 import 'exceptions.dart';
 // Built-in Logger
 import 'logging.dart';
@@ -124,7 +134,12 @@ class _IncompleteDataException implements Exception {
 
 /// The main client implementation for communicating with a Valkey server.
 class ValkeyClient
-    with JsonCommands, TransactionCommands, GenericCommands
+    with
+        GenericCommands,
+        HashCommands,
+        JsonCommands,
+        ListCommands,
+        TransactionCommands
     implements ValkeyClientBase {
   static final _log = ValkeyLogger('ValkeyClient');
 
@@ -1810,39 +1825,54 @@ class ValkeyClient
 
   // --- HASH (v0.5.0) ---
   @override
-  Future<String?> hGet(String key, String field) async {
-    final response = await execute(['HGET', key, field]);
-    // Returns a Bulk String ($) or Null ($-1)
-    return response as String?;
-  }
+  Future<String?> hGet(String key, String field) async =>
+      HGetCommand(this).hGet(key, field);
+  // Future<String?> hGet(String key, String field) async {
+  //   final response = await execute(['HGET', key, field]);
+  //   // Returns a Bulk String ($) or Null ($-1)
+  //   return response as String?;
+  // }
 
   @override
   @Deprecated('Use [hGet] instead. This method will be removed in v4.0.0.')
   Future<String?> hget(String key, String field) async => hGet(key, field);
 
   @override
-  Future<int> hset(String key, String field, String value) async {
-    final response = await execute(['HSET', key, field, value]);
-    // Returns an Integer (:)
-    return response as int;
-  }
+  Future<int> hSet(String key, Map<String, String> data) async =>
+      HSetCommand(this).hSet(key, data);
+  // Future<int> hset(String key, String field, String value) async {
+  //   final response = await execute(['HSET', key, field, value]);
+  //   // Returns an Integer (:)
+  //   return response as int;
+  // }
 
   @override
-  Future<Map<String, String>> hgetall(String key) async {
-    // HGETALL returns a flat array: ['field1', 'value1', 'field2', 'value2']
-    final response = await execute(['HGETALL', key])
-        as List<dynamic>?; // Can return null array
-    if (response == null || response.isEmpty) return {};
+  @Deprecated('Use [hSet] instead. This method will be removed in v4.0.0.')
+  Future<int> hset(String key, String field, String value) async =>
+      hSet(key, {field: value});
 
-    // Convert the flat list into a Map
-    final map = <String, String>{};
-    for (var i = 0; i < response.length; i += 2) {
-      // We know the structure is [String, String, String, String, ...]
-      // Assume server returns strings for fields/values
-      map[response[i] as String] = response[i + 1] as String;
-    }
-    return map;
-  }
+  @override
+  Future<Map<String, String>> hGetAll(String key) async =>
+      HGetAllCommand(this).hGetAll(key);
+  // Future<Map<String, String>> hgetall(String key) async {
+  //   // HGETALL returns a flat array: ['field1', 'value1', 'field2', 'value2']
+  //   final response = await execute(['HGETALL', key])
+  //       as List<dynamic>?; // Can return null array
+  //   if (response == null || response.isEmpty) return {};
+
+  //   // Convert the flat list into a Map
+  //   final map = <String, String>{};
+  //   for (var i = 0; i < response.length; i += 2) {
+  //     // We know the structure is [String, String, String, String, ...]
+  //     // Assume server returns strings for fields/values
+  //     map[response[i] as String] = response[i + 1] as String;
+  //   }
+  //   return map;
+  // }
+
+  @override
+  @Deprecated('Use [hGetAll] instead. This method will be removed in v4.0.0.')
+  Future<Map<String, String>> hgetall(String key) async => hGetAll(key);
 
   // --- LIST (v0.6.0) ---
 

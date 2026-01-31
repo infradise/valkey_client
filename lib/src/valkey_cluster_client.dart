@@ -495,8 +495,21 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   Future<String?> hget(String key, String field) => hGet(key, field);
 
   @override
+  Future<int> hSet(String key, Map<String, String> data) =>
+      _executeOnKey(key, (client) => client.hSet(key, data));
+
+  @override
+  @Deprecated('Use [hSet] instead. This method will be removed in v4.0.0.')
   Future<int> hset(String key, String field, String value) =>
-      _executeOnKey(key, (client) => client.hset(key, field, value));
+      hSet(key, {field: value});
+
+  @override
+  Future<Map<String, String>> hGetAll(String key) =>
+      _executeOnKey(key, (client) => client.hGetAll(key));
+
+  @override
+  @Deprecated('Use [hGetAll] instead. This method will be removed in v4.0.0.')
+  Future<Map<String, String>> hgetall(String key) => hGetAll(key);
 
   // --- STUBS for remaining ValkeyCommandsBase methods ---
   // (These must be implemented to satisfy the interface)
@@ -505,9 +518,6 @@ class ValkeyClusterClient implements ValkeyClusterClientBase {
   // ... (hgetall, lpush, lpop, sadd, zadd, etc. follow the same pattern)
   // (Implementation of all other commands is omitted for brevity)
 
-  @override
-  Future<Map<String, String>> hgetall(String key) =>
-      _executeOnKey(key, (client) => client.hgetall(key));
   @override
   Future<int> lpush(String key, String value) =>
       _executeOnKey(key, (client) => client.lpush(key, value));

@@ -57,11 +57,29 @@ abstract class ValkeyCommandsBase {
   @Deprecated('Use [hGet] instead. This method will be removed in v4.0.0.')
   Future<String?> hget(String key, String field);
 
-  /// Sets [field] in the hash stored at [key] to [value].
+  /// Sets field in the hash stored at [key] to value.
   ///
-  /// Returns `1` if [field] is a new field and was set,
-  /// or `0` if [field] already existed and was updated.
+  /// Returns `1` if field is a new field and was set,
+  /// or `0` if field already existed and was updated.
   /// Throws a [ValkeyServerException] if the key holds a non-hash value.
+  ///
+  /// Adds a field-value pair to the hash stored at key.
+  /// Returns the number of fields that were added.
+  /// Usage:
+  /// ```dart
+  /// await hSet('user:2', {'name':'john', 'age':'20'});
+  /// await hSet('user:2', {'name':'john'});
+  /// ```
+  Future<int> hSet(String key, Map<String, String> data);
+
+  /// Sets multiple field-value pairs in the hash stored at key.
+  /// Returns the number of fields that were added.
+  /// Usage:
+  /// ```dart
+  /// hset('user:1', 'name', 'richard');
+  /// ```
+  /// Delegate single-field call to the multi-field API.
+  @Deprecated('Use [hSet] instead. This method will be removed in v4.0.0.')
   Future<int> hset(String key, String field, String value);
 
   /// Gets all fields and values of the hash stored at [key].
@@ -69,6 +87,8 @@ abstract class ValkeyCommandsBase {
   /// Returns a `Map<String, String>`.
   /// Returns an empty map if the key does not exist.
   /// Throws a [ValkeyServerException] if the key holds a non-hash value.
+  Future<Map<String, String>> hGetAll(String key);
+  @Deprecated('Use [hGetAll] instead. This method will be removed in v4.0.0.')
   Future<Map<String, String>> hgetall(String key);
 
   // --- Lists ---

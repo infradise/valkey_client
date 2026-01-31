@@ -16,6 +16,8 @@
 
 export 'extensions.dart';
 
+/// Hash Commands Mixin
+///
 /// This mixin defines the contract for Hash-related operations in Valkey/Redis.
 /// It creates a modular structure where specific commands (e.g., HDEL, HGET)
 /// are implemented as extensions on this mixin.
