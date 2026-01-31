@@ -44,7 +44,7 @@ copy, del, dump, exists, expire, expireAt, expireTime, keys, migrate, move, obje
 |               | [RANDOMKEY](https://redis.io/docs/latest/commands/randomkey/)             | [RANDOMKEY](https://valkey.io/commands/randomkey/)             |
 |               | [RENAME](https://redis.io/docs/latest/commands/rename/)                   | [RENAME](https://valkey.io/commands/rename/)                   |
 |               | [RENAMENX](https://redis.io/docs/latest/commands/renamenx/)               | [RENAMENX](https://valkey.io/commands/renamenx/)               |
-|               | [RESTORE](https://redis.io/docs/latest/commands/restore/)                 | [](https://valkey.io/commands/restore/)                        |
+|               | [RESTORE](https://redis.io/docs/latest/commands/restore/)                 | [RESTORE](https://valkey.io/commands/restore/)                 |
 | `scan`        | [SCAN](https://redis.io/docs/latest/commands/scan/)                       | [SCAN](https://valkey.io/commands/scan/)                       |
 |               | [SORT](https://redis.io/docs/latest/commands/sort/)                       | [SORT](https://valkey.io/commands/sort/)                       |
 |               | [SORT_RO](https://redis.io/docs/latest/commands/sort_ro/)                 | [SORT_RO](https://valkey.io/commands/sort_ro/)                 |
